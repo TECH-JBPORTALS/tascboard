@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth-server";
+import { isAuthenticated } from "@/lib/auth-server";
 import { redirect } from "next/navigation";
 
 export default async function Layout({
@@ -6,8 +6,6 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const token = await getToken();
-
-  if (!token) redirect("/sign-in");
+  if (!(await isAuthenticated())) redirect("/sign-in");
   return <>{children}</>;
 }
