@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 
@@ -23,16 +23,39 @@ const inboxItemReturn = v.object({
   actorName: v.optional(v.string()),
 });
 
-async function requireUserId(ctx: { auth: { getUserIdentity: () => Promise<unknown> } }) {
+async function requireUserId(ctx: {
+  auth: { getUserIdentity: () => Promise<unknown> };
+}) {
   const identity = (await ctx.auth.getUserIdentity()) as {
-    subject?: string;
     tokenIdentifier: string;
-  } | null;
+  };
+
   if (!identity) {
     throw new Error("Not authenticated");
   }
-  return identity.subject ?? identity.tokenIdentifier;
+  return identity.tokenIdentifier;
 }
+
+export const createInboxItem = internalMutation({
+  args: {
+    organizationId: v.string(),
+    recipientUserId: v.string(),
+    kind: inboxKindValidator,
+    title: v.string(),
+    snippet: v.optional(v.string()),
+    body: v.optional(v.string()),
+    actorName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const insertedItemId = await ctx.db.insert("inboxItems", {
+      ...args,
+      archived: false,
+      read: false,
+    });
+
+    return insertedItemId;
+  },
+});
 
 export const list = query({
   args: {
