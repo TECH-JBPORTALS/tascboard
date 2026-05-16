@@ -127,7 +127,8 @@ erDiagram
     organization ||--o{ session : activeIn
 ```
 
----
+
+
 
 ## Field notes
 

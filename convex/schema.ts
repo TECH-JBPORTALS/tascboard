@@ -42,6 +42,7 @@ export default defineSchema({
       name: v.string(),
       description: v.optional(v.string()),
     }),
+    
     tracks: defineTable({
       name: v.string(),
       description: v.optional(v.string()),

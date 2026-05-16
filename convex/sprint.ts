@@ -28,10 +28,12 @@ async function requireUserId(ctx: {
       ctx,
       { trackId, sprintName, goal, startDate, endDate }
     ) => {
+      const userId = await requireUserId(ctx);
       const track = await ctx.db.get(trackId);
       if (!track) {
         throw new Error("Track not found");
       }
+      
       const trimmedSprintName = sprintName.trim();
       const trimmedGoal = goal.trim();
       if (startDate > endDate) {
