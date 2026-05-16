@@ -7,19 +7,18 @@ import { authClient } from "@/lib/auth-client";
 import { parseOrganizationMetadata } from "@/lib/organization";
 import { OrganizationAvatar } from "./OrganizationAvatar";
 import { Button, buttonVariants } from "@/components/ui/button";
+
+import { RiAddLine, RiCheckLine } from "@remixicon/react";
+import { SidebarMenuButton } from "../ui/sidebar";
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxLabel,
-  ComboboxList,
-  ComboboxTrigger,
-  useComboboxAnchor,
-} from "@/components/ui/combobox";
-import { RiAddLine } from "@remixicon/react";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 type OrganizationListItem = {
   id: string;
@@ -33,7 +32,6 @@ type OrgComboValue = { slug: string; name: string };
 export function OrganizationSwitcher() {
   const router = useRouter();
   const params = useParams<{ orgSlug: string }>();
-  const anchorRef = useComboboxAnchor();
   const [isSwitching, setIsSwitching] = useState(false);
   const { data: organizations, isPending } = authClient.useListOrganizations();
   const { data: session } = authClient.useSession();
@@ -67,14 +65,15 @@ export function OrganizationSwitcher() {
     }
   }
 
-  function handleComboValueChange(value: OrgComboValue | null) {
-    if (!value) {
+  function handleOrganizationChange(slug: string) {
+    if (!slug) {
       return;
     }
-    if (value.slug === params.orgSlug) {
+    if (slug === params.orgSlug) {
       return;
     }
-    const org = orgList.find((o) => o.slug === value.slug);
+    const org = orgList.find((o) => o.slug === slug);
+
     if (org) {
       void switchOrganization(org);
     }
@@ -102,56 +101,61 @@ export function OrganizationSwitcher() {
   const currentMetadata = parseOrganizationMetadata(current.metadata);
 
   return (
-    <Combobox
-      value={comboValue}
-      onValueChange={handleComboValueChange}
-      isItemEqualToValue={(a, b) => a.slug === b.slug}
-      itemToStringLabel={(v) => v.name}
-      itemToStringValue={(v) => v.slug}
-      items={orgList}
-    >
-      <div ref={anchorRef} className="w-full">
-        <ComboboxTrigger
-          className={buttonVariants({
-            variant: "outline",
-            size: "lg",
-            className: "w-full justify-between p-1.5",
-          })}
-          disabled={isSwitching}
-        >
-          <div className="flex  items-center gap-1.5">
+    <Popover>
+      <SidebarMenuButton
+        render={() => (
+          <PopoverTrigger
+            className={buttonVariants({
+              className:
+                "justify-start group-data-[collapsed=icon]:justify-center group-data-[collapsed=icon]:size-8  w-full",
+              variant: "outline",
+            })}
+          >
             <OrganizationAvatar
               name={current.name}
               imageStorageId={currentMetadata.imageStorageId}
-              className="size-6"
+              className="size-6 "
             />
-            <span className="truncate text-left text-sm font-medium">
+            <span className="truncate text-left group-data-[collapsed=icon]:hidden! text-sm font-medium">
               {current.name}
             </span>
-          </div>
-        </ComboboxTrigger>
-      </div>
+          </PopoverTrigger>
+        )}
+        className="justify-start  group-data-[collapsed=icon]:size-8! group-data-[collapsed=icon]:justify-center gap-1.5"
+      />
 
-      <ComboboxContent anchor={anchorRef}>
-        <ComboboxInput placeholder="Search..." showTrigger={false} />
-        <ComboboxEmpty>No organization found</ComboboxEmpty>
+      <PopoverContent className={"max-w-[240px]! p-0"}>
+        <Command value={current.slug}>
+          <CommandInput placeholder="Search..." />
+          <CommandList>
+            <CommandEmpty>No organization found</CommandEmpty>
+            <CommandGroup heading={"Organizations"}>
+              {orgList.map((org) => {
+                const metadata = parseOrganizationMetadata(org.metadata);
+                return (
+                  <CommandItem
+                    onClick={() => handleOrganizationChange(org.slug)}
+                    key={org.id}
+                    value={org.slug}
+                  >
+                    <OrganizationAvatar
+                      name={org.name}
+                      imageStorageId={metadata.imageStorageId}
+                      className="size-6"
+                    />
 
-        <ComboboxList>
-          {(org: (typeof orgList)[0]) => {
-            const metadata = parseOrganizationMetadata(org.metadata);
-            return (
-              <ComboboxItem key={org.id} value={org}>
-                <OrganizationAvatar
-                  name={org.name}
-                  imageStorageId={metadata.imageStorageId}
-                  className="size-6"
-                />
-                {org.name}
-              </ComboboxItem>
-            );
-          }}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+                    {org.name}
+
+                    {org.slug === current.slug && (
+                      <RiCheckLine className="ml-auto" />
+                    )}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

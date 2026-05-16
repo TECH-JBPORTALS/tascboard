@@ -14,7 +14,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -23,9 +22,10 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
+import React from "react";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Inbox", href: "", icon: RiInboxLine },
@@ -34,7 +34,11 @@ const navItems = [
   { label: "Settings", href: "/settings", icon: RiSettings3Line },
 ] as const;
 
-export function AppSidebar() {
+export function AppSidebar({
+  className,
+  showTooltip = false,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { showTooltip?: boolean }) {
   const pathname = usePathname();
   const params = useParams<{ orgSlug: string }>();
   const basePath = `/${params.orgSlug}`;
@@ -46,13 +50,19 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-2">
-        <OrganizationSwitcher />
+    <Sidebar {...props} className={cn("group", className)}>
+      <SidebarHeader className="p-2 h-12 border-b">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <OrganizationSwitcher />
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>ORGANIZATION</SidebarGroupLabel>
+          <SidebarGroupLabel className="group-data-[collapsed=icon]:hidden!">
+            ORGANIZATION
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
@@ -66,7 +76,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      tooltip={item.label}
+                      tooltip={{ children: item.label, hidden: !showTooltip }}
                       render={<Link href={href} />}
                     >
                       <item.icon />
@@ -86,7 +96,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   );
 }

@@ -15,8 +15,21 @@ import {
   RiInboxLine,
   RiMailLine,
   RiNotification3Line,
+  RiSearch2Line,
 } from "@remixicon/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+} from "../ui/sidebar";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "../ui/input-group";
 
 type InboxFilter = "all" | "unread";
 
@@ -488,5 +501,25 @@ export function InboxView() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export function InboxSidebar() {
+  return (
+    <Sidebar collapsible="none" className="hidden flex-1 md:flex border-r">
+      <SidebarHeader className="h-12 border-b">
+        <InputGroup>
+          <InputGroupAddon>
+            <RiSearch2Line />
+          </InputGroupAddon>
+          <InputGroupInput placeholder="Search..." />
+        </InputGroup>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent></SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
