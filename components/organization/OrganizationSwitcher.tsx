@@ -115,7 +115,7 @@ export function OrganizationSwitcher() {
           className={buttonVariants({
             variant: "outline",
             size: "lg",
-            className: "w-full justify-between",
+            className: "w-full justify-between p-1.5",
           })}
           disabled={isSwitching}
         >

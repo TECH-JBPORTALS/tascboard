@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
@@ -247,69 +248,65 @@ export function InboxView() {
 
   return (
     <div className="flex min-h-[calc(100dvh-8.5rem)] min-w-0 flex-1 flex-col overflow-hidden bg-background shadow-sm md:min-h-[calc(100dvh-7rem)]">
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 h-14">
-        <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-            <RiInboxLine className="size-4 text-muted-foreground" />
-          </div>
-          <div>
-            <h1 className="font-heading text-base font-semibold tracking-tight">
-              Inbox
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {items.length} notification{items.length === 1 ? "" : "s"} ·{" "}
-              <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">
-                j
-              </kbd>
-              <kbd className="ml-1 rounded border bg-muted px-1 font-mono text-[10px]">
-                k
-              </kbd>{" "}
-              navigate ·{" "}
-              <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">
-                e
-              </kbd>{" "}
-              archive
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-muted/80 p-0.5">
-            <button
+      <PageHeader
+        icon={<RiInboxLine />}
+        title="Inbox"
+        description={
+          <>
+            {items.length} notification{items.length === 1 ? "" : "s"} ·{" "}
+            <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">
+              j
+            </kbd>
+            <kbd className="ml-1 rounded border bg-muted px-1 font-mono text-[10px]">
+              k
+            </kbd>{" "}
+            navigate ·{" "}
+            <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">
+              e
+            </kbd>{" "}
+            archive
+          </>
+        }
+        actions={
+          <>
+            <div className="flex rounded-lg bg-muted/80 p-0.5">
+              <button
+                type="button"
+                onClick={() => setFilter("all")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  filter === "all"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter("unread")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  filter === "unread"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Unread
+              </button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
               type="button"
-              onClick={() => setFilter("all")}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                filter === "all"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+              onClick={() => void handleMarkAllRead()}
             >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter("unread")}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                filter === "unread"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Unread
-            </button>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-            type="button"
-            onClick={() => void handleMarkAllRead()}
-          >
-            Mark all read
-          </Button>
-        </div>
-      </header>
+              Mark all read
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex min-h-0 flex-1 divide-x divide-border/60">
         <div className="flex w-full min-w-0 flex-col md:w-[min(420px,42%)]">
