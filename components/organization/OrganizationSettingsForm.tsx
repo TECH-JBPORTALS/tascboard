@@ -205,18 +205,28 @@ export function OrganizationSettingsForm() {
             control={form.control}
             render={({ field: { onChange, ref, onBlur }, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <Label htmlFor="settings-org-image">Organization image</Label>
-                <OrganizationImagePreview
-                  previewUrl={previewUrl}
-                  organizationName={organizationName}
-                  imageStorageId={metadata.imageStorageId}
-                />
+                <div className="flex items-center gap-4">
+                  <Label htmlFor="settings-org-image">
+                    <OrganizationImagePreview
+                      previewUrl={previewUrl}
+                      organizationName={organizationName}
+                      imageStorageId={metadata.imageStorageId}
+                    />
+                  </Label>
+                  <div className="gap-0.5 flex flex-col">
+                    <span>Organization Logo</span>
+                    <p className="text-sm text-muted-foreground">
+                      Recommended 256x256px
+                    </p>
+                  </div>
+                </div>
                 <Input
                   id="settings-org-image"
                   ref={ref}
                   type="file"
                   accept="image/*"
                   onBlur={onBlur}
+                  hidden
                   onChange={(event) => onChange(event.target.files)}
                 />
                 <FieldError errors={[fieldState.error]} />
@@ -252,7 +262,7 @@ function OrganizationImagePreview({
   return (
     <div
       className={cn(
-        "mb-2 flex size-16 items-center justify-center overflow-hidden rounded-xl bg-muted",
+        "mb-2 flex size-16! items-center justify-center overflow-hidden rounded-xl border bg-muted",
       )}
     >
       {previewUrl ? (
@@ -266,7 +276,7 @@ function OrganizationImagePreview({
         <OrganizationAvatar
           name={organizationName || "Organization"}
           imageStorageId={imageStorageId}
-          className="size-16 rounded-xl text-base"
+          className="size-16! rounded-xl text-base"
         />
       )}
     </div>
