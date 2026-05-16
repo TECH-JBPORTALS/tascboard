@@ -1521,4 +1521,151 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    sprint: {
+      addTaskToSprint: FunctionReference<
+        "mutation",
+        "internal",
+        { sprintId: string; taskId: string },
+        null,
+        Name
+      >;
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          endDate: number;
+          goal: string;
+          sprintName: string;
+          startDate: number;
+          trackId: string;
+        },
+        string,
+        Name
+      >;
+      edit: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          endDate: number;
+          goal: string;
+          sprintId: string;
+          sprintName: string;
+          startDate: number;
+          status: "planned" | "active" | "completed";
+        },
+        null,
+        Name
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { sprintId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          endDate: number;
+          goal: string;
+          sprintName: string;
+          startDate: number;
+          status: "planned" | "active" | "completed";
+          trackId: string;
+          updatedAt?: number;
+        },
+        Name
+      >;
+      getBacklog: FunctionReference<
+        "query",
+        "internal",
+        { trackId: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          description?: string;
+          dueDate: number | null;
+          priority: "low" | "medium" | "high";
+          sprintId?: string | null;
+          status: "todo" | "in_progress" | "done";
+          title: string;
+          trackId: string;
+        }>,
+        Name
+      >;
+      getBurndownChart: FunctionReference<
+        "query",
+        "internal",
+        { sprintId: string },
+        {
+          burndown: Array<{ date: number; ideal: number; remaining: number }>;
+          doneTasks: number;
+          sprintId: string;
+          totalTasks: number;
+        },
+        Name
+      >;
+      getSprintProgress: FunctionReference<
+        "query",
+        "internal",
+        { sprintId: string },
+        {
+          done: number;
+          inProgress: number;
+          progress: number;
+          sprintId: string;
+          todo: number;
+          total: number;
+          trackId: string;
+        },
+        Name
+      >;
+      getSprintTasks: FunctionReference<
+        "query",
+        "internal",
+        { sprintId: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          description?: string;
+          dueDate: number | null;
+          priority: "low" | "medium" | "high";
+          sprintId?: string | null;
+          status: "todo" | "in_progress" | "done";
+          title: string;
+          trackId: string;
+        }>,
+        Name
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        { trackId: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          endDate: number;
+          goal: string;
+          sprintName: string;
+          startDate: number;
+          status: "planned" | "active" | "completed";
+          trackId: string;
+          updatedAt?: number;
+        }>,
+        Name
+      >;
+      remove: FunctionReference<
+        "mutation",
+        "internal",
+        { sprintId: string },
+        null,
+        Name
+      >;
+      removeTaskFromSprint: FunctionReference<
+        "mutation",
+        "internal",
+        { taskId: string },
+        null,
+        Name
+      >;
+    };
   };

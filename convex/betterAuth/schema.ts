@@ -104,6 +104,7 @@ export const tables = {
     .index("role", ["role"])
     .index("status", ["status"])
     .index("inviterId", ["inviterId"]),
+    
 };
 
 const schema = defineSchema(tables);

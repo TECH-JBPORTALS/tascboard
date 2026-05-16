@@ -11,6 +11,7 @@
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as inbox from "../inbox.js";
+import type * as sprint from "../sprint.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +23,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   http: typeof http;
   inbox: typeof inbox;
+  sprint: typeof sprint;
 }>;
 
 /**
