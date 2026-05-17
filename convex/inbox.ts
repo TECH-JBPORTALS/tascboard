@@ -1,6 +1,7 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import { components } from "./_generated/api";
 
 const inboxKindValidator = v.union(
   v.literal("assignment"),
@@ -22,19 +23,6 @@ const inboxItemReturn = v.object({
   archived: v.boolean(),
   actorName: v.optional(v.string()),
 });
-
-async function requireUserId(ctx: {
-  auth: { getUserIdentity: () => Promise<unknown> };
-}) {
-  const identity = (await ctx.auth.getUserIdentity()) as {
-    tokenIdentifier: string;
-  };
-
-  if (!identity) {
-    throw new Error("Not authenticated");
-  }
-  return identity.tokenIdentifier;
-}
 
 export const createInboxItem = internalMutation({
   args: {
@@ -64,14 +52,17 @@ export const list = query({
   },
   returns: v.array(inboxItemReturn),
   handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const orgId = await ctx.runQuery(
+      components.betterAuth.auth.requireActiveOrg,
+    );
 
     if (args.filter === "unread") {
       return await ctx.db
         .query("inboxItems")
         .withIndex("by_org_recipient_archived_read", (q) =>
           q
-            .eq("organizationId", args.organizationId)
+            .eq("organizationId", orgId)
             .eq("recipientUserId", userId)
             .eq("archived", false)
             .eq("read", false),
@@ -84,7 +75,7 @@ export const list = query({
       .query("inboxItems")
       .withIndex("by_org_recipient_archived", (q) =>
         q
-          .eq("organizationId", args.organizationId)
+          .eq("organizationId", orgId)
           .eq("recipientUserId", userId)
           .eq("archived", false),
       )
@@ -94,15 +85,19 @@ export const list = query({
 });
 
 export const unreadCount = query({
-  args: { organizationId: v.string() },
+  args: {},
   returns: v.number(),
-  handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+  handler: async (ctx) => {
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const orgId = await ctx.runQuery(
+      components.betterAuth.auth.requireActiveOrg,
+    );
+
     const unread = await ctx.db
       .query("inboxItems")
       .withIndex("by_org_recipient_archived_read", (q) =>
         q
-          .eq("organizationId", args.organizationId)
+          .eq("organizationId", orgId)
           .eq("recipientUserId", userId)
           .eq("archived", false)
           .eq("read", false),
@@ -117,7 +112,8 @@ export const markRead = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+
     const doc = await ctx.db.get(args.itemId);
     if (!doc || doc.recipientUserId !== userId) {
       throw new Error("Not found");
@@ -131,7 +127,8 @@ export const markUnread = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+
     const doc = await ctx.db.get(args.itemId);
     if (!doc || doc.recipientUserId !== userId) {
       throw new Error("Not found");
@@ -145,7 +142,8 @@ export const archive = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+
     const doc = await ctx.db.get(args.itemId);
     if (!doc || doc.recipientUserId !== userId) {
       throw new Error("Not found");
@@ -156,15 +154,19 @@ export const archive = mutation({
 });
 
 export const markAllRead = mutation({
-  args: { organizationId: v.string() },
+  args: {},
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+  handler: async (ctx) => {
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const orgId = await ctx.runQuery(
+      components.betterAuth.auth.requireActiveOrg,
+    );
+
     const unread = await ctx.db
       .query("inboxItems")
       .withIndex("by_org_recipient_archived_read", (q) =>
         q
-          .eq("organizationId", args.organizationId)
+          .eq("organizationId", orgId)
           .eq("recipientUserId", userId)
           .eq("archived", false)
           .eq("read", false),
@@ -180,16 +182,19 @@ export const markAllRead = mutation({
 
 /** Idempotent seed so new workspaces have a Linear-style inbox preview. */
 export const seedWelcomeItems = mutation({
-  args: { organizationId: v.string() },
+  args: {},
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await requireUserId(ctx);
+    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const orgId = await ctx.runQuery(
+      components.betterAuth.auth.requireActiveOrg,
+    );
 
     const existing = await ctx.db
       .query("inboxItems")
       .withIndex("by_org_recipient_archived", (q) =>
         q
-          .eq("organizationId", args.organizationId)
+          .eq("organizationId", orgId)
           .eq("recipientUserId", userId)
           .eq("archived", false),
       )
@@ -201,7 +206,7 @@ export const seedWelcomeItems = mutation({
 
     const samples: Omit<Doc<"inboxItems">, "_id" | "_creationTime">[] = [
       {
-        organizationId: args.organizationId,
+        organizationId: orgId,
         recipientUserId: userId,
         kind: "system",
         title: "Welcome to your inbox",
@@ -211,7 +216,7 @@ export const seedWelcomeItems = mutation({
         archived: false,
       },
       {
-        organizationId: args.organizationId,
+        organizationId: orgId,
         recipientUserId: userId,
         kind: "assignment",
         title: "Review Q1 attendance export",
@@ -222,7 +227,7 @@ export const seedWelcomeItems = mutation({
         actorName: "Alex Rivera",
       },
       {
-        organizationId: args.organizationId,
+        organizationId: orgId,
         recipientUserId: userId,
         kind: "comment",
         title: "Re: Employee onboarding checklist",
@@ -233,7 +238,7 @@ export const seedWelcomeItems = mutation({
         actorName: "Jordan Lee",
       },
       {
-        organizationId: args.organizationId,
+        organizationId: orgId,
         recipientUserId: userId,
         kind: "invite",
         title: "Invite: Product team workspace",
@@ -244,7 +249,7 @@ export const seedWelcomeItems = mutation({
         actorName: "Sam Chen",
       },
       {
-        organizationId: args.organizationId,
+        organizationId: orgId,
         recipientUserId: userId,
         kind: "system",
         title: "Weekly digest",

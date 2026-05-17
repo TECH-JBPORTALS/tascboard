@@ -1,4 +1,4 @@
-import { InboxSidebar } from "@/components/inbox/InboxView";
+import { InboxSidebar } from "@/components/inbox/InboxSidebar";
 import { AppSidebar } from "@/components/organization/AppSidebar";
 import {
   Sidebar,
@@ -20,9 +20,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         className="overflow-hidden w-fit *:data-[sidebar=sidebar]:flex-row"
       >
         <AppSidebar
-          data-collapsed="icon"
           collapsible="none"
-          className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
+          className="border-r w-[16rem]!"
           showTooltip
         />
         <InboxSidebar />

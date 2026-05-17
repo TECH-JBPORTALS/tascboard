@@ -8,7 +8,7 @@ import { parseOrganizationMetadata } from "@/lib/organization";
 import { OrganizationAvatar } from "./OrganizationAvatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 
-import { RiAddLine, RiCheckLine } from "@remixicon/react";
+import { RiAddLine, RiCheckLine, RiExpandUpDownFill } from "@remixicon/react";
 import { SidebarMenuButton } from "../ui/sidebar";
 import {
   Command,
@@ -79,7 +79,7 @@ export function OrganizationSwitcher() {
     }
   }
 
-  if (isPending) {
+  if (isPending || isSwitching) {
     return (
       <div className="h-9 w-full animate-pulse rounded-lg bg-sidebar-accent" />
     );
@@ -106,9 +106,9 @@ export function OrganizationSwitcher() {
         render={() => (
           <PopoverTrigger
             className={buttonVariants({
-              className:
-                "justify-start group-data-[collapsed=icon]:justify-center group-data-[collapsed=icon]:size-8  w-full",
+              className: "justify-start p-1.5!  w-full",
               variant: "outline",
+              size: "lg",
             })}
           >
             <OrganizationAvatar
@@ -116,12 +116,13 @@ export function OrganizationSwitcher() {
               imageStorageId={currentMetadata.imageStorageId}
               className="size-6 "
             />
-            <span className="truncate text-left group-data-[collapsed=icon]:hidden! text-sm font-medium">
+            <span className="truncate text-left  text-sm font-medium">
               {current.name}
             </span>
+            <RiExpandUpDownFill className="ml-auto text-muted-foreground" />
           </PopoverTrigger>
         )}
-        className="justify-start  group-data-[collapsed=icon]:size-8! group-data-[collapsed=icon]:justify-center gap-1.5"
+        className="justify-start  gap-1.5"
       />
 
       <PopoverContent className={"max-w-[240px]! p-0"}>

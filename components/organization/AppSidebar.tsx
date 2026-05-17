@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { authClient } from "@/lib/auth-client";
 import {
   RiCalendarCheckLine,
   RiInboxLine,
@@ -42,16 +41,11 @@ export function AppSidebar({
   const pathname = usePathname();
   const params = useParams<{ orgSlug: string }>();
   const basePath = `/${params.orgSlug}`;
-  const { data: session } = authClient.useSession();
-  const orgId = session?.session.activeOrganizationId;
-  const unreadCount = useQuery(
-    api.inbox.unreadCount,
-    orgId ? { organizationId: orgId } : "skip",
-  );
+  const unreadCount = useQuery(api.inbox.unreadCount);
 
   return (
     <Sidebar {...props} className={cn("group", className)}>
-      <SidebarHeader className="p-2 h-12 border-b">
+      <SidebarHeader className="p-2 h-14  justify-center border-b">
         <SidebarMenu>
           <SidebarMenuItem>
             <OrganizationSwitcher />
@@ -60,9 +54,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="group-data-[collapsed=icon]:hidden!">
-            ORGANIZATION
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>ORGANIZATION</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
