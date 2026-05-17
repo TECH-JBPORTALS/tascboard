@@ -148,8 +148,8 @@ export function InboxSidebar() {
                       className={cn(
                         "flex w-full gap-3 px-4 py-3 text-left transition-colors",
                         inboxItemId === item._id
-                          ? "bg-accent/40"
-                          : "hover:bg-muted/60",
+                          ? "bg-accent"
+                          : "hover:bg-muted/40",
                       )}
                     >
                       <div className="min-w-0 flex-1">
