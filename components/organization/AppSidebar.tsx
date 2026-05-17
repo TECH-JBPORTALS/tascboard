@@ -5,9 +5,12 @@ import { useParams, usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
+  RiCalendarCheckFill,
   RiCalendarCheckLine,
+  RiInboxFill,
   RiInboxLine,
   RiSettings3Line,
+  RiTeamFill,
   RiTeamLine,
 } from "@remixicon/react";
 import {
@@ -27,10 +30,25 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Inbox", href: "", icon: RiInboxLine },
-  { label: "Employees", href: "/employees", icon: RiTeamLine },
-  { label: "Attendance", href: "/attendance", icon: RiCalendarCheckLine },
-  { label: "Settings", href: "/settings", icon: RiSettings3Line },
+  { label: "Inbox", href: "", icon: RiInboxLine, fillIcon: RiInboxFill },
+  {
+    label: "Employees",
+    href: "/employees",
+    icon: RiTeamLine,
+    fillIcon: RiTeamFill,
+  },
+  {
+    label: "Attendance",
+    href: "/attendance",
+    icon: RiCalendarCheckLine,
+    fillIcon: RiCalendarCheckFill,
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: RiSettings3Line,
+    fillIcon: RiSettings3Line,
+  },
 ] as const;
 
 export function AppSidebar({
@@ -71,7 +89,7 @@ export function AppSidebar({
                       tooltip={{ children: item.label, hidden: !showTooltip }}
                       render={<Link href={href} />}
                     >
-                      <item.icon />
+                      {isActive ? <item.fillIcon /> : <item.icon />}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                     {item.label === "Inbox" &&
