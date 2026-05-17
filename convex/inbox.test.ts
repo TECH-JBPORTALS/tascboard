@@ -10,7 +10,8 @@ describe("Inbox", () => {
 
   beforeEach(() => {
     t = convexTest(schema, modules).withIdentity({
-      subject: "user-1",
+      userId: "user-1",
+      orgId: "org-1",
     });
   });
 

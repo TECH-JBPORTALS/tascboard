@@ -1,4 +1,3 @@
-import { v } from "convex/values";
 import { query } from "./_generated/server";
 
 import { createClient, GenericCtx } from "@convex-dev/better-auth";
@@ -29,7 +28,21 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     emailAndPassword: {
       enabled: true,
     },
-    plugins: [organization(), convex({ authConfig })],
+
+    plugins: [
+      organization(),
+      convex({
+        authConfig,
+        jwt: {
+          definePayload: ({ session, user }) => ({
+            orgId: session.activeOrganizationId as string,
+            userId: session.userId,
+            email: user.email,
+            name: user.name,
+          }),
+        },
+      }),
+    ],
   } satisfies BetterAuthOptions;
 };
 
@@ -45,33 +58,5 @@ export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
     return authComponent.getAuthUser(ctx);
-  },
-});
-
-export const requireAuth = query({
-  args: {},
-  returns: v.string(),
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) throw new Error("Unauthorized access!");
-
-    return identity.subject;
-  },
-});
-
-/** Verifies `activeOrganizationId` presents in the session and returns or else throws error */
-export const requireActiveOrg = query({
-  args: {},
-  returns: v.string(),
-  handler: async (ctx) => {
-    const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
-
-    const session = await auth.api.getSession({ headers });
-
-    if (!session?.session.activeOrganizationId)
-      throw new Error("No organization is active!");
-
-    return session?.session.activeOrganizationId;
   },
 });

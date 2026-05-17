@@ -1,7 +1,7 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { components } from "./_generated/api";
+import { requireIdentity, requireOrganization } from "./lib/auth";
 
 const inboxKindValidator = v.union(
   v.literal("assignment"),
@@ -52,10 +52,8 @@ export const list = query({
   },
   returns: v.array(inboxItemReturn),
   handler: async (ctx, args) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
-    const orgId = await ctx.runQuery(
-      components.betterAuth.auth.requireActiveOrg,
-    );
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
 
     if (args.filter === "unread") {
       return await ctx.db
@@ -88,10 +86,8 @@ export const unreadCount = query({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
-    const orgId = await ctx.runQuery(
-      components.betterAuth.auth.requireActiveOrg,
-    );
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
 
     const unread = await ctx.db
       .query("inboxItems")
@@ -112,7 +108,7 @@ export const markRead = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const { userId } = await requireIdentity(ctx);
 
     const doc = await ctx.db.get(args.itemId);
     if (!doc || doc.recipientUserId !== userId) {
@@ -127,7 +123,7 @@ export const markUnread = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const { userId } = await requireIdentity(ctx);
 
     const doc = await ctx.db.get(args.itemId);
     if (!doc || doc.recipientUserId !== userId) {
@@ -142,7 +138,7 @@ export const archive = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
+    const { userId } = await requireIdentity(ctx);
 
     const doc = await ctx.db.get(args.itemId);
     if (!doc || doc.recipientUserId !== userId) {
@@ -157,10 +153,8 @@ export const markAllRead = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
-    const orgId = await ctx.runQuery(
-      components.betterAuth.auth.requireActiveOrg,
-    );
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
 
     const unread = await ctx.db
       .query("inboxItems")
@@ -184,11 +178,9 @@ export const markAllRead = mutation({
 export const seedWelcomeItems = mutation({
   args: {},
   returns: v.null(),
-  handler: async (ctx, args) => {
-    const userId = await ctx.runQuery(components.betterAuth.auth.requireAuth);
-    const orgId = await ctx.runQuery(
-      components.betterAuth.auth.requireActiveOrg,
-    );
+  handler: async (ctx) => {
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
 
     const existing = await ctx.db
       .query("inboxItems")

@@ -1523,13 +1523,5 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
     };
     auth: {
       getCurrentUser: FunctionReference<"query", "internal", {}, any, Name>;
-      requireActiveOrg: FunctionReference<
-        "query",
-        "internal",
-        {},
-        string,
-        Name
-      >;
-      requireAuth: FunctionReference<"query", "internal", {}, string, Name>;
     };
   };
