@@ -26,7 +26,6 @@ export function InboxPage() {
   const { inboxItemId } = useParams<{ inboxItemId: Id<"inboxItems"> }>();
   const selected = useQuery(api.inbox.get, { id: inboxItemId });
   const markReadMutation = useMutation(api.inbox.markRead);
-  const markUnreadMutation = useMutation(api.inbox.markUnread);
   const archiveMutation = useMutation(api.inbox.archive);
 
   useEffect(() => {
@@ -76,19 +75,6 @@ export function InboxPage() {
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2 border-t border-border/60 bg-background/90 px-6 py-3">
-            {selected.read ? (
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                className="h-8"
-                onClick={() =>
-                  void markUnreadMutation({ itemId: selected._id })
-                }
-              >
-                Mark unread
-              </Button>
-            ) : null}
             <Button
               variant="outline"
               size="sm"

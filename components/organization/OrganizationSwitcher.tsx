@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { parseOrganizationMetadata } from "@/lib/organization";
 import { OrganizationAvatar } from "./OrganizationAvatar";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 import { RiAddLine, RiCheckLine, RiExpandUpDownFill } from "@remixicon/react";
 import { SidebarMenuButton } from "../ui/sidebar";
@@ -102,28 +102,17 @@ export function OrganizationSwitcher() {
 
   return (
     <Popover>
-      <SidebarMenuButton
-        render={() => (
-          <PopoverTrigger
-            className={buttonVariants({
-              className: "justify-start p-1.5!  w-full",
-              variant: "outline",
-              size: "lg",
-            })}
-          >
-            <OrganizationAvatar
-              name={current.name}
-              imageStorageId={currentMetadata.imageStorageId}
-              className="size-6 "
-            />
-            <span className="truncate text-left  text-sm font-medium">
-              {current.name}
-            </span>
-            <RiExpandUpDownFill className="ml-auto text-muted-foreground" />
-          </PopoverTrigger>
-        )}
-        className="justify-start  gap-1.5"
-      />
+      <SidebarMenuButton variant={"outline"} render={<PopoverTrigger />}>
+        <OrganizationAvatar
+          name={current.name}
+          imageStorageId={currentMetadata.imageStorageId}
+          className="size-6"
+        />
+        <span className="truncate text-left  text-sm font-medium">
+          {current.name}
+        </span>
+        <RiExpandUpDownFill className="ml-auto text-muted-foreground" />
+      </SidebarMenuButton>
 
       <PopoverContent className={"max-w-[240px]! p-0"}>
         <Command value={current.slug}>
