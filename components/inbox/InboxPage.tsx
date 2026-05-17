@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { Button } from "../ui/button";
 import { RiArchiveLine } from "@remixicon/react";
 import { useEffect } from "react";
+import { Spinner } from "../ui/spinner";
 
 function kindLabel(kind: Doc<"inboxItems">["kind"]): string {
   switch (kind) {
@@ -23,7 +24,7 @@ function kindLabel(kind: Doc<"inboxItems">["kind"]): string {
 
 export function InboxPage() {
   const { inboxItemId } = useParams<{ inboxItemId: Id<"inboxItems"> }>();
-  const selected = useQuery(api.inbox.get, { inboxItemId });
+  const selected = useQuery(api.inbox.get, { id: inboxItemId });
   const markReadMutation = useMutation(api.inbox.markRead);
   const markUnreadMutation = useMutation(api.inbox.markUnread);
   const archiveMutation = useMutation(api.inbox.archive);
@@ -39,7 +40,7 @@ export function InboxPage() {
     <div className="hidden min-h-0 min-w-0 flex-1 flex-col bg-muted/20 md:flex">
       {!selected ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-          <p className="text-sm text-muted-foreground">Select a notification</p>
+          <Spinner className="size-5" />
         </div>
       ) : (
         <>

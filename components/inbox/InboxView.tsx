@@ -84,7 +84,7 @@ export function InboxView() {
     if (!organizationId) {
       return;
     }
-    void seedWelcome({ organizationId });
+    void seedWelcome();
   }, [organizationId, seedWelcome]);
 
   const resolvedSelectedId = useMemo(() => {

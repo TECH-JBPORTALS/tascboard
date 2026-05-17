@@ -82,6 +82,20 @@ export const list = query({
   },
 });
 
+export const get = query({
+  args: { id: v.id("inboxItems") },
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+
+    const unread = await ctx.db
+      .query("inboxItems")
+      .withIndex("by_id", (q) => q.eq("_id", args.id))
+      .first();
+
+    return unread;
+  },
+});
+
 export const unreadCount = query({
   args: {},
   returns: v.number(),

@@ -6,21 +6,28 @@ import {
   RiCheckboxCircleLine,
   RiMailLine,
   RiSearch2Line,
+  RiInbox2Fill,
 } from "@remixicon/react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "../ui/input-group";
-import { Sidebar, SidebarContent, SidebarHeader } from "../ui/sidebar";
-import { useMemo } from "react";
-import { useQuery } from "convex/react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+} from "../ui/sidebar";
+import { useEffect, useMemo } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
 import { authClient } from "@/lib/auth-client";
 import { formatDistanceToNowStrict, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
+import { useParams, useRouter } from "next/navigation";
 
 type InboxItem = Doc<"inboxItems">;
 
@@ -55,11 +62,18 @@ function kindIcon(kind: InboxItem["kind"]) {
 export function InboxSidebar() {
   const { data: session } = authClient.useSession();
   const organizationId = session?.session.activeOrganizationId;
+  const { inboxItemId, orgSlug } = useParams<{
+    inboxItemId?: string;
+    orgSlug: string;
+  }>();
+  const router = useRouter();
 
   const items = useQuery(
     api.inbox.list,
     organizationId ? { organizationId, filter: "all" } : "skip",
   ) as InboxItem[] | undefined;
+
+  const seedWelcome = useMutation(api.inbox.seedWelcomeItems);
 
   const grouped = useMemo(() => {
     if (!items?.length) {
@@ -83,17 +97,30 @@ export function InboxSidebar() {
       .filter((g) => g.items.length > 0);
   }, [items]);
 
+  // Seed welcome messages
+  useEffect(() => {
+    if (!organizationId) {
+      return;
+    }
+    void seedWelcome();
+  }, [organizationId, seedWelcome]);
+
   return (
     <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-      <SidebarHeader className="h-14 justify-center border-b">
-        <InputGroup>
-          <InputGroupAddon>
-            <RiSearch2Line />
-          </InputGroupAddon>
-          <InputGroupInput placeholder="Search..." />
-        </InputGroup>
+      <SidebarHeader className="justify-center h-14 border-b">
+        <div className="flex gap-3">
+          <RiInbox2Fill /> Inbox
+        </div>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <InputGroup>
+            <InputGroupAddon>
+              <RiSearch2Line />
+            </InputGroupAddon>
+            <InputGroupInput placeholder="Search..." />
+          </InputGroup>
+        </SidebarGroup>
         {/** Loading state */}
         {items === undefined && (
           <div>
@@ -116,10 +143,13 @@ export function InboxSidebar() {
                 return (
                   <li key={item._id}>
                     <button
+                      onClick={() => router.push(`/${orgSlug}/in/${item._id}`)}
                       type="button"
                       className={cn(
                         "flex w-full gap-3 px-4 py-3 text-left transition-colors",
-                        //   active ? "bg-accent/40" : "hover:bg-muted/60",
+                        inboxItemId === item._id
+                          ? "bg-accent/40"
+                          : "hover:bg-muted/60",
                       )}
                     >
                       <div className="min-w-0 flex-1">
