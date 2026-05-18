@@ -4,7 +4,7 @@ import { convexTest, TestConvexForDataModel } from "convex-test";
 import { api } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
-import { modules } from "./testModules";
+import { modules } from "./_modules.test";
 
 describe("Subtask", () => {
   let t: TestConvexForDataModel<DataModel>;

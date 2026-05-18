@@ -8,8 +8,8 @@
     "start": "next start",
     "auth:generate": "bun x auth generate --config ./convex/betterAuth/auth.ts --output ./convex/betterAuth/generatedSchema.ts",
     "lint": "eslint . --ignore-pattern \"convex/_generated/**\"",
-    "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test": "bun  test --path-ignore-patterns 'convex/__tests__/_modules.test.ts'",
+    "test:watch": "bun run test --watch"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
