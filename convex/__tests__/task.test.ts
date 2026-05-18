@@ -5,7 +5,7 @@ import { api } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 
-import { modules } from "./testModules";
+import { modules } from "./_modules.test";
 
 describe("Task", () => {
   let t: TestConvexForDataModel<DataModel>;

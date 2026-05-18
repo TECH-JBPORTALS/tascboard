@@ -4,7 +4,7 @@ import { convexTest, TestConvexForDataModel } from "convex-test";
 import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { DataModel } from "../_generated/dataModel";
-import { modules } from "./testModules";
+import { modules } from "./_modules.test";
 
 describe("Inbox", () => {
   let t: TestConvexForDataModel<DataModel>;
