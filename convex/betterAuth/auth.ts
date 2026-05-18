@@ -7,7 +7,8 @@ import { betterAuth, BetterAuthOptions } from "better-auth/minimal";
 import authConfig from "../auth.config";
 import { organization } from "better-auth/plugins";
 import authSchema from "./schema";
-import { components } from "../_generated/api";
+import { components, internal } from "../_generated/api";
+import { ac, admin, member, owner } from "../../lib/permissions";
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
@@ -17,6 +18,34 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
     verbose: false,
   },
 );
+
+function runAction(
+  ctx: GenericCtx<DataModel>,
+  action: typeof internal.emails.processInvitationEmail,
+  args: {
+    organizationId: string;
+    email: string;
+    invitationId: string;
+    organizationName: string;
+    inviterName: string;
+  },
+) {
+  if ("runAction" in ctx && typeof ctx.runAction === "function") {
+    return ctx.runAction(action, args);
+  }
+  throw new Error("Cannot send invitation email in this context.");
+}
+
+function runMutation(
+  ctx: GenericCtx<DataModel>,
+  mutation: typeof internal.employees.ensureProfileAfterInvite,
+  args: { organizationId: string; userId: string },
+) {
+  if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
+    return ctx.runMutation(mutation, args);
+  }
+  throw new Error("Cannot run mutation in this context.");
+}
 
 // Better Auth Options
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
@@ -30,7 +59,38 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     },
 
     plugins: [
-      organization(),
+      organization({
+        ac,
+        roles: { owner, admin, member },
+        async sendInvitationEmail(data) {
+          await runAction(ctx, internal.emails.processInvitationEmail, {
+            organizationId: data.organization.id,
+            email: data.email,
+            invitationId: data.id,
+            organizationName: data.organization.name,
+            inviterName: data.inviter.user.name,
+          });
+        },
+        organizationHooks: {
+          afterAcceptInvitation: async ({ invitation, user }) => {
+            await runMutation(ctx, internal.employees.ensureProfileAfterInvite, {
+              organizationId: invitation.organizationId,
+              userId: user.id,
+            });
+
+            if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
+              await ctx.runMutation(internal.inbox.createInboxItem, {
+                organizationId: invitation.organizationId,
+                recipientUserId: user.id,
+                kind: "system",
+                title: "Welcome to the team",
+                snippet: "Complete your employee onboarding",
+                body: "Fill in your profile, government ID, bank details, and certificates to get started.",
+              });
+            }
+          },
+        },
+      }),
       convex({
         authConfig,
         jwt: {

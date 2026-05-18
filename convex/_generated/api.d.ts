@@ -8,10 +8,14 @@
  * @module
  */
 
+import type * as emails from "../emails.js";
+import type * as employees from "../employees.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as inbox from "../inbox.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_members from "../lib/members.js";
+import type * as lib_permissions from "../lib/permissions.js";
 
 import type {
   ApiFromModules,
@@ -20,10 +24,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  emails: typeof emails;
+  employees: typeof employees;
   files: typeof files;
   http: typeof http;
   inbox: typeof inbox;
   "lib/auth": typeof lib_auth;
+  "lib/members": typeof lib_members;
+  "lib/permissions": typeof lib_permissions;
 }>;
 
 /**
@@ -54,4 +62,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
+  resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;
 };

@@ -28,6 +28,8 @@ import {
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import React from "react";
 import { cn } from "@/lib/utils";
+import { NavPermissionGate } from "./NavPermissionGate";
+import type { PermissionRequest } from "@/lib/permissions";
 
 const navItems = [
   { label: "Inbox", href: "", icon: RiInboxLine, fillIcon: RiInboxFill },
@@ -36,20 +38,23 @@ const navItems = [
     href: "/employees",
     icon: RiTeamLine,
     fillIcon: RiTeamFill,
+    permissions: { employee: ["list"] },
   },
   {
     label: "Attendance",
     href: "/attendance",
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
+    permissions: { attendance: ["read"] },
   },
   {
     label: "Settings",
     href: "/settings",
     icon: RiSettings3Line,
     fillIcon: RiSettings3Line,
+    permissions: { settings: ["read"] },
   },
-] as const;
+];
 
 export function AppSidebar({
   className,
@@ -82,7 +87,7 @@ export function AppSidebar({
                     ? pathname === basePath
                     : pathname.startsWith(href);
 
-                return (
+                const link = (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
                       isActive={isActive}
@@ -101,6 +106,19 @@ export function AppSidebar({
                     ) : null}
                   </SidebarMenuItem>
                 );
+
+                if ("permissions" in item && item.permissions) {
+                  return (
+                    <NavPermissionGate
+                      key={item.label}
+                      permissions={item.permissions as PermissionRequest}
+                    >
+                      {link}
+                    </NavPermissionGate>
+                  );
+                }
+
+                return link;
               })}
             </SidebarMenu>
           </SidebarGroupContent>

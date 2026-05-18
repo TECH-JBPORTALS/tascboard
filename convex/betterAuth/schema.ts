@@ -15,6 +15,11 @@ const schema = defineSchema({
     "organizationId",
     "userId",
   ]),
+  invitation: tables.invitation.index("by_organization_status_email", [
+    "organizationId",
+    "status",
+    "email",
+  ]),
 });
 
 export default schema;
