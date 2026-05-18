@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
-
-const modules = import.meta.glob("./**/*.ts");
+import { api } from "../_generated/api";
+import schema from "../schema";
+import { DataModel, Id } from "../_generated/dataModel";
+import { modules } from "./_modules.test";
 
 describe("Sprint", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -181,12 +180,12 @@ describe("Sprint", () => {
       startDate: Date.now(),
       endDate: Date.now() + 10000,
     });
-  
+
     // delete it
     await t.mutation(api.sprint.remove, {
       sprintId: tempSprintId,
     });
-  
+
     // now it should truly not exist
     await expect(
       t.mutation(api.sprint.edit, {
@@ -196,7 +195,7 @@ describe("Sprint", () => {
         startDate: 1,
         endDate: 2,
         status: "planned",
-      })
+      }),
     ).rejects.toThrow("Sprint not found");
   });
 });

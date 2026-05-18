@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api, internal } from "./_generated/api";
-import schema from "./schema";
-import { DataModel } from "./_generated/dataModel";
+import { api, internal } from "../_generated/api";
+import schema from "../schema";
+import { DataModel } from "../_generated/dataModel";
+import { modules } from "./_modules.test";
 
 describe("Inbox", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -142,6 +143,107 @@ describe("Inbox", () => {
     expect(items.length).toBe(0);
   });
 
+  test("listArchived returns archived items only", async () => {
+    const itemId = await t.mutation(internal.inbox.createInboxItem, {
+      title: "Archived item",
+      kind: "system",
+      organizationId: "org-1",
+      recipientUserId: "user-1",
+    });
+
+    await t.mutation(api.inbox.archive, { itemId });
+
+    const archived = await t.query(api.inbox.listArchived);
+
+    expect(archived.length).toBe(1);
+    expect(archived[0]?.title).toBe("Archived item");
+  });
+
+  test("unarchive restores item to active inbox", async () => {
+    const itemId = await t.mutation(internal.inbox.createInboxItem, {
+      title: "Restore me",
+      kind: "system",
+      organizationId: "org-1",
+      recipientUserId: "user-1",
+    });
+
+    await t.mutation(api.inbox.archive, { itemId });
+    await t.mutation(api.inbox.unarchive, { itemId });
+
+    const items = await t.query(api.inbox.list, {
+      organizationId: "org-1",
+      filter: "all",
+    });
+
+    expect(items.length).toBe(1);
+    expect(items[0]?.archived).toBe(false);
+  });
+
+  test("permanentlyDelete removes archived item", async () => {
+    const itemId = await t.mutation(internal.inbox.createInboxItem, {
+      title: "Delete me",
+      kind: "system",
+      organizationId: "org-1",
+      recipientUserId: "user-1",
+    });
+
+    await t.mutation(api.inbox.archive, { itemId });
+    await t.mutation(api.inbox.permanentlyDelete, { itemId });
+
+    const archived = await t.query(api.inbox.listArchived);
+
+    expect(archived.length).toBe(0);
+  });
+
+  test("deleteAllArchived removes every archived message", async () => {
+    await t.mutation(internal.inbox.createInboxItem, {
+      title: "Archived 1",
+      kind: "system",
+      organizationId: "org-1",
+      recipientUserId: "user-1",
+    });
+    await t.mutation(internal.inbox.createInboxItem, {
+      title: "Archived 2",
+      kind: "system",
+      organizationId: "org-1",
+      recipientUserId: "user-1",
+    });
+
+    const items = await t.query(api.inbox.list, {
+      organizationId: "org-1",
+      filter: "all",
+    });
+    for (const item of items) {
+      await t.mutation(api.inbox.archive, { itemId: item._id });
+    }
+
+    const deleted = await t.mutation(api.inbox.deleteAllArchived);
+
+    expect(deleted).toBe(2);
+
+    const archived = await t.query(api.inbox.listArchived);
+    expect(archived.length).toBe(0);
+
+    const active = await t.query(api.inbox.list, {
+      organizationId: "org-1",
+      filter: "all",
+    });
+    expect(active.length).toBe(0);
+  });
+
+  test("permanentlyDelete rejects non-archived items", async () => {
+    const itemId = await t.mutation(internal.inbox.createInboxItem, {
+      title: "Active item",
+      kind: "system",
+      organizationId: "org-1",
+      recipientUserId: "user-1",
+    });
+
+    await expect(
+      t.mutation(api.inbox.permanentlyDelete, { itemId }),
+    ).rejects.toThrow("Only archived messages can be permanently deleted");
+  });
+
   test("markAllRead marks every unread item as read", async () => {
     await t.mutation(internal.inbox.createInboxItem, {
       title: "Item 1",
@@ -236,5 +338,3 @@ describe("Inbox", () => {
     expect(unread[0]?.title).toBe("Another unread item");
   });
 });
-
-const modules = import.meta.glob("./**/*.ts");

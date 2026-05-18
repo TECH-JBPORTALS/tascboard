@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -29,8 +29,10 @@ export function SelectOrganizationPage() {
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const orgList = organizations ?? [];
+  const orgList = useMemo(
+    () => (organizations ?? []) as OrganizationListItem[],
+    [organizations],
+  );
   const activeOrganizationId = session?.session.activeOrganizationId;
   const isLoading = orgsPending || sessionPending;
 
@@ -48,14 +50,26 @@ export function SelectOrganizationPage() {
     }
 
     if (destination.type === "organization") {
+      const { id, slug } = destination.organization;
+
+      if (activeOrganizationId === id) {
+        router.replace(`/${slug}`);
+        return;
+      }
+
+      let cancelled = false;
       void (async () => {
-        if (activeOrganizationId !== destination.organization.id) {
-          await authClient.organization.setActive({
-            organizationId: destination.organization.id,
-          });
+        await authClient.organization.setActive({
+          organizationId: id,
+        });
+        if (!cancelled) {
+          router.replace(`/${slug}`);
         }
-        router.replace(`/${destination.organization.slug}`);
       })();
+
+      return () => {
+        cancelled = true;
+      };
     }
   }, [activeOrganizationId, isLoading, orgList, router]);
 

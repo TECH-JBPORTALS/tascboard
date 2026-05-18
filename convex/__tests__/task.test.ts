@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
+import { api } from "../_generated/api";
+import schema from "../schema";
+import { DataModel, Id } from "../_generated/dataModel";
 
-const modules = import.meta.glob("./**/*.ts");
+import { modules } from "./_modules.test";
 
 describe("Task", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -103,20 +103,20 @@ describe("Task", () => {
 
   test("list returns tasks", async () => {
     const tasks = await t.query(api.task.list, {});
-  
+
     expect(tasks.length).toBeGreaterThan(0);
-  
+
     expect(tasks[0]?.title).toBe("Initial Task");
   });
-  
+
   test("list returns empty array if there are no tasks", async () => {
     const isolated = convexTest(schema, modules).withIdentity({
       userId: "user-2",
       orgId: "org-2",
     });
-  
+
     const tasks = await isolated.query(api.task.list, {});
-  
+
     expect(tasks).toEqual([]);
   });
   // --------------------

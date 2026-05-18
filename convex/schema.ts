@@ -1,7 +1,5 @@
-import { organization } from "better-auth/plugins";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { id } from "zod/v4/locales";
 
 export const onboardingStatusValidator = v.union(
   v.literal("pending"),
@@ -74,9 +72,8 @@ export default defineSchema({
     endDate: v.number(),
     status: v.union(
       v.literal("active"),
-      v.literal("completed"),
-      v.literal("archived"),
-      v.literal("on hold"),
+      v.literal("inactive"),
+      v.literal("terminated"),
     ),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
