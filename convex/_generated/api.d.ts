@@ -9,19 +9,24 @@
  */
 
 import type * as activity from "../activity.js";
+import type * as attendace from "../attendace.js";
 import type * as comment from "../comment.js";
+import type * as emails from "../emails.js";
+import type * as employeeProfiles from "../employeeProfiles.js";
+import type * as employees_auth from "../employees/auth.js";
+import type * as employees_profile from "../employees/profile.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as inbox from "../inbox.js";
 import type * as label from "../label.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_betterAuthAdapter from "../lib/betterAuthAdapter.js";
+import type * as lib_employees from "../lib/employees.js";
+import type * as lib_permissions from "../lib/permissions.js";
 import type * as project from "../project.js";
-import type * as projectTestSchema from "../projectTestSchema.js";
-import type * as schemaTables from "../schemaTables.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as task from "../task.js";
-import type * as testHelpers from "../testHelpers.js";
 import type * as track from "../track.js";
 
 import type {
@@ -32,19 +37,24 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activity: typeof activity;
+  attendace: typeof attendace;
   comment: typeof comment;
+  emails: typeof emails;
+  employeeProfiles: typeof employeeProfiles;
+  "employees/auth": typeof employees_auth;
+  "employees/profile": typeof employees_profile;
   files: typeof files;
   http: typeof http;
   inbox: typeof inbox;
   label: typeof label;
   "lib/auth": typeof lib_auth;
+  "lib/betterAuthAdapter": typeof lib_betterAuthAdapter;
+  "lib/employees": typeof lib_employees;
+  "lib/permissions": typeof lib_permissions;
   project: typeof project;
-  projectTestSchema: typeof projectTestSchema;
-  schemaTables: typeof schemaTables;
   sprint: typeof sprint;
   subtask: typeof subtask;
   task: typeof task;
-  testHelpers: typeof testHelpers;
   track: typeof track;
 }>;
 
@@ -76,4 +86,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
+  resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;
 };

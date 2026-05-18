@@ -3,12 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import {
+  organizationPath,
+  resolveOrganizationDestination,
+  type OrganizationListItem,
+} from "@/lib/organization-membership";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type OrganizationListItem = {
-  id: string;
-  slug: string;
-};
 
 export function HomeRedirect() {
   const router = useRouter();
@@ -22,24 +22,25 @@ export function HomeRedirect() {
     }
 
     const orgList = (organizations ?? []) as OrganizationListItem[];
+    const activeOrganizationId = session?.session.activeOrganizationId;
+    const destination = resolveOrganizationDestination(
+      orgList,
+      activeOrganizationId,
+    );
 
-    if (orgList.length === 0) {
-      router.replace("/create-organization");
+    if (destination.type === "organization") {
+      void (async () => {
+        if (activeOrganizationId !== destination.organization.id) {
+          await authClient.organization.setActive({
+            organizationId: destination.organization.id,
+          });
+        }
+        router.replace(`/${destination.organization.slug}`);
+      })();
       return;
     }
 
-    const activeOrganizationId = session?.session.activeOrganizationId;
-    const active =
-      orgList.find((org) => org.id === activeOrganizationId) ?? orgList[0];
-
-    void (async () => {
-      if (activeOrganizationId !== active.id) {
-        await authClient.organization.setActive({
-          organizationId: active.id,
-        });
-      }
-      router.replace(`/${active.slug}`);
-    })();
+    router.replace(organizationPath(destination));
   }, [organizations, orgsPending, router, session, sessionPending]);
 
   return (

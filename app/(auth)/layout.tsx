@@ -7,5 +7,5 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   if (!(await isAuthenticated())) redirect("/sign-in");
-  return <>{children}</>;
+  return children;
 }
