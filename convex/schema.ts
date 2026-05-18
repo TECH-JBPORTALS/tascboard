@@ -37,7 +37,7 @@ export default defineSchema({
     ]),
 
     projects: defineTable({
-      organizationID: v.id("organization"),
+      organizationId: v.string(),
       name: v.string(),
       description: v.optional(v.string()),
       startDate: v.number(),
@@ -50,14 +50,14 @@ export default defineSchema({
       ),
       createdAt: v.number(),
       updatedAt: v.optional(v.number())
-    }),
+    }).index("by_organization",["organizationId"]),
 
     tracks: defineTable({
       name: v.string(),
       description: v.optional(v.string()),
       projectId: v.id("projects"),
       trackCode: v.string(),
-      trackLeaderID: v.id("employee"),
+      trackLeaderID: v.string(),
       status: v.union(
         v.literal("active"),
         v.literal("completed"),
@@ -65,7 +65,6 @@ export default defineSchema({
       ),
       createdAt: v.number(),
       updatedAt: v.optional(v.number()),
-
     }).index("by_project", { fields: ["projectId"] }),
 
     employees: defineTable({
@@ -184,6 +183,9 @@ export default defineSchema({
   .index("by_approved_by", ["approvedBy"]),
 
     tasks: defineTable({
+      trackId: v.id("tracks"),
+      projectId: v.id("projects"),
+      taskCode: v.string(),
       title: v.string(),
       description: v.optional(v.string()),
       status: v.union(
@@ -191,22 +193,29 @@ export default defineSchema({
         v.literal("in_progress"),
         v.literal("done"),
       ),
-      priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-      dueDate: v.nullable(v.number()),
-      trackId: v.id("tracks"),
-    }).index("by_track", { fields: ["trackId"] }),
+      assignedTo: v.string(),
+      assignedBy: v.string(),
+      priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+      complexity: v.union(v.literal("easy"),v.literal("medium"),v.literal("hard")),
+      startDate: v.number(),
+      endDate: v.number(),
+      createdAt: v.number(),
+      updatedAt: v.optional(v.number())
+    }).index("by_track", ["trackId"]),
     
     labels: defineTable({
       name: v.string(),
       color: v.string(),
       projectId: v.id("projects"),
     }).index("by_project", { fields: ["projectId"] }),
+
     taskLabels: defineTable({
       taskId: v.id("tasks"),
       labelId: v.id("labels"),
     })
       .index("by_task", { fields: ["taskId"] })
       .index("by_label", { fields: ["labelId"] }),
+      
     subtasks: defineTable({
       taskId: v.id("tasks"),
       title: v.string(),
@@ -249,6 +258,7 @@ export default defineSchema({
       startDate: v.number(),
       endDate: v.number(),
       status: v.union(v.literal("planned"), v.literal("active"), v.literal("completed")),
+      createdBy: v.string(),
       createdAt: v.number(),
       updatedAt: v.optional(v.number()),
     }).index("by_track", { fields: ["trackId"] }),

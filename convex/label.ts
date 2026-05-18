@@ -1,16 +1,62 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { logActivity } from "./task";
+import type { Doc } from "./_generated/dataModel";
+import { requireIdentity } from "./lib/auth";
+
+const labelReturn = v.object({
+  _id: v.id("labels"),
+  _creationTime: v.number(),
+  name: v.string(),
+  color: v.string(),
+  projectId: v.id("projects"),
+});
+
+const taskLabelReturn = v.object({
+  _id: v.id("taskLabels"),
+  _creationTime: v.number(),
+  taskId: v.id("tasks"),
+  labelId: v.id("labels"),
+});
 
 export const listByProject = query({
   args: {
     projectId: v.id("projects"),
   },
+  returns: v.array(labelReturn),
   handler: async (ctx, { projectId }) => {
+    await requireIdentity(ctx);
+
     return await ctx.db
       .query("labels")
-      .withIndex("by_project", (q) => q.eq("projectId", projectId))
+      .withIndex("by_project", (q) =>
+        q.eq("projectId", projectId),
+      )
       .collect();
+  },
+});
+
+export const listTaskLabels = query({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  returns: v.array(labelReturn),
+  handler: async (ctx, { taskId }) => {
+    await requireIdentity(ctx);
+
+    const links = await ctx.db
+      .query("taskLabels")
+      .withIndex("by_task", (q) =>
+        q.eq("taskId", taskId),
+      )
+      .collect();
+
+    const labels = await Promise.all(
+      links.map((link) => ctx.db.get(link.labelId)),
+    );
+
+    return labels.filter(
+      (label): label is Doc<"labels"> => label !== null,
+    );
   },
 });
 
@@ -20,8 +66,79 @@ export const create = mutation({
     name: v.string(),
     color: v.string(),
   },
+  returns: v.id("labels"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("labels", args);
+    await requireIdentity(ctx);
+
+    const trimmed = args.name.trim();
+
+    if (!trimmed) {
+      throw new Error("Label name cannot be empty");
+    }
+
+    return await ctx.db.insert("labels", {
+      projectId: args.projectId,
+      name: trimmed,
+      color: args.color,
+    });
+  },
+});
+
+export const get = query({
+  args: {
+    labelId: v.id("labels"),
+  },
+  returns: v.union(labelReturn, v.null()),
+  handler: async (ctx, { labelId }) => {
+    await requireIdentity(ctx);
+
+    const label = await ctx.db.get(labelId);
+
+    if (!label) {
+      return null;
+    }
+
+    return label;
+  },
+});
+
+export const update = mutation({
+  args: {
+    labelId: v.id("labels"),
+    body: v.object({
+      name: v.optional(v.string()),
+      color: v.optional(v.string()),
+    }),
+  },
+  returns: v.null(),
+  handler: async (ctx, { labelId, body }) => {
+    await requireIdentity(ctx);
+
+    const label = await ctx.db.get(labelId);
+
+    if (!label) {
+      throw new Error("Label not found");
+    }
+
+    const patch: Partial<Doc<"labels">> = {};
+
+    if (body.name !== undefined) {
+      const trimmed = body.name.trim();
+
+      if (!trimmed) {
+        throw new Error("Label name cannot be empty");
+      }
+
+      patch.name = trimmed;
+    }
+
+    if (body.color !== undefined) {
+      patch.color = body.color;
+    }
+
+    await ctx.db.patch(labelId, patch);
+
+    return null;
   },
 });
 
@@ -29,13 +146,30 @@ export const remove = mutation({
   args: {
     labelId: v.id("labels"),
   },
+  returns: v.null(),
   handler: async (ctx, { labelId }) => {
+    await requireIdentity(ctx);
+
+    const label = await ctx.db.get(labelId);
+
+    if (!label) {
+      throw new Error("Label not found");
+    }
+
     const links = await ctx.db
       .query("taskLabels")
-      .withIndex("by_label", (q) => q.eq("labelId", labelId))
+      .withIndex("by_label", (q) =>
+        q.eq("labelId", labelId),
+      )
       .collect();
-    await Promise.all(links.map((l) => ctx.db.delete(l._id)));
-    return await ctx.db.delete(labelId);
+
+    await Promise.all(
+      links.map((link) => ctx.db.delete(link._id)),
+    );
+
+    await ctx.db.delete(labelId);
+
+    return null;
   },
 });
 
@@ -45,24 +179,33 @@ export const attachToTask = mutation({
     labelId: v.id("labels"),
     deviceName: v.string(),
   },
-  handler: async (ctx, { taskId, labelId, deviceName }) => {
-    const existing = await ctx.db
-      .query("taskLabels")
-      .withIndex("by_task", (q) => q.eq("taskId", taskId))
-      .collect();
-    if (existing.some((link) => link.labelId === labelId)) return null;
+  returns: v.union(v.id("taskLabels"), v.null()),
+  handler: async (ctx, { taskId, labelId }) => {
+    await requireIdentity(ctx);
 
     const label = await ctx.db.get(labelId);
-    if (!label) throw new Error("Label not found");
 
-    const id = await ctx.db.insert("taskLabels", { taskId, labelId });
-    await logActivity(ctx, {
+    if (!label) {
+      throw new Error("Label not found");
+    }
+
+    const existing = await ctx.db
+      .query("taskLabels")
+      .withIndex("by_task", (q) =>
+        q.eq("taskId", taskId),
+      )
+      .collect();
+
+    if (
+      existing.some((link) => link.labelId === labelId)
+    ) {
+      return null;
+    }
+
+    return await ctx.db.insert("taskLabels", {
       taskId,
-      deviceName,
-      kind: "label_added",
-      meta: label.name,
+      labelId,
     });
-    return id;
   },
 });
 
@@ -72,22 +215,27 @@ export const detachFromTask = mutation({
     labelId: v.id("labels"),
     deviceName: v.string(),
   },
-  handler: async (ctx, { taskId, labelId, deviceName }) => {
+  returns: v.null(),
+  handler: async (ctx, { taskId, labelId }) => {
+    await requireIdentity(ctx);
+
     const links = await ctx.db
       .query("taskLabels")
-      .withIndex("by_task", (q) => q.eq("taskId", taskId))
+      .withIndex("by_task", (q) =>
+        q.eq("taskId", taskId),
+      )
       .collect();
-    const link = links.find((l) => l.labelId === labelId);
-    if (!link) return null;
 
-    const label = await ctx.db.get(labelId);
+    const link = links.find(
+      (link) => link.labelId === labelId,
+    );
+
+    if (!link) {
+      throw new Error("Task label not found");
+    }
+
     await ctx.db.delete(link._id);
-    await logActivity(ctx, {
-      taskId,
-      deviceName,
-      kind: "label_removed",
-      meta: label?.name ?? "",
-    });
+
     return null;
   },
 });

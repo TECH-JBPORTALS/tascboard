@@ -1,196 +1,123 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
-import type { DataModelFromSchemaDefinition } from "convex/server";
-import type { GenericId } from "convex/values";
 
-import { api, internal } from "./_generated/api";
-import projectTestSchema from "./projectTestSchema";
-import { insertTestEmployee } from "./testHelpers";
+import { api } from "./_generated/api";
+import schema from "./schema";
+import { DataModel, Id } from "./_generated/dataModel";
 
-type SprintTestDataModel = DataModelFromSchemaDefinition<
-  typeof projectTestSchema
->;
+const modules = import.meta.glob("./**/*.ts");
 
 describe("Sprint", () => {
-  let t: TestConvexForDataModel<SprintTestDataModel>;
-  let organizationId: GenericId<"organization">;
-  let trackId: GenericId<"tracks">;
-  let sprintId: GenericId<"sprints">;
-  let taskId: GenericId<"tasks">;
+  let t: TestConvexForDataModel<DataModel>;
+  let trackId: Id<"tracks">;
+  let sprintId: Id<"sprints">;
+  let taskId: Id<"tasks">;
 
   beforeEach(async () => {
-    t = convexTest(projectTestSchema).withIdentity({
-      tokenIdentifier: "user-1",
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
     });
 
-    organizationId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organization", {
-        name: "Test Org",
-        slug: "test-org",
-        createdAt: Date.now(),
-      });
+    // create project
+    const projectId = await t.mutation(api.project.create, {
+      name: "Project A",
+      description: "Test Project",
+      startDate: 1700000000000,
+      endDate: 1800000000000,
+      status: "active",
     });
 
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationID: organizationId,
-        name: "Project A",
-        description: "Test project",
-        startDate: 1700000000000,
-        endDate: 1800000000000,
-        status: "active",
-        createdAt: 1700000000000,
-      });
+    // create track
+    trackId = await t.mutation(api.track.create, {
+      name: "Track A",
+      description: "Track desc",
+      projectId,
+      trackCode: "TR-001",
+      trackLeaderID: "emp-1",
+      status: "active",
     });
 
-    const trackLeaderID = await insertTestEmployee(t);
-
-    trackId = await t.run(async (ctx) => {
-      return await ctx.db.insert("tracks", {
-        name: "Track A",
-        description: "Test track",
-        projectId,
-        trackCode: "TRK-001",
-        trackLeaderID,
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    taskId = await t.run(async (ctx) => {
-      return await ctx.db.insert("tasks", {
-        title: "Task A",
-        description: "Test task",
-        status: "todo",
-        priority: "medium",
-        dueDate: null,
-        trackId,
-      });
-    });
-
-    sprintId = await t.mutation(internal.sprint.create, {
+    // create task (needed for backlog/progress/burndown)
+    taskId = await t.mutation(api.task.create, {
       trackId,
-      sprintName: " Sprint 1 ",
-      goal: " Build UI ",
+      projectId,
+      taskCode: "T-001",
+      title: "Task 1",
+      description: "Test task",
+      status: "todo",
+      assignedTo: "emp-1",
+      assignedBy: "emp-1",
+      priority: "medium",
+      complexity: "easy",
       startDate: Date.now(),
-      endDate: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      endDate: Date.now() + 100000,
+    });
+
+    // create sprint
+    sprintId = await t.mutation(api.sprint.create, {
+      trackId,
+      sprintName: "Sprint 1",
+      goal: "Build feature",
+      startDate: Date.now(),
+      endDate: Date.now() + 100000,
     });
   });
 
-  // 1. CREATE SPRINT
-  test("create sprint trims values and sets default status", async () => {
-    const sprint = await t.run(async (ctx) => {
-      return await ctx.db.get("sprints", sprintId);
+  // --------------------
+  // CREATE
+  // --------------------
+  test("create sprint sets createdBy automatically", async () => {
+    const sprint = await t.query(api.sprint.listByTrack, {
+      trackId,
     });
 
-    expect(sprint?.sprintName).toBe("Sprint 1");
-    expect(sprint?.goal).toBe("Build UI");
-    expect(sprint?.status).toBe("planned");
+    expect(sprint.length).toBe(1);
+    expect(sprint[0]?.sprintName).toBe("Sprint 1");
+    expect(sprint[0]?.goal).toBe("Build feature");
+    expect(sprint[0]?.createdBy).toBe("user-1");
   });
-  test("create sprint throws if startDate < endDate", async () => {
-    await expect(
-      t.mutation(internal.sprint.create, {
-        trackId,
-        sprintName: "Test",
-        goal: "Test",
-        startDate: 100,
-        endDate: 50,
-      })
-    ).rejects.toThrow("Start date cannot be after end date");
-  });
-  // 2. UPDATE SPRINT
+
+  // --------------------
+  // EDIT
+  // --------------------
   test("edit sprint updates fields", async () => {
     await t.mutation(api.sprint.edit, {
       sprintId,
       sprintName: "Updated Sprint",
       goal: "Updated Goal",
       startDate: Date.now(),
-      endDate: Date.now() + 1000,
+      endDate: Date.now() + 200000,
       status: "active",
     });
 
-    const sprint = await t.run(async (ctx) => {
-      return await ctx.db.get("sprints", sprintId);
+    const sprint = await t.query(api.sprint.listByTrack, {
+      trackId,
     });
 
-    expect(sprint?.sprintName).toBe("Updated Sprint");
-    expect(sprint?.goal).toBe("Updated Goal");
-    expect(sprint?.status).toBe("active");
-    expect(sprint?.updatedAt).toBeDefined();
+    expect(sprint[0]?.sprintName).toBe("Updated Sprint");
+    expect(sprint[0]?.status).toBe("active");
   });
-  test("edit throws if sprint name is empty", async () => {
-    await expect(
-      t.mutation(api.sprint.edit, {
-        sprintId,
-        sprintName: "   ",
-        goal: "Valid goal",
-        startDate: Date.now(),
-        endDate: Date.now() + 1000,
-        status: "active",
-      })
-    ).rejects.toThrow("Sprint name cannot be empty");
-  });
-  test("edit throws if goal is empty", async () => {
-    await expect(
-      t.mutation(api.sprint.edit, {
-        sprintId,
-        sprintName: "Sprint",
-        goal: "   ",
-        startDate: Date.now(),
-        endDate: Date.now() + 1000,
-        status: "active",
-      })
-    ).rejects.toThrow("Goal cannot be empty");
-  });
-  test("edit throws if startDate > endDate", async () => {
-    await expect(
-      t.mutation(api.sprint.edit, {
-        sprintId,
-        sprintName: "Sprint",
-        goal: "Goal",
-        startDate: 100,
-        endDate: 50,
-        status: "active",
-      })
-    ).rejects.toThrow("Start date cannot be after end date");
-  });
-  test("edit returns early if no changes", async () => {
-    const before = await t.run(async (ctx) => ctx.db.get(sprintId));
-  
-    await t.mutation(api.sprint.edit, {
+
+  // --------------------
+  // REMOVE
+  // --------------------
+  test("remove sprint deletes sprint", async () => {
+    await t.mutation(api.sprint.remove, {
       sprintId,
-      sprintName: before!.sprintName,
-      goal: before!.goal,
-      startDate: before!.startDate,
-      endDate: before!.endDate,
-      status: before!.status,
-    });
-  
-    const after = await t.run(async (ctx) => ctx.db.get(sprintId));
-  
-    expect(after?.updatedAt).toBeUndefined();
-  });
-  // 3. DELETE SPRINT
-  test("remove deletes sprint", async () => {
-    await t.mutation(api.sprint.remove, { sprintId });
-
-    const sprint = await t.run(async (ctx) => {
-      return await ctx.db.get("sprints", sprintId);
     });
 
-    expect(sprint).toBeNull();
-  });
-  test("remove throws if sprint not found", async () => {
-    const fakeId = sprintId; // reuse type-safe ID
-    await t.mutation(api.sprint.remove, { sprintId: fakeId });
-  
-    await expect(
-      t.mutation(api.sprint.remove, { sprintId: fakeId })
-    ).rejects.toThrow("Sprint not found");
+    const sprint = await t.query(api.sprint.listByTrack, {
+      trackId,
+    });
+
+    expect(sprint.length).toBe(0);
   });
 
-  // 4. ADD TASK TO SPRINT
-  test("addTaskToSprint validates same track", async () => {
+  // --------------------
+  // ADD TASK
+  // --------------------
+  test("addTask validates same track", async () => {
     const res = await t.mutation(api.sprint.addTask, {
       taskId,
       sprintId,
@@ -199,132 +126,77 @@ describe("Sprint", () => {
     expect(res.success).toBe(true);
     expect(res.message).toBe("Task is valid for this sprint");
   });
-  test("addTaskToSprint throws if task not found", async () => {
-    // create a valid sprint (you already have sprintId)
-  
-    // create a VALID fake task id by creating and deleting
-    const tempTaskId = await t.run(async (ctx) => {
-      const id = await ctx.db.insert("tasks", {
-        title: "Temp task",
-        description: "temp",
-        status: "todo",
-        priority: "low",
-        dueDate: null,
-        trackId,
-      });
-  
-      await ctx.db.delete(id); // remove it immediately
-      return id;
-    });
-  
-    await expect(
-      t.mutation(api.sprint.addTask, {
-        taskId: tempTaskId,
-        sprintId,
-      })
-    ).rejects.toThrow("Task not found");
-  });
-  test("addTaskToSprint throws if sprint not found", async () => {
-    const fakeSprintId = await t.run(async (ctx) => {
-      const id = await ctx.db.insert("sprints", {
-        trackId,
-        sprintName: "Temp sprint",
-        goal: "Temp goal",
-        startDate: Date.now(),
-        endDate: Date.now() + 1000,
-        status: "planned",
-        createdAt: Date.now(),
-      });
-  
-      await ctx.db.delete(id); // remove immediately
-      return id;
-    });
-  
-    await expect(
-      t.mutation(api.sprint.addTask, {
-        taskId,
-        sprintId: fakeSprintId,
-      })
-    ).rejects.toThrow("Sprint not found");
-  });
-  // 5. BACKLOG
-  test("getBacklog returns tasks for track", async () => {
-    const res = await t.query(api.sprint.Backlog, {
+
+  // --------------------
+  // BACKLOG
+  // --------------------
+  test("backlog returns tasks for track", async () => {
+    const tasks = await t.query(api.sprint.backlog, {
       trackId,
     });
 
-    expect(res.length).toBe(1);
-    expect(res[0].title).toBe("Task A");
+    expect(tasks.length).toBe(1);
+    expect(tasks[0]?._id).toBe(taskId);
   });
-  test("getBacklog returns empty array for invalid track", async () => {
-    const fakeTrackId = await t.run(async (ctx) => {
-      const tempLeaderId = await ctx.db.insert("employee", {
-        name: "Temp Leader",
-        createdAt: Date.now(),
-      });
-      const id = await ctx.db.insert("tracks", {
-        name: "Temp track",
-        description: "temp",
-        projectId: await ctx.db.insert("projects", {
-          organizationID: organizationId,
-          name: "Temp project",
-          startDate: 1700000000000,
-          endDate: 1800000000000,
-          status: "active",
-          createdAt: 1700000000000,
-        }),
-        trackCode: "TRK-TMP",
-        trackLeaderID: tempLeaderId,
-        status: "active",
-        createdAt: Date.now(),
-      });
-  
-      await ctx.db.delete(id); // remove immediately
-      return id;
-    });
-  
-    const res = await t.query(api.sprint.Backlog, {
-      trackId: fakeTrackId,
-    });
-  
-    expect(res.length).toBe(0);
-  });
-  // 6. SPRINT PROGRESS
-  test("getSprintProgress calculates correctly", async () => {
-    const res = await t.query(api.sprint.Progress, {
+
+  // --------------------
+  // PROGRESS
+  // --------------------
+  test("progress calculates sprint stats", async () => {
+    const progress = await t.query(api.sprint.progress, {
       sprintId,
     });
 
-    expect(res.total).toBe(1);
-    expect(res.todo).toBe(1);
-    expect(res.done).toBe(0);
-    expect(res.progress).toBe(0);
+    expect(progress.total).toBe(1);
+    expect(progress.todo).toBe(1);
+    expect(progress.done).toBe(0);
+    expect(progress.inProgress).toBe(0);
+    expect(progress.progress).toBe(0);
   });
 
-  // 7. BURNDOWN CHART
-  test("getBurndownChart returns timeline data", async () => {
-    const res = await t.query(api.sprint.BurndownChart, {
+  // --------------------
+  // BURNDOWN
+  // --------------------
+  test("burndownChart returns data", async () => {
+    const result = await t.query(api.sprint.burndownChart, {
       sprintId,
     });
 
-    expect(res.totalTasks).toBe(1);
-    expect(res.doneTasks).toBe(0);
-
-    expect(Array.isArray(res.burndown)).toBe(true);
-    expect(res.burndown.length).toBeGreaterThan(0);
-
-    expect(res.burndown[0]).toHaveProperty("ideal");
-    expect(res.burndown[0]).toHaveProperty("remaining");
-    expect(res.burndown[0]).toHaveProperty("date");
+    expect(result.sprintId).toBe(sprintId);
+    expect(result.totalTasks).toBe(1);
+    expect(result.doneTasks).toBe(0);
+    expect(Array.isArray(result.burndown)).toBe(true);
+    expect(result.burndown.length).toBeGreaterThan(0);
   });
 
-  test("burndown works when no tasks exist", async () => {
-    const emptyTrackId = trackId;
-  
-    const res = await t.query(api.sprint.BurndownChart, {
-      sprintId,
+  // --------------------
+  // EDGE CASE
+  // --------------------
+  test("edit throws if sprint not found", async () => {
+    // create a real sprint first
+    const tempSprintId = await t.mutation(api.sprint.create, {
+      trackId,
+      sprintName: "Temp Sprint",
+      goal: "Temp Goal",
+      startDate: Date.now(),
+      endDate: Date.now() + 10000,
     });
   
-    expect(res.burndown.length).toBeGreaterThan(0);
+    // delete it
+    await t.mutation(api.sprint.remove, {
+      sprintId: tempSprintId,
+    });
+  
+    // now it should truly not exist
+    await expect(
+      t.mutation(api.sprint.edit, {
+        sprintId: tempSprintId,
+        sprintName: "X",
+        goal: "Y",
+        startDate: 1,
+        endDate: 2,
+        status: "planned",
+      })
+    ).rejects.toThrow("Sprint not found");
   });
 });

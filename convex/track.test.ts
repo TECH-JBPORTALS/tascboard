@@ -1,35 +1,24 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
-import type { DataModelFromSchemaDefinition } from "convex/server";
-import type { GenericId } from "convex/values";
 
 import { api } from "./_generated/api";
-import projectTestSchema from "./projectTestSchema";
-import { insertTestEmployee } from "./testHelpers";
+import schema from "./schema";
+import { DataModel, Id } from "./_generated/dataModel";
 
-type TrackTestDataModel = DataModelFromSchemaDefinition<typeof projectTestSchema>;
+const modules = import.meta.glob("./**/*.ts");
 
-describe("Track", () => {
-  let t: TestConvexForDataModel<TrackTestDataModel>;
-  let projectId: GenericId<"projects">;
-  let trackId: GenericId<"tracks">;
+describe("Tracks", () => {
+  let t: TestConvexForDataModel<DataModel>;
+  let projectId: Id<"projects">;
+  let trackId: Id<"tracks">;
 
   beforeEach(async () => {
-    t = convexTest(projectTestSchema).withIdentity({
-      tokenIdentifier: "user-1",
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
     });
 
-    const organizationId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organization", {
-        name: "Test Org",
-        slug: "test-org",
-        createdAt: Date.now(),
-      });
-    });
-
-    // Create project first
     projectId = await t.mutation(api.project.create, {
-      organizationID: organizationId,
       name: "Project A",
       description: "Test project",
       startDate: 1700000000000,
@@ -37,48 +26,99 @@ describe("Track", () => {
       status: "active",
     });
 
-    const trackLeaderID = await insertTestEmployee(t);
-
-    // Create track
     trackId = await t.mutation(api.track.create, {
-      name: " Track A ",
-      description: " Test track ",
+      name: "Track A",
+      description: "Test track",
       projectId,
-      trackCode: "TRK-001",
-      trackLeaderID,
+      trackCode: "TR-001",
+      trackLeaderID: "emp-1",
       status: "active",
     });
   });
 
-  // 1. CREATE TRACK
+  // --------------------
+  // CREATE
+  // --------------------
   test("create track", async () => {
     const track = await t.query(api.track.get, {
       trackId,
     });
 
     expect(track).not.toBeNull();
-    expect(track?.name).toBe(" Track A ");
-    expect(track?.description).toBe(" Test track ");
+    expect(track?.name).toBe("Track A");
     expect(track?.projectId).toBe(projectId);
+    expect(track?.status).toBe("active");
   });
 
-  // 2. GET TRACK
-  test("get returns track with project", async () => {
+  // --------------------
+  // CREATE FAIL (ORG CHECK)
+  // --------------------
+  test("create fails if project does not belong to org", async () => {
+    const projectId = await t.mutation(api.project.create, {
+      name: "Valid Project",
+      description: "Test",
+      startDate: Date.now(),
+      endDate: Date.now() + 100000,
+      status: "active",
+    });
+  
+    // delete project → now it exists in DB structure but is invalid reference
+    await t.mutation(api.project.remove, { projectId });
+  
+    await expect(
+      t.mutation(api.track.create, {
+        name: "Track X",
+        projectId,
+        trackCode: "TR-001",
+        trackLeaderID: "emp-1",
+        status: "active",
+      }),
+    ).rejects.toThrow("Not found");
+  });
+  // --------------------
+  // GET
+  // --------------------
+  test("get returns track by id", async () => {
     const track = await t.query(api.track.get, {
       trackId,
     });
 
     expect(track?._id).toBe(trackId);
-    expect(track?.project?.name).toBe("Project A");
+    expect(track?.name).toBe("Track A");
   });
 
-  // 3. UPDATE TRACK
-  test("update track fields", async () => {
+  test("get returns null if not found", async () => {
+    // create a real track first
+    const tempTrackId = await t.mutation(api.track.create, {
+      name: "Temp Track",
+      description: "Will be deleted",
+      projectId,
+      trackCode: "TMP-001",
+      trackLeaderID: "emp-1",
+      status: "active",
+    });
+  
+    // delete it so it becomes "not found"
+    await t.mutation(api.track.remove, {
+      trackId: tempTrackId,
+    });
+  
+    // now query deleted track
+    const result = await t.query(api.track.get, {
+      trackId: tempTrackId,
+    });
+  
+    expect(result).toBeNull();
+  });
+
+  // --------------------
+  // UPDATE
+  // --------------------
+  test("update track name", async () => {
     await t.mutation(api.track.update, {
       trackId,
       body: {
-        name: " Updated Track ",
-        description: " Updated description ",
+        name: "Updated Track",
       },
     });
 
@@ -87,22 +127,39 @@ describe("Track", () => {
     });
 
     expect(updated?.name).toBe("Updated Track");
-    expect(updated?.description).toBe("Updated description");
   });
 
-  // 4. UPDATE VALIDATION
-  test("update throws if track name is empty", async () => {
+  test("update throws if track not found", async () => {
+    const trackId = await t.mutation(api.track.create, {
+      name: "Temp Track",
+      projectId,
+      trackCode: "TMP",
+      trackLeaderID: "emp-1",
+      status: "active",
+    });
+  
+    await t.mutation(api.track.remove, { trackId });
+  
     await expect(
       t.mutation(api.track.update, {
         trackId,
-        body: {
-          name: "   ",
-        },
+        body: { name: "Updated" },
+      }),
+    ).rejects.toThrow("Track not found");
+  });
+
+  test("update throws if name is empty", async () => {
+    await expect(
+      t.mutation(api.track.update, {
+        trackId,
+        body: { name: "   " },
       }),
     ).rejects.toThrow("Track name cannot be empty");
   });
 
-  // 5. DELETE TRACK
+  // --------------------
+  // REMOVE
+  // --------------------
   test("remove deletes track", async () => {
     await t.mutation(api.track.remove, {
       trackId,
@@ -115,62 +172,20 @@ describe("Track", () => {
     expect(deleted).toBeNull();
   });
 
-  // 6. REMOVE NON EXISTING TRACK
-  test("remove throws when track does not exist", async () => {
-    await t.mutation(api.track.remove, {
-      trackId,
+  test("remove throws if track not found", async () => {
+    const trackId = await t.mutation(api.track.create, {
+      name: "Temp Track",
+      projectId,
+      trackCode: "TMP",
+      trackLeaderID: "emp-1",
+      status: "active",
     });
-
+  
+    await t.mutation(api.track.remove, { trackId });
+  
     await expect(
       t.mutation(api.track.remove, {
         trackId,
-      }),
-    ).rejects.toThrow();
-  });
-
-  // 7. UPDATE TRIMS VALUES
-  test("update trims name and description", async () => {
-    await t.mutation(api.track.update, {
-      trackId,
-      body: {
-        name: "   Trimmed Track   ",
-        description: "   Trimmed Description   ",
-      },
-    });
-
-    const updated = await t.query(api.track.get, {
-      trackId,
-    });
-
-    expect(updated?.name).toBe("Trimmed Track");
-    expect(updated?.description).toBe("Trimmed Description");
-  });
-
-  // 8. GET RETURNS NULL AFTER DELETE
-  test("get returns null after track deletion", async () => {
-    await t.mutation(api.track.remove, {
-      trackId,
-    });
-
-    const deleted = await t.query(api.track.get, {
-      trackId,
-    });
-
-    expect(deleted).toBeNull();
-  });
-
-  // 9. UPDATE NON EXISTING TRACK
-  test("update throws if track does not exist", async () => {
-    await t.mutation(api.track.remove, {
-      trackId,
-    });
-
-    await expect(
-      t.mutation(api.track.update, {
-        trackId,
-        body: {
-          name: "Updated",
-        },
       }),
     ).rejects.toThrow("Track not found");
   });

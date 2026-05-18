@@ -1,35 +1,23 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
-import type { DataModelFromSchemaDefinition } from "convex/server";
-import type { GenericId } from "convex/values";
 
 import { api } from "./_generated/api";
-import projectTestSchema from "./projectTestSchema";
+import schema from "./schema";
+import { DataModel, Id } from "./_generated/dataModel";
 
-type ProjectTestDataModel = DataModelFromSchemaDefinition<
-  typeof projectTestSchema
->;
+const modules = import.meta.glob("./**/*.ts");
 
 describe("Project", () => {
-  let t: TestConvexForDataModel<ProjectTestDataModel>;
-  let organizationId: GenericId<"organization">;
-  let projectId: GenericId<"projects">;
+  let t: TestConvexForDataModel<DataModel>;
+  let projectId: Id<"projects">;
 
   beforeEach(async () => {
-    t = convexTest(projectTestSchema).withIdentity({
-      tokenIdentifier: "user-1",
-    });
-
-    organizationId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organization", {
-        name: "Test Org",
-        slug: "test-org",
-        createdAt: Date.now(),
-      });
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
     });
 
     projectId = await t.mutation(api.project.create, {
-      organizationID: organizationId,
       name: " Project A ",
       description: " Test project ",
       startDate: 1700000000000,
@@ -38,41 +26,35 @@ describe("Project", () => {
     });
   });
 
-  // 1. CREATE PROJECT
   test("create project", async () => {
     const project = await t.query(api.project.get, {
       projectId,
     });
 
     expect(project).not.toBeNull();
-    expect(project?.name).toBe(" Project A ");
-    expect(project?.description).toBe(" Test project ");
-    expect(project?.organizationID).toBe(organizationId);
+
+    expect(project?.name).toBe("Project A");
+    expect(project?.description).toBe("Test project");
     expect(project?.status).toBe("active");
-    expect(typeof project?.startDate).toBe("number");
-    expect(typeof project?.endDate).toBe("number");
   });
 
-  // 2. GET ALL PROJECTS
-  test("getAll returns all projects", async () => {
-    const projects = await t.query(api.project.getAll, {});
+  test("list returns organization projects", async () => {
+    const projects = await t.query(api.project.list, {});
 
     expect(projects.length).toBe(1);
-    expect(projects[0].name).toBe(" Project A ");
-    expect(Array.isArray(projects[0].tracks)).toBe(true);
+    expect(projects[0]?.name).toBe("Project A");
+    expect(Array.isArray(projects[0]?.tracks)).toBe(true);
   });
 
-  // 3. GET PROJECT
   test("get returns project by id", async () => {
     const project = await t.query(api.project.get, {
       projectId,
     });
 
     expect(project?._id).toBe(projectId);
-    expect(project?.name).toBe(" Project A ");
+    expect(project?.name).toBe("Project A");
   });
 
-  // 4. UPDATE PROJECT
   test("update project fields", async () => {
     await t.mutation(api.project.update, {
       projectId,
@@ -93,7 +75,6 @@ describe("Project", () => {
     expect(updated?.updatedAt).toBeTypeOf("number");
   });
 
-  // 5. UPDATE VALIDATION
   test("update throws if project name is empty", async () => {
     await expect(
       t.mutation(api.project.update, {
@@ -105,33 +86,30 @@ describe("Project", () => {
     ).rejects.toThrow("Project name cannot be empty");
   });
 
-  // 6. DELETE PROJECT
   test("remove deletes project", async () => {
     await t.mutation(api.project.remove, {
       projectId,
     });
 
-    const project = await t.query(api.project.get, {
-      projectId,
-    });
-
-    expect(project).toBeNull();
+    await expect(
+      t.query(api.project.get, {
+        projectId,
+      }),
+    ).resolves.toBeNull();
   });
 
-  // 7. REMOVE NON EXISTING PROJECT
   test("remove throws if project does not exist", async () => {
     await t.mutation(api.project.remove, {
       projectId,
     });
-  
+
     await expect(
       t.mutation(api.project.remove, {
         projectId,
       }),
-    ).rejects.toThrow("Project not found");
+    ).rejects.toThrow("Not found");
   });
 
-  // 8. UPDATE TRIMS VALUES
   test("update trims name and description", async () => {
     await t.mutation(api.project.update, {
       projectId,
@@ -149,27 +127,89 @@ describe("Project", () => {
     expect(updated?.description).toBe("Trimmed Description");
   });
 
-  // 9. GET RETURNS NULL FOR DELETED PROJECT
-  test("get returns null after project deletion", async () => {
-    await t.mutation(api.project.remove, {
-      projectId,
+  test("seedStarterProjects creates default projects", async () => {
+    const isolated = convexTest(schema, modules).withIdentity({
+      userId: "user-2",
+      orgId: "org-2",
     });
 
-    const deleted = await t.query(api.project.get, {
-      projectId,
-    });
+    await isolated.mutation(api.project.seedStarterProjects);
 
-    expect(deleted).toBeNull();
+    const projects = await isolated.query(api.project.list, {});
+
+    expect(projects.length).toBeGreaterThanOrEqual(2);
+
+    expect(
+      projects.some((x) =>
+        x.name.includes("Employee Attendance"),
+      ),
+    ).toBe(true);
   });
 
-  // 10. GETALL RETURNS EMPTY ARRAY
-  test("getAll returns empty array when no projects exist", async () => {
-    await t.mutation(api.project.remove, {
-      projectId,
+  test("seedStarterProjects is idempotent", async () => {
+    const isolated = convexTest(schema, modules).withIdentity({
+      userId: "user-3",
+      orgId: "org-3",
     });
 
-    const projects = await t.query(api.project.getAll, {});
+    await isolated.mutation(api.project.seedStarterProjects);
+    await isolated.mutation(api.project.seedStarterProjects);
 
-    expect(projects.length).toBe(0);
+    const projects = await isolated.query(api.project.list, {});
+
+    expect(projects.length).toBe(2);
+  });
+
+  test("list only returns current organization projects", async () => {
+    await t.mutation(api.project.create, {
+      name: "Other org project",
+      startDate: 1,
+      endDate: 2,
+      status: "active",
+    });
+  
+    const projects = await t.query(api.project.list, {});
+  
+    expect(projects.length).toBe(2);
+  
+    expect(projects.every(p => p.organizationId === "org-1")).toBe(true);
+  });
+
+  test("users cannot access another organization's project", async () => {
+    const isolated = convexTest(schema, modules).withIdentity({
+      userId: "user-2",
+      orgId: "org-2",
+    });
+
+    await expect(
+      isolated.query(api.project.get, {
+        projectId,
+      }),
+    ).resolves.toBeNull();
+  });
+
+  test("users cannot access another org project", async () => {
+    const owner = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
+    });
+
+    const projectId = await owner.mutation(api.project.create, {
+      name: "Private Project",
+      startDate: 1,
+      endDate: 2,
+      status: "active",
+    });
+
+    const attacker = convexTest(schema, modules).withIdentity({
+      userId: "user-2",
+      orgId: "org-2",
+    });
+
+    await expect(
+      attacker.query(api.project.get, {
+        projectId,
+      }),
+    ).resolves.toBeNull();
   });
 });

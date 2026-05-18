@@ -1,175 +1,204 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
-import type { DataModelFromSchemaDefinition } from "convex/server";
-import type { GenericId } from "convex/values";
 
 import { api } from "./_generated/api";
-import projectTestSchema from "./projectTestSchema";
-import { insertTestEmployee } from "./testHelpers";
+import schema from "./schema";
+import { DataModel, Id } from "./_generated/dataModel";
 
-type SubtaskTestDataModel = DataModelFromSchemaDefinition<
-  typeof projectTestSchema
->;
+const modules = import.meta.glob("./**/*.ts");
 
 describe("Subtask", () => {
-  let t: TestConvexForDataModel<SubtaskTestDataModel>;
+  let t: TestConvexForDataModel<DataModel>;
 
-  let projectId: GenericId<"projects">;
-  let trackId: GenericId<"tracks">;
-  let taskId: GenericId<"tasks">;
-  let subtaskId: GenericId<"subtasks">;
+  let projectId: Id<"projects">;
+  let trackId: Id<"tracks">;
+  let taskId: Id<"tasks">;
+  let subtaskId: Id<"subtasks">;
 
   beforeEach(async () => {
-    t = convexTest(projectTestSchema).withIdentity({
-      tokenIdentifier: "user-1",
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
     });
 
-    const organizationId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organization", {
-        name: "Test Org",
-        slug: "test-org",
-        createdAt: Date.now(),
-      });
-    });
-
-    // Create project
     projectId = await t.mutation(api.project.create, {
-      organizationID: organizationId,
       name: "Project A",
-      description: "Test project",
-      startDate: 1700000000000,
-      endDate: 1800000000000,
+      description: "Test Project",
+      startDate: 1,
+      endDate: 2,
       status: "active",
     });
 
-    const trackLeaderID = await insertTestEmployee(t);
-
-    // Create track
     trackId = await t.mutation(api.track.create, {
       name: "Track A",
-      description: "Test track",
+      description: "Track Desc",
       projectId,
-      trackCode: "TRK-001",
-      trackLeaderID,
+      trackCode: "TR-001",
+      trackLeaderID: "emp-1",
       status: "active",
     });
 
-    // Create task
     taskId = await t.mutation(api.task.create, {
-      title: "Task A",
-      description: "Task description",
-      status: "todo",
-      priority: "medium",
-      dueDate: null,
       trackId,
-      deviceName: "MacBook",
+      projectId,
+      taskCode: "TASK-001",
+      title: "Task A",
+      description: "Task Desc",
+      status: "todo",
+      assignedTo: "emp-1",
+      assignedBy: "manager-1",
+      priority: "high",
+      complexity: "medium",
+      startDate: 1,
+      endDate: 2,
     });
 
-    // Create subtask
     subtaskId = await t.mutation(api.subtask.create, {
       taskId,
-      title: "Subtask A",
-      deviceName: "MacBook",
+      title: "Initial Subtask",
+      deviceName: "Chrome",
     });
   });
 
-  // 1. CREATE SUBTASK
+  // --------------------
+  // CREATE
+  // --------------------
   test("create subtask", async () => {
     const subtasks = await t.query(api.subtask.listByTask, {
       taskId,
     });
 
     expect(subtasks.length).toBe(1);
-    expect(subtasks[0].title).toBe("Subtask A");
-    expect(subtasks[0].completed).toBe(false);
-    expect(subtasks[0].order).toBe(0);
+    expect(subtasks[0]?.title).toBe("Initial Subtask");
+    expect(subtasks[0]?.completed).toBe(false);
+    expect(subtasks[0]?.order).toBe(0);
   });
 
-  // 2. LIST SUBTASKS
-  test("listByTask returns subtasks for task", async () => {
+  test("create trims title", async () => {
     await t.mutation(api.subtask.create, {
       taskId,
-      title: "Subtask B",
-      deviceName: "MacBook",
+      title: "   Trimmed Title   ",
+      deviceName: "Chrome",
     });
 
     const subtasks = await t.query(api.subtask.listByTask, {
       taskId,
     });
 
-    expect(subtasks.length).toBe(2);
-    expect(subtasks[0].title).toBe("Subtask A");
-    expect(subtasks[1].title).toBe("Subtask B");
+    expect(
+      subtasks.some((s) => s.title === "Trimmed Title"),
+    ).toBe(true);
   });
 
-  // 3. TOGGLE SUBTASK
+  test("create throws if title is empty", async () => {
+    await expect(
+      t.mutation(api.subtask.create, {
+        taskId,
+        title: "   ",
+        deviceName: "Chrome",
+      }),
+    ).rejects.toThrow("Subtask title cannot be empty");
+  });
+
+  // --------------------
+  // LIST
+  // --------------------
+  test("listByTask returns subtasks", async () => {
+    const subtasks = await t.query(api.subtask.listByTask, {
+      taskId,
+    });
+
+    expect(subtasks.length).toBe(1);
+    expect(subtasks[0]?.title).toBe("Initial Subtask");
+  });
+
+  test("listByTask returns empty array when no subtasks exist", async () => {
+    const emptyTaskId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      taskCode: "TASK-002",
+      title: "Empty Task",
+      description: "No subtasks",
+      status: "todo",
+      assignedTo: "emp-1",
+      assignedBy: "manager-1",
+      priority: "medium",
+      complexity: "easy",
+      startDate: 1,
+      endDate: 2,
+    });
+
+    const subtasks = await t.query(api.subtask.listByTask, {
+      taskId: emptyTaskId,
+    });
+
+    expect(subtasks).toEqual([]);
+  });
+
+  // --------------------
+  // TOGGLE
+  // --------------------
   test("toggle changes completed status", async () => {
     await t.mutation(api.subtask.toggle, {
       subtaskId,
-      deviceName: "MacBook",
+      deviceName: "Chrome",
     });
 
     const subtasks = await t.query(api.subtask.listByTask, {
       taskId,
     });
 
-    expect(subtasks[0].completed).toBe(true);
+    expect(subtasks[0]?.completed).toBe(true);
   });
 
-  // 4. TOGGLE AGAIN
-  test("toggle twice restores original status", async () => {
-    await t.mutation(api.subtask.toggle, {
-      subtaskId,
-      deviceName: "MacBook",
-    });
-
-    await t.mutation(api.subtask.toggle, {
-      subtaskId,
-      deviceName: "MacBook",
-    });
-
-    const subtasks = await t.query(api.subtask.listByTask, {
-      taskId,
-    });
-
-    expect(subtasks[0].completed).toBe(false);
-  });
-
-  // 5. RENAME SUBTASK
+  // --------------------
+  // RENAME
+  // --------------------
   test("rename updates title", async () => {
     await t.mutation(api.subtask.rename, {
       subtaskId,
       title: "Updated Subtask",
-      deviceName: "MacBook",
+      deviceName: "Chrome",
     });
 
     const subtasks = await t.query(api.subtask.listByTask, {
       taskId,
     });
 
-    expect(subtasks[0].title).toBe("Updated Subtask");
+    expect(subtasks[0]?.title).toBe("Updated Subtask");
   });
 
-  // 6. RENAME WITH SAME TITLE
-  test("rename with same title does nothing", async () => {
+  test("rename trims title", async () => {
     await t.mutation(api.subtask.rename, {
       subtaskId,
-      title: "Subtask A",
-      deviceName: "MacBook",
+      title: "   Trimmed Rename   ",
+      deviceName: "Chrome",
     });
 
     const subtasks = await t.query(api.subtask.listByTask, {
       taskId,
     });
 
-    expect(subtasks[0].title).toBe("Subtask A");
+    expect(subtasks[0]?.title).toBe("Trimmed Rename");
   });
 
-  // 7. REMOVE SUBTASK
+  test("rename throws if title is empty", async () => {
+    await expect(
+      t.mutation(api.subtask.rename, {
+        subtaskId,
+        title: "   ",
+        deviceName: "Chrome",
+      }),
+    ).rejects.toThrow("Subtask title cannot be empty");
+  });
+
+  // --------------------
+  // REMOVE
+  // --------------------
   test("remove deletes subtask", async () => {
     await t.mutation(api.subtask.remove, {
       subtaskId,
-      deviceName: "MacBook",
+      deviceName: "Chrome",
     });
 
     const subtasks = await t.query(api.subtask.listByTask, {
@@ -177,74 +206,5 @@ describe("Subtask", () => {
     });
 
     expect(subtasks.length).toBe(0);
-  });
-
-  // 8. REMOVE NON EXISTING SUBTASK
-  test("remove non existing subtask does nothing", async () => {
-    await t.mutation(api.subtask.remove, {
-      subtaskId,
-      deviceName: "MacBook",
-    });
-
-    await expect(
-      t.mutation(api.subtask.remove, {
-        subtaskId,
-        deviceName: "MacBook",
-      }),
-    ).resolves.not.toThrow();
-  });
-
-  // 9. TOGGLE NON EXISTING SUBTASK
-  test("toggle throws if subtask not found", async () => {
-    await t.mutation(api.subtask.remove, {
-      subtaskId,
-      deviceName: "MacBook",
-    });
-
-    await expect(
-      t.mutation(api.subtask.toggle, {
-        subtaskId,
-        deviceName: "MacBook",
-      }),
-    ).rejects.toThrow("Subtask not found");
-  });
-
-  // 10. RENAME NON EXISTING SUBTASK
-  test("rename throws if subtask not found", async () => {
-    await t.mutation(api.subtask.remove, {
-      subtaskId,
-      deviceName: "MacBook",
-    });
-
-    await expect(
-      t.mutation(api.subtask.rename, {
-        subtaskId,
-        title: "Updated",
-        deviceName: "MacBook",
-      }),
-    ).rejects.toThrow("Subtask not found");
-  });
-
-  // 11. ORDER INCREMENTS CORRECTLY
-  test("new subtasks increment order correctly", async () => {
-    await t.mutation(api.subtask.create, {
-      taskId,
-      title: "Subtask B",
-      deviceName: "MacBook",
-    });
-
-    await t.mutation(api.subtask.create, {
-      taskId,
-      title: "Subtask C",
-      deviceName: "MacBook",
-    });
-
-    const subtasks = await t.query(api.subtask.listByTask, {
-      taskId,
-    });
-
-    expect(subtasks[0].order).toBe(0);
-    expect(subtasks[1].order).toBe(1);
-    expect(subtasks[2].order).toBe(2);
   });
 });

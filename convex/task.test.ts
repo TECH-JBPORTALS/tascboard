@@ -1,37 +1,29 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
-import type { DataModelFromSchemaDefinition } from "convex/server";
-import type { GenericId } from "convex/values";
 
 import { api } from "./_generated/api";
-import projectTestSchema from "./projectTestSchema";
-import { insertTestEmployee } from "./testHelpers";
+import schema from "./schema";
+import { DataModel, Id } from "./_generated/dataModel";
 
-type TaskTestDataModel = DataModelFromSchemaDefinition<typeof projectTestSchema>;
+const modules = import.meta.glob("./**/*.ts");
 
 describe("Task", () => {
-  let t: TestConvexForDataModel<TaskTestDataModel>;
-  let projectId: GenericId<"projects">;
-  let trackId: GenericId<"tracks">;
-  let taskId: GenericId<"tasks">;
-  let subtaskId: GenericId<"subtasks">;
+  let t: TestConvexForDataModel<DataModel>;
+
+  let projectId: Id<"projects">;
+  let trackId: Id<"tracks">;
+  let taskId: Id<"tasks">;
 
   beforeEach(async () => {
-    t = convexTest(projectTestSchema).withIdentity({
-      tokenIdentifier: "user-1",
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
     });
 
-    const organizationId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organization", {
-        name: "Test Org",
-        slug: "test-org",
-        createdAt: Date.now(),
-      });
-    });
-
-    // Create project
+    // --------------------
+    // CREATE PROJECT
+    // --------------------
     projectId = await t.mutation(api.project.create, {
-      organizationID: organizationId,
       name: "Project A",
       description: "Test project",
       startDate: 1700000000000,
@@ -39,70 +31,106 @@ describe("Task", () => {
       status: "active",
     });
 
-    const trackLeaderID = await insertTestEmployee(t);
-
-    // Create track
+    // --------------------
+    // CREATE TRACK
+    // --------------------
     trackId = await t.mutation(api.track.create, {
       name: "Track A",
       description: "Test track",
       projectId,
-      trackCode: "TRK-001",
-      trackLeaderID,
+      trackCode: "TR-001",
+      trackLeaderID: "emp-1",
       status: "active",
     });
 
-    // Create task
+    // --------------------
+    // CREATE TASK
+    // --------------------
     taskId = await t.mutation(api.task.create, {
-      title: "Task A",
-      description: "Test task",
-      status: "todo",
-      priority: "medium",
-      dueDate: null,
       trackId,
-      deviceName: "MacBook",
+      projectId,
+      taskCode: "TASK-001",
+      title: "Initial Task",
+      description: "Task description",
+      status: "todo",
+      assignedTo: "emp-1",
+      assignedBy: "manager-1",
+      priority: "medium",
+      complexity: "easy",
+      startDate: 1700000000000,
+      endDate: 1800000000000,
     });
   });
 
-  // 1. CREATE TASK
+  // --------------------
+  // CREATE
+  // --------------------
   test("create task", async () => {
     const task = await t.query(api.task.get, {
       taskId,
     });
 
     expect(task).not.toBeNull();
-    expect(task?.title).toBe("Task A");
+
+    expect(task?.title).toBe("Initial Task");
     expect(task?.status).toBe("todo");
     expect(task?.priority).toBe("medium");
   });
 
-  // 2. GET TASK
-  test("get returns task with track and project", async () => {
+  // --------------------
+  // GET
+  // --------------------
+  test("get returns task by id", async () => {
     const task = await t.query(api.task.get, {
       taskId,
     });
 
     expect(task?._id).toBe(taskId);
-    expect(task?.track?.name).toBe("Track A");
-    expect(task?.project?.name).toBe("Project A");
+    expect(task?.title).toBe("Initial Task");
   });
 
-  // 3. GET ALL TASKS BY TRACK
-  test("getAllByTrack returns all tasks", async () => {
-    const tasks = await t.query(api.task.getAllByTrack, {
-      trackId,
+  test("get returns null if task not found", async () => {
+    await t.mutation(api.task.remove, {
+      taskId,
     });
 
-    expect(tasks.length).toBe(1);
-    expect(tasks[0].title).toBe("Task A");
+    const result = await t.query(api.task.get, {
+      taskId,
+    });
+
+    expect(result).toBeNull();
   });
 
-  // 4. UPDATE TASK TITLE
-  test("update task title", async () => {
+  test("list returns tasks", async () => {
+    const tasks = await t.query(api.task.list, {});
+  
+    expect(tasks.length).toBeGreaterThan(0);
+  
+    expect(tasks[0]?.title).toBe("Initial Task");
+  });
+  
+  test("list returns empty array if there are no tasks", async () => {
+    const isolated = convexTest(schema, modules).withIdentity({
+      userId: "user-2",
+      orgId: "org-2",
+    });
+  
+    const tasks = await isolated.query(api.task.list, {});
+  
+    expect(tasks).toEqual([]);
+  });
+  // --------------------
+  // UPDATE
+  // --------------------
+  test("update task fields", async () => {
     await t.mutation(api.task.update, {
       taskId,
-      deviceName: "MacBook",
       body: {
         title: "Updated Task",
+        description: "Updated description",
+        status: "done",
+        priority: "high",
+        complexity: "hard",
       },
     });
 
@@ -111,63 +139,25 @@ describe("Task", () => {
     });
 
     expect(updated?.title).toBe("Updated Task");
-  });
-
-  // 5. UPDATE TASK STATUS
-  test("update task status", async () => {
-    await t.mutation(api.task.update, {
-      taskId,
-      deviceName: "MacBook",
-      body: {
-        status: "done",
-      },
-    });
-
-    const updated = await t.query(api.task.get, {
-      taskId,
-    });
-
+    expect(updated?.description).toBe("Updated description");
     expect(updated?.status).toBe("done");
-  });
-
-  // 6. UPDATE TASK PRIORITY
-  test("update task priority", async () => {
-    await t.mutation(api.task.update, {
-      taskId,
-      deviceName: "MacBook",
-      body: {
-        priority: "high",
-      },
-    });
-
-    const updated = await t.query(api.task.get, {
-      taskId,
-    });
-
     expect(updated?.priority).toBe("high");
+    expect(updated?.complexity).toBe("hard");
+    expect(updated?.updatedAt).toBeTypeOf("number");
   });
 
-  // 7. UPDATE TASK DUE DATE
-  test("update task due date", async () => {
-    const dueDate = Date.now();
-
-    await t.mutation(api.task.update, {
-      taskId,
-      deviceName: "MacBook",
-      body: {
-        dueDate,
-      },
-    });
-
-    const updated = await t.query(api.task.get, {
-      taskId,
-    });
-
-    expect(updated?.dueDate).toBe(dueDate);
+  test("update throws if task title is empty", async () => {
+    await expect(
+      t.mutation(api.task.update, {
+        taskId,
+        body: {
+          title: "   ",
+        },
+      }),
+    ).rejects.toThrow("Task title cannot be empty");
   });
 
-  // 8. UPDATE NON EXISTING TASK
-  test("update throws if task does not exist", async () => {
+  test("update throws if task not found", async () => {
     await t.mutation(api.task.remove, {
       taskId,
     });
@@ -175,7 +165,6 @@ describe("Task", () => {
     await expect(
       t.mutation(api.task.update, {
         taskId,
-        deviceName: "MacBook",
         body: {
           title: "Updated",
         },
@@ -183,7 +172,9 @@ describe("Task", () => {
     ).rejects.toThrow("Task not found");
   });
 
-  // 9. DELETE TASK
+  // --------------------
+  // REMOVE
+  // --------------------
   test("remove deletes task", async () => {
     await t.mutation(api.task.remove, {
       taskId,
@@ -196,73 +187,41 @@ describe("Task", () => {
     expect(deleted).toBeNull();
   });
 
-  // 10. GET RETURNS NULL AFTER DELETE
-  test("get returns null after deletion", async () => {
+  test("remove throws if task not found", async () => {
     await t.mutation(api.task.remove, {
       taskId,
     });
 
-    const deleted = await t.query(api.task.get, {
-      taskId,
-    });
-
-    expect(deleted).toBeNull();
+    await expect(
+      t.mutation(api.task.remove, {
+        taskId,
+      }),
+    ).rejects.toThrow("Task not found");
   });
 
-  // 11. ACTIVITY IS CREATED WHEN TASK IS CREATED
-  test("create logs activity", async () => {
-    const activities = await t.run(async (ctx) => {
-      return await ctx.db
-        .query("activities")
-        .withIndex("by_task", (q) => q.eq("taskId", taskId))
-        .collect();
+  // --------------------
+  // TRIMMING
+  // --------------------
+  test("create trims task title", async () => {
+    const newTaskId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      taskCode: "TASK-002",
+      title: "   Trimmed Task   ",
+      description: "Test",
+      status: "todo",
+      assignedTo: "emp-2",
+      assignedBy: "manager-1",
+      priority: "low",
+      complexity: "easy",
+      startDate: 1,
+      endDate: 2,
     });
 
-    expect(activities.length).toBe(1);
-    expect(activities[0].kind).toBe("created");
-  });
-
-  // 12. TITLE CHANGE CREATES ACTIVITY
-  test("update title logs activity", async () => {
-    await t.mutation(api.task.update, {
-      taskId,
-      deviceName: "MacBook",
-      body: {
-        title: "New Title",
-      },
+    const task = await t.query(api.task.get, {
+      taskId: newTaskId,
     });
 
-    const activities = await t.run(async (ctx) => {
-      return await ctx.db
-        .query("activities")
-        .withIndex("by_task", (q) => q.eq("taskId", taskId))
-        .collect();
-    });
-
-    expect(
-      activities.some((a) => a.kind === "title_changed"),
-    ).toBe(true);
-  });
-
-  // 13. STATUS CHANGE CREATES ACTIVITY
-  test("update status logs activity", async () => {
-    await t.mutation(api.task.update, {
-      taskId,
-      deviceName: "MacBook",
-      body: {
-        status: "done",
-      },
-    });
-
-    const activities = await t.run(async (ctx) => {
-      return await ctx.db
-        .query("activities")
-        .withIndex("by_task", (q) => q.eq("taskId", taskId))
-        .collect();
-    });
-
-    expect(
-      activities.some((a) => a.kind === "status_changed"),
-    ).toBe(true);
+    expect(task?.title).toBe("Trimmed Task");
   });
 });
