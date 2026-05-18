@@ -3,6 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { InvitationRowActions } from "./InvitationRowActions";
 
 export type InvitationRow = {
   id: string;
@@ -12,7 +13,7 @@ export type InvitationRow = {
   expiresAt: number;
 };
 
-export const invitationColumns: ColumnDef<InvitationRow>[] = [
+const baseColumns: ColumnDef<InvitationRow>[] = [
   {
     accessorKey: "email",
     header: "Email",
@@ -52,3 +53,25 @@ export const invitationColumns: ColumnDef<InvitationRow>[] = [
     ),
   },
 ];
+
+export function createInvitationColumns(options: {
+  organizationId: string;
+  onRequestCancel: (invitation: InvitationRow) => void;
+}): ColumnDef<InvitationRow>[] {
+  return [
+    ...baseColumns,
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <InvitationRowActions
+          invitation={row.original}
+          organizationId={options.organizationId}
+          onRequestCancel={options.onRequestCancel}
+        />
+      ),
+    },
+  ];
+}
+
+export const invitationColumnsWithoutActions = baseColumns;

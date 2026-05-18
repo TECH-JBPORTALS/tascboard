@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "convex/react";
@@ -20,15 +20,53 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { RiArrowRightLine } from "@remixicon/react";
 
-type ViewState =
+type DerivedView =
   | "loading"
   | "not_found"
   | "expired"
   | "already_handled"
   | "email_mismatch"
-  | "ready"
-  | "accepting"
-  | "done";
+  | "sign_in_required"
+  | "ready";
+
+type InvitationPreview = {
+  status: string;
+  email: string;
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string;
+  organizationLogo: string | null;
+  expiresAt: number;
+  role: string | null;
+};
+
+function deriveView(
+  preview: InvitationPreview | null | undefined,
+  sessionEmail: string | undefined,
+): DerivedView {
+  if (preview === undefined) return "loading";
+  if (preview === null) return "not_found";
+
+  if (preview.status === "accepted") return "already_handled";
+
+  if (
+    preview.status === "canceled" ||
+    preview.status === "cancelled" ||
+    preview.status === "rejected"
+  ) {
+    return "already_handled";
+  }
+
+  if (preview.expiresAt < Date.now()) return "expired";
+
+  if (preview.status !== "pending") return "already_handled";
+
+  if (!sessionEmail) return "sign_in_required";
+
+  if (sessionEmail !== preview.email.toLowerCase()) return "email_mismatch";
+
+  return "ready";
+}
 
 export function AcceptInvitationPage() {
   const params = useParams<{ invitationId: string }>();
@@ -38,87 +76,44 @@ export function AcceptInvitationPage() {
     invitationId,
   });
   const { data: session } = authClient.useSession();
-  const [view, setView] = useState<ViewState>("loading");
+  const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const returnUrl = `/accept-invitation/${invitationId}`;
+  const sessionEmail = session?.user.email?.toLowerCase();
 
-  const setState = useCallback(() => {
-    if (preview === undefined) {
-      setView("loading");
-      return;
-    }
-
-    if (preview === null) {
-      setView("not_found");
-      return;
-    }
-
-    if (preview.status === "accepted") {
-      setView("already_handled");
-      return;
-    }
-
-    if (
-      preview.status === "canceled" ||
-      preview.status === "cancelled" ||
-      preview.status === "rejected"
-    ) {
-      setView("already_handled");
-      return;
-    }
-
-    if (preview.expiresAt < Date.now()) {
-      setView("expired");
-      return;
-    }
-
-    if (preview.status !== "pending") {
-      setView("already_handled");
-      return;
-    }
-
-    if (!session?.user) {
-      setView("ready");
-      return;
-    }
-
-    const sessionEmail = session.user.email?.toLowerCase();
-    if (sessionEmail && sessionEmail !== preview.email.toLowerCase()) {
-      setView("email_mismatch");
-      return;
-    }
-
-    setView("ready");
-  }, [preview, session?.user]);
-
-  setState();
+  const view = useMemo(
+    () => deriveView(preview, sessionEmail),
+    [preview, sessionEmail],
+  );
 
   async function handleAccept() {
-    if (!preview || view !== "ready") return;
+    if (!preview || view !== "ready" || isAccepting) return;
 
-    setView("accepting");
+    setIsAccepting(true);
     setError(null);
 
-    const result = await authClient.organization.acceptInvitation({
-      invitationId,
-    });
+    try {
+      const result = await authClient.organization.acceptInvitation({
+        invitationId,
+      });
 
-    if (result.error) {
-      setError(result.error.message ?? "Could not accept invitation");
-      setView("ready");
-      return;
+      if (result.error) {
+        setError(result.error.message ?? "Could not accept invitation");
+        return;
+      }
+
+      await authClient.organization.setActive({
+        organizationId: preview.organizationId,
+      });
+
+      router.replace("/onboarding");
+    } finally {
+      setIsAccepting(false);
     }
-
-    await authClient.organization.setActive({
-      organizationId: preview.organizationId,
-    });
-
-    setView("done");
-    router.replace("/onboarding");
   }
 
-  if (view === "loading" || preview === undefined) {
+  if (view === "loading") {
     return (
       <div className="flex min-h-svh items-center justify-center p-6">
         <Skeleton className="h-64 w-full max-w-md" />
@@ -126,7 +121,7 @@ export function AcceptInvitationPage() {
     );
   }
 
-  if (view === "not_found" || preview === null) {
+  if (preview == null) {
     return (
       <CenteredCard
         title="Invitation not found"
@@ -186,14 +181,13 @@ export function AcceptInvitationPage() {
     );
   }
 
-  if (!session?.user) {
+  if (view === "sign_in_required") {
     const redirect = encodeURIComponent(returnUrl);
     return (
       <CenteredCard
         title={`Join ${preview.organizationName}`}
         description={`Sign in or create an account with ${preview.email} to accept this invitation.`}
         orgName={preview.organizationName}
-        orgLogo={preview.organizationLogo}
         badge="Sign in required"
         action={
           <div className="flex w-full flex-col gap-2">
@@ -242,10 +236,10 @@ export function AcceptInvitationPage() {
         <CardFooter className="flex flex-col gap-2">
           <Button
             className="w-full"
-            disabled={view === "accepting"}
+            disabled={isAccepting}
             onClick={() => void handleAccept()}
           >
-            {view === "accepting" ? "Accepting..." : "Accept invitation"}
+            {isAccepting ? "Accepting..." : "Accept invitation"}
             <RiArrowRightLine />
           </Button>
           <Button variant="ghost" className="w-full" render={<Link href="/" />}>
@@ -262,14 +256,12 @@ function CenteredCard({
   description,
   action,
   orgName,
-  orgLogo,
   badge,
 }: {
   title: string;
   description: string;
   action: React.ReactNode;
   orgName?: string;
-  orgLogo?: string | null;
   badge?: string;
 }) {
   return (

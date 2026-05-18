@@ -8,6 +8,7 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import {
+  getOrganizationContext,
   requireIdentity,
   requireMembership,
   requireOrganization,
@@ -124,6 +125,20 @@ export const getInvitationPreview = query({
   },
 });
 
+export const deleteInvitationRecord = internalMutation({
+  args: { invitationId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.runMutation(components.betterAuth.adapter.deleteOne, {
+      input: {
+        model: "invitation",
+        where: [{ field: "_id", operator: "eq", value: args.invitationId }],
+      },
+    });
+    return null;
+  },
+});
+
 export const ensureProfileAfterInvite = internalMutation({
   args: {
     organizationId: v.string(),
@@ -163,7 +178,10 @@ export const getMyOnboardingStatus = query({
     v.null(),
   ),
   handler: async (ctx) => {
-    const { orgId, userId } = await requireOrganization(ctx);
+    const context = await getOrganizationContext(ctx);
+    if (!context) return null;
+
+    const { orgId, userId } = context;
 
     const profile = await ctx.db
       .query("employeeProfiles")

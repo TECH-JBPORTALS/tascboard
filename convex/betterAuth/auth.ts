@@ -40,6 +40,20 @@ function runMutation(
   ctx: GenericCtx<DataModel>,
   mutation: typeof internal.employees.ensureProfileAfterInvite,
   args: { organizationId: string; userId: string },
+): Promise<unknown>;
+
+function runMutation(
+  ctx: GenericCtx<DataModel>,
+  mutation: typeof internal.employees.deleteInvitationRecord,
+  args: { invitationId: string },
+): Promise<unknown>;
+
+function runMutation(
+  ctx: GenericCtx<DataModel>,
+  mutation:
+    | typeof internal.employees.ensureProfileAfterInvite
+    | typeof internal.employees.deleteInvitationRecord,
+  args: { organizationId: string; userId: string } | { invitationId: string },
 ) {
   if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
     return ctx.runMutation(mutation, args);
@@ -73,10 +87,14 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         },
         organizationHooks: {
           afterAcceptInvitation: async ({ invitation, user }) => {
-            await runMutation(ctx, internal.employees.ensureProfileAfterInvite, {
-              organizationId: invitation.organizationId,
-              userId: user.id,
-            });
+            await runMutation(
+              ctx,
+              internal.employees.ensureProfileAfterInvite,
+              {
+                organizationId: invitation.organizationId,
+                userId: user.id,
+              },
+            );
 
             if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
               await ctx.runMutation(internal.inbox.createInboxItem, {
@@ -88,6 +106,11 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
                 body: "Fill in your profile, government ID, bank details, and certificates to get started.",
               });
             }
+          },
+          afterCancelInvitation: async ({ invitation }) => {
+            await runMutation(ctx, internal.employees.deleteInvitationRecord, {
+              invitationId: invitation.id,
+            });
           },
         },
       }),

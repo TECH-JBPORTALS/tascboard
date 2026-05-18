@@ -19,12 +19,20 @@ export async function requireIdentity(ctx: GenericCtx<DataModel>) {
   return identity as AppUserIdentity;
 }
 
-export async function requireOrganization(ctx: GenericCtx<DataModel>) {
+export async function getOrganizationContext(ctx: GenericCtx<DataModel>) {
   const identity = await requireIdentity(ctx);
 
-  if (!identity.orgId) throw new Error("Unauthorised access!");
+  if (!identity.orgId) return null;
 
   return { orgId: identity.orgId as string, userId: identity.userId };
+}
+
+export async function requireOrganization(ctx: GenericCtx<DataModel>) {
+  const context = await getOrganizationContext(ctx);
+
+  if (!context) throw new Error("Unauthorised access!");
+
+  return context;
 }
 
 export async function requireMembership(ctx: GenericCtx<DataModel>) {

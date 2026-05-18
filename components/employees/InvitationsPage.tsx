@@ -1,24 +1,44 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { authClient } from "@/lib/auth-client";
 import { usePermission } from "@/hooks/use-permission";
+import type { PermissionRequest } from "@/lib/permissions";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  invitationColumns,
+  createInvitationColumns,
+  invitationColumnsWithoutActions,
   type InvitationRow,
 } from "./invitations-columns";
 import { EmployeesDataTable } from "./employees-data-table";
+import { CancelInvitationDialog } from "./CancelInvitationDialog";
+
+const listPermissions: PermissionRequest = { employee: ["list"] };
+const invitePermissions: PermissionRequest = { employee: ["invite"] };
 
 export function InvitationsPage() {
-  const { allowed, isLoading: permissionLoading } = usePermission({
-    employee: ["list"],
-  });
+  const { allowed, isLoading: permissionLoading } =
+    usePermission(listPermissions);
+  const { allowed: canInvite } = usePermission(invitePermissions);
+  const { data: organization } = authClient.useActiveOrganization();
+  const orgId = (organization as { id: string } | null | undefined)?.id;
+
   const invitations = useQuery(
     api.employees.listPendingInvitations,
     allowed ? {} : "skip",
   );
+
+  const [cancelTarget, setCancelTarget] = useState<InvitationRow | null>(null);
+
+  const handleRequestCancel = useCallback((invitation: InvitationRow) => {
+    setCancelTarget(invitation);
+  }, []);
+
+  const handleCloseCancel = useCallback(() => {
+    setCancelTarget(null);
+  }, []);
 
   const rows = useMemo<InvitationRow[]>(() => {
     if (!invitations) return [];
@@ -30,6 +50,16 @@ export function InvitationsPage() {
       expiresAt: inv.expiresAt,
     }));
   }, [invitations]);
+
+  const columns = useMemo(() => {
+    if (canInvite && orgId) {
+      return createInvitationColumns({
+        organizationId: orgId,
+        onRequestCancel: handleRequestCancel,
+      });
+    }
+    return invitationColumnsWithoutActions;
+  }, [canInvite, orgId, handleRequestCancel]);
 
   if (!permissionLoading && !allowed) {
     return (
@@ -53,8 +83,15 @@ export function InvitationsPage() {
           No pending invitations.
         </p>
       ) : (
-        <EmployeesDataTable columns={invitationColumns} data={rows} />
+        <EmployeesDataTable columns={columns} data={rows} />
       )}
+
+      {canInvite ? (
+        <CancelInvitationDialog
+          invitation={cancelTarget}
+          onClose={handleCloseCancel}
+        />
+      ) : null}
     </div>
   );
 }

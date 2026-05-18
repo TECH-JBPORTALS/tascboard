@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import {
+  findOrganizationBySlug,
+  organizationPath,
+  resolveOrganizationDestination,
+  type OrganizationListItem,
+} from "@/lib/organization-membership";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function OrgSlugGuard({ children }: { children: React.ReactNode }) {
@@ -12,16 +18,22 @@ export function OrgSlugGuard({ children }: { children: React.ReactNode }) {
   const { data: organizations, isPending: orgsPending } =
     authClient.useListOrganizations();
 
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+
   useEffect(() => {
-    if (orgsPending) {
+    if (orgsPending || sessionPending) {
       return;
     }
 
-    const orgList = (organizations ?? []) as Array<{ id: string; slug: string }>;
-    const org = orgList.find((item) => item.slug === params.orgSlug);
+    const orgList = (organizations ?? []) as OrganizationListItem[];
+    const org = findOrganizationBySlug(orgList, params.orgSlug);
 
     if (!org) {
-      router.replace("/");
+      const destination = resolveOrganizationDestination(
+        orgList,
+        session?.session.activeOrganizationId,
+      );
+      router.replace(organizationPath(destination));
       return;
     }
 
@@ -31,7 +43,14 @@ export function OrgSlugGuard({ children }: { children: React.ReactNode }) {
       });
       setReady(true);
     })();
-  }, [organizations, orgsPending, params.orgSlug, router]);
+  }, [
+    organizations,
+    orgsPending,
+    params.orgSlug,
+    router,
+    session,
+    sessionPending,
+  ]);
 
   if (!ready) {
     return (

@@ -55,7 +55,7 @@ export function DeleteOrganizationSection() {
       return;
     }
 
-    router.replace("/");
+    router.replace("/select-organization");
     router.refresh();
   }
 

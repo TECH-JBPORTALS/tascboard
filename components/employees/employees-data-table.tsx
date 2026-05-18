@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -30,7 +31,7 @@ export function EmployeesDataTable<TData>({
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
+    getCoreRowModel: useMemo(() => getCoreRowModel(), []),
   });
 
   return (
