@@ -1,0 +1,227 @@
+import { beforeEach, describe, expect, test } from "vitest";
+import { convexTest, TestConvexForDataModel } from "convex-test";
+
+import { api } from "./_generated/api";
+import schema from "./schema";
+import { DataModel, Id } from "./_generated/dataModel";
+
+const modules = import.meta.glob("./**/*.ts");
+
+describe("Task", () => {
+  let t: TestConvexForDataModel<DataModel>;
+
+  let projectId: Id<"projects">;
+  let trackId: Id<"tracks">;
+  let taskId: Id<"tasks">;
+
+  beforeEach(async () => {
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
+    });
+
+    // --------------------
+    // CREATE PROJECT
+    // --------------------
+    projectId = await t.mutation(api.project.create, {
+      name: "Project A",
+      description: "Test project",
+      startDate: 1700000000000,
+      endDate: 1800000000000,
+      status: "active",
+    });
+
+    // --------------------
+    // CREATE TRACK
+    // --------------------
+    trackId = await t.mutation(api.track.create, {
+      name: "Track A",
+      description: "Test track",
+      projectId,
+      trackCode: "TR-001",
+      trackLeaderID: "emp-1",
+      status: "active",
+    });
+
+    // --------------------
+    // CREATE TASK
+    // --------------------
+    taskId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      taskCode: "TASK-001",
+      title: "Initial Task",
+      description: "Task description",
+      status: "todo",
+      assignedTo: "emp-1",
+      assignedBy: "manager-1",
+      priority: "medium",
+      complexity: "easy",
+      startDate: 1700000000000,
+      endDate: 1800000000000,
+    });
+  });
+
+  // --------------------
+  // CREATE
+  // --------------------
+  test("create task", async () => {
+    const task = await t.query(api.task.get, {
+      taskId,
+    });
+
+    expect(task).not.toBeNull();
+
+    expect(task?.title).toBe("Initial Task");
+    expect(task?.status).toBe("todo");
+    expect(task?.priority).toBe("medium");
+  });
+
+  // --------------------
+  // GET
+  // --------------------
+  test("get returns task by id", async () => {
+    const task = await t.query(api.task.get, {
+      taskId,
+    });
+
+    expect(task?._id).toBe(taskId);
+    expect(task?.title).toBe("Initial Task");
+  });
+
+  test("get returns null if task not found", async () => {
+    await t.mutation(api.task.remove, {
+      taskId,
+    });
+
+    const result = await t.query(api.task.get, {
+      taskId,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  test("list returns tasks", async () => {
+    const tasks = await t.query(api.task.list, {});
+  
+    expect(tasks.length).toBeGreaterThan(0);
+  
+    expect(tasks[0]?.title).toBe("Initial Task");
+  });
+  
+  test("list returns empty array if there are no tasks", async () => {
+    const isolated = convexTest(schema, modules).withIdentity({
+      userId: "user-2",
+      orgId: "org-2",
+    });
+  
+    const tasks = await isolated.query(api.task.list, {});
+  
+    expect(tasks).toEqual([]);
+  });
+  // --------------------
+  // UPDATE
+  // --------------------
+  test("update task fields", async () => {
+    await t.mutation(api.task.update, {
+      taskId,
+      body: {
+        title: "Updated Task",
+        description: "Updated description",
+        status: "done",
+        priority: "high",
+        complexity: "hard",
+      },
+    });
+
+    const updated = await t.query(api.task.get, {
+      taskId,
+    });
+
+    expect(updated?.title).toBe("Updated Task");
+    expect(updated?.description).toBe("Updated description");
+    expect(updated?.status).toBe("done");
+    expect(updated?.priority).toBe("high");
+    expect(updated?.complexity).toBe("hard");
+    expect(updated?.updatedAt).toBeTypeOf("number");
+  });
+
+  test("update throws if task title is empty", async () => {
+    await expect(
+      t.mutation(api.task.update, {
+        taskId,
+        body: {
+          title: "   ",
+        },
+      }),
+    ).rejects.toThrow("Task title cannot be empty");
+  });
+
+  test("update throws if task not found", async () => {
+    await t.mutation(api.task.remove, {
+      taskId,
+    });
+
+    await expect(
+      t.mutation(api.task.update, {
+        taskId,
+        body: {
+          title: "Updated",
+        },
+      }),
+    ).rejects.toThrow("Task not found");
+  });
+
+  // --------------------
+  // REMOVE
+  // --------------------
+  test("remove deletes task", async () => {
+    await t.mutation(api.task.remove, {
+      taskId,
+    });
+
+    const deleted = await t.query(api.task.get, {
+      taskId,
+    });
+
+    expect(deleted).toBeNull();
+  });
+
+  test("remove throws if task not found", async () => {
+    await t.mutation(api.task.remove, {
+      taskId,
+    });
+
+    await expect(
+      t.mutation(api.task.remove, {
+        taskId,
+      }),
+    ).rejects.toThrow("Task not found");
+  });
+
+  // --------------------
+  // TRIMMING
+  // --------------------
+  test("create trims task title", async () => {
+    const newTaskId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      taskCode: "TASK-002",
+      title: "   Trimmed Task   ",
+      description: "Test",
+      status: "todo",
+      assignedTo: "emp-2",
+      assignedBy: "manager-1",
+      priority: "low",
+      complexity: "easy",
+      startDate: 1,
+      endDate: 2,
+    });
+
+    const task = await t.query(api.task.get, {
+      taskId: newTaskId,
+    });
+
+    expect(task?.title).toBe("Trimmed Task");
+  });
+});

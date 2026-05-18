@@ -8,10 +8,21 @@
  * @module
  */
 
+import type * as activity from "../activity.js";
+import type * as comment from "../comment.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as inbox from "../inbox.js";
+import type * as label from "../label.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as project from "../project.js";
+import type * as projectTestSchema from "../projectTestSchema.js";
+import type * as schemaTables from "../schemaTables.js";
+import type * as sprint from "../sprint.js";
+import type * as subtask from "../subtask.js";
+import type * as task from "../task.js";
+import type * as testHelpers from "../testHelpers.js";
+import type * as track from "../track.js";
 
 import type {
   ApiFromModules,
@@ -20,10 +31,21 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  activity: typeof activity;
+  comment: typeof comment;
   files: typeof files;
   http: typeof http;
   inbox: typeof inbox;
+  label: typeof label;
   "lib/auth": typeof lib_auth;
+  project: typeof project;
+  projectTestSchema: typeof projectTestSchema;
+  schemaTables: typeof schemaTables;
+  sprint: typeof sprint;
+  subtask: typeof subtask;
+  task: typeof task;
+  testHelpers: typeof testHelpers;
+  track: typeof track;
 }>;
 
 /**
