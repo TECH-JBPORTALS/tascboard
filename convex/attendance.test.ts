@@ -5,162 +5,262 @@ import { api } from "./_generated/api";
 import schema from "./schema";
 import { DataModel, Id } from "./_generated/dataModel";
 
-const modules = import.meta.glob("./**/*.ts");
-
 describe("Attendance", () => {
   let t: TestConvexForDataModel<DataModel>;
-  let employeeId: Id<"employees">;
 
-  beforeEach(async () => {
+  const employeeId = "employee-1";
+4
+  beforeEach(() => {
     t = convexTest(schema, modules).withIdentity({
       userId: "user-1",
       orgId: "org-1",
     });
-
-    employeeId = await t.mutation(api.employee.create, {
-      userId: "user-1",
-      organizationId: "org-1",
-      employeeCode: "EMP001",
-      designation: "Developer",
-      joiningDate: Date.now(),
-      ctc: 100000,
-      leaveQuota: 10,
-      employmentType: "fulltime",
-      workMode: "wfh",
-      workLocation: "Remote",
-      profileImage: "img.png",
-      address: "addr",
-      city: "city",
-      state: "state",
-      country: "country",
-      postal_code: "123",
-      emergencyContactName: "John",
-      emergencyContactPhone: "9999999999",
-      bloodGroup: "O+",
-      status: "active",
-      relievingDate: 0,
-      bankName: "bank",
-      bankAccountNumber: "123",
-      branchName: "branch",
-      ifscCode: "IFSC",
-    });
   });
 
-  test("mark attendance successfully", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-
-    const id = await t.mutation(api.attendance.markAttendance, {
-      employeeId,
-      loginTime,
-    });
-
-    expect(id).toBeDefined();
-  });
-
-  test("throws if attendance already exists", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-
-    await t.mutation(api.attendance.markAttendance, {
-      employeeId,
-      loginTime,
-    });
-
-    await expect(
-      t.mutation(api.attendance.markAttendance, {
+  test("createAttendance creates attendance record", async () => {
+    const attendanceId = await t.mutation(
+      api.attendance.createAttendance,
+      {
         employeeId,
-        loginTime,
-      })
-    ).rejects.toThrow("Attendance already marked for today");
-  });
+        recordDate: 20240518,
+        loginTime: Date.now(),
+        status: "present",
+      },
+    );
 
-  test("mark logout updates record", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-    const logoutTime = new Date("2026-05-18T18:00:00Z").getTime();
+    expect(attendanceId).toBeDefined();
 
-    await t.mutation(api.attendance.markAttendance, {
-      employeeId,
-      loginTime,
-    });
-
-    await t.mutation(api.attendance.markLogout, {
-      employeeId,
-      logoutTime,
-    });
-
-    const records = await t.query(api.attendance.getEmployeeAttendance, {
+    const records = await t.query(api.attendance.listByEmployee, {
       employeeId,
     });
 
     expect(records.length).toBe(1);
-    expect(records[0].logoutTime).toBeDefined();
+    expect(records[0]?.status).toBe("present");
   });
 
-  test("marks half day if worked less than 4 hours", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-    const logoutTime = new Date("2026-05-18T11:00:00Z").getTime();
-
-    await t.mutation(api.attendance.markAttendance, {
+  test("createAttendance prevents duplicate attendance for same date", async () => {
+    await t.mutation(api.attendance.createAttendance, {
       employeeId,
-      loginTime,
-    });
-
-    await t.mutation(api.attendance.markLogout, {
-      employeeId,
-      logoutTime,
-    });
-
-    const records = await t.query(api.attendance.getEmployeeAttendance, {
-      employeeId,
-    });
-
-    expect(records[0].status).toBe("half day");
-  });
-
-  test("list attendance by employee", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-
-    await t.mutation(api.attendance.markAttendance, {
-      employeeId,
-      loginTime,
-    });
-
-    const records = await t.query(api.attendance.getEmployeeAttendance, {
-      employeeId,
-    });
-
-    expect(records.length).toBe(1);
-  });
-
-  test("filter by status", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-
-    await t.mutation(api.attendance.markAttendance, {
-      employeeId,
-      loginTime,
-    });
-
-    const result = await t.query(api.attendance.filterAttendance, {
+      recordDate: 20240518,
+      loginTime: Date.now(),
       status: "present",
     });
 
-    expect(result.length).toBeGreaterThan(0);
+    await expect(
+      t.mutation(api.attendance.createAttendance, {
+        employeeId,
+        recordDate: 20240518,
+        loginTime: Date.now(),
+        status: "late",
+      }),
+    ).rejects.toThrow("Attendance already exists for this date");
   });
 
-  test("attendance report returns summary", async () => {
-    const loginTime = new Date("2026-05-18T09:00:00Z").getTime();
-
-    await t.mutation(api.attendance.markAttendance, {
+  test("listByEmployee returns employee attendance records", async () => {
+    await t.mutation(api.attendance.createAttendance, {
       employeeId,
-      loginTime,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
     });
 
-    const report = await t.query(api.attendance.getAttendanceReport, {
+    await t.mutation(api.attendance.createAttendance, {
       employeeId,
-      startDate: loginTime - 1000,
-      endDate: loginTime + 1000,
+      recordDate: 20240519,
+      loginTime: Date.now(),
+      status: "late",
     });
 
-    expect(report.summary.totalDays).toBe(1);
-    expect(report.records.length).toBe(1);
+    const records = await t.query(api.attendance.listByEmployee, {
+      employeeId,
+    });
+
+    expect(records.length).toBe(2);
   });
+
+  test("getAttendanceByDate returns attendance record", async () => {
+    await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    });
+
+    const attendance = await t.query(api.attendance.getAttendanceByDate, {
+      employeeId,
+      recordDate: 20240518,
+    });
+
+    expect(attendance).not.toBeNull();
+    expect(attendance?.status).toBe("present");
+  });
+
+  test("getAttendanceByDate returns null for missing record", async () => {
+    const attendance = await t.query(api.attendance.getAttendanceByDate, {
+      employeeId,
+      recordDate: 20240518,
+    });
+
+    expect(attendance).toBeNull();
+  });
+
+  test("updateAttendance updates attendance record", async () => {
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    });
+
+    await t.mutation(api.attendance.updateAttendance, {
+      attendanceId,
+      status: "half day",
+    });
+
+    const attendance = await t.query(api.attendance.getAttendanceByDate, {
+      employeeId,
+      recordDate: 20240518,
+    });
+
+    expect(attendance?.status).toBe("half day");
+  });
+
+  test("markLogout updates logoutTime", async () => {
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    });
+
+    const logoutTime = Date.now();
+
+    await t.mutation(api.attendance.markLogout, {
+      attendanceId,
+      logoutTime,
+    });
+
+    const attendance = await t.query(api.attendance.getAttendanceByDate, {
+      employeeId,
+      recordDate: 20240518,
+    });
+
+    expect(attendance?.logoutTime).toBe(logoutTime);
+  });
+
+  test("deleteAttendance removes attendance record", async () => {
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    });
+
+    await t.mutation(api.attendance.deleteAttendance, {
+      attendanceId,
+    });
+
+    const attendance = await t.query(api.attendance.getAttendanceByDate, {
+      employeeId,
+      recordDate: 20240518,
+    });
+
+    expect(attendance).toBeNull();
+  });
+
+  test("listTodayAttendance returns records within date range", async () => {
+    await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 100,
+      loginTime: Date.now(),
+      status: "present",
+    });
+
+    await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 200,
+      loginTime: Date.now(),
+      status: "late",
+    });
+
+    const records = await t.query(api.attendance.listTodayAttendance, {
+      startOfDay: 50,
+      endOfDay: 150,
+    });
+
+    expect(records.length).toBe(1);
+    expect(records[0]?.recordDate).toBe(100);
+  });
+
+  test("updateAttendance throws error for invalid attendance", async () => {
+    const attendanceId = await t.mutation(
+      api.attendance.createAttendance,
+      {
+        employeeId,
+        recordDate: 20240518,
+        loginTime: Date.now(),
+        status: "present",
+      },
+    );
+  
+    await t.mutation(api.attendance.deleteAttendance, {
+      attendanceId,
+    });
+  
+    await expect(
+      t.mutation(api.attendance.updateAttendance, {
+        attendanceId,
+        status: "present",
+      }),
+    ).rejects.toThrow("Attendance record not found");
+  });
+
+test("deleteAttendance throws error for invalid attendance", async () => {
+  const attendanceId = await t.mutation(
+    api.attendance.createAttendance,
+    {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    },
+  );
+
+  await t.mutation(api.attendance.deleteAttendance, {
+    attendanceId,
+  });
+
+  await expect(
+    t.mutation(api.attendance.deleteAttendance, {
+      attendanceId,
+    }),
+  ).rejects.toThrow("Attendance record not found");
 });
+
+test("markLogout throws error for invalid attendance", async () => {
+  const attendanceId = await t.mutation(
+    api.attendance.createAttendance,
+    {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    },
+  );
+
+  // delete it first so it becomes "missing"
+  await t.mutation(api.attendance.deleteAttendance, {
+    attendanceId,
+  });
+
+  // now second call triggers your real error
+  await expect(
+    t.mutation(api.attendance.markLogout, {
+      attendanceId,
+      logoutTime: Date.now(),
+    }),
+  ).rejects.toThrow("Attendance record not found");
+});
+});
+
+const modules = import.meta.glob("./**/*.ts");

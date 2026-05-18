@@ -98,7 +98,7 @@ export default defineSchema({
   }).index("by_project", { fields: ["projectId"] }),
 
   employeePerformancePoints: defineTable({
-    employeeId: v.id("employees"),
+    employeeId: v.id("employee"),
     taskId: v.id("tasks"),
     points: v.number(),
     awardedBy: v.string(),
@@ -109,7 +109,7 @@ export default defineSchema({
     .index("by_task", ["taskId"]),
 
   attendance: defineTable({
-    employeeId: v.id("employees"),
+    employeeId: v.string(),
     recordDate: v.number(),
     loginTime: v.number(),
     logoutTime: v.optional(v.number()),
