@@ -5,11 +5,27 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useParams } from "next/navigation";
 import { Button } from "../ui/button";
-import { RiArchiveLine } from "@remixicon/react";
+import {
+  RiArchiveLine,
+  RiDeleteBinLine,
+  RiInboxUnarchiveLine,
+} from "@remixicon/react";
 import { useEffect } from "react";
 import { Spinner } from "../ui/spinner";
 import { InboxOnboardingPanel } from "./InboxOnboardingPanel";
 import { motion } from "motion/react";
+import { useInbox } from "./InboxContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 function kindLabel(kind: Doc<"inboxItems">["kind"]): string {
   switch (kind) {
@@ -34,18 +50,19 @@ export function InboxPage() {
     {},
   );
   const markReadMutation = useMutation(api.inbox.markRead);
-  const archiveMutation = useMutation(api.inbox.archive);
+  const { archiveItem, unarchiveItem, permanentlyDeleteItem } = useInbox();
 
   const isOnboardingMessage = selected?.kind === "onboarding";
   const showOnboardingWizard =
     isOnboardingMessage && onboardingStatus?.onboardingStatus === "pending";
+  const isArchived = selected?.archived === true;
 
   useEffect(() => {
-    if (!selected || selected.read || showOnboardingWizard) {
+    if (!selected || selected.read || showOnboardingWizard || isArchived) {
       return;
     }
     void markReadMutation({ itemId: selected._id });
-  }, [selected, markReadMutation, showOnboardingWizard]);
+  }, [selected, markReadMutation, showOnboardingWizard, isArchived]);
 
   return (
     <motion.div className="hidden min-h-0 min-w-0 flex-1 flex-col bg-muted/20 md:flex">
@@ -63,6 +80,14 @@ export function InboxPage() {
         />
       ) : (
         <>
+          {isArchived ? (
+            <div
+              className="shrink-0 border-b border-amber-500/20 bg-amber-500/10 px-6 py-2.5 text-sm text-amber-950 dark:text-amber-100"
+              role="status"
+            >
+              This message has been archived.
+            </div>
+          ) : null}
           <div className="shrink-0 space-y-3 border-b border-border/60 bg-background/80 px-6 py-5 backdrop-blur-sm">
             <motion.div
               className="flex flex-wrap items-center gap-2"
@@ -103,16 +128,67 @@ export function InboxPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              className="h-8"
-              onClick={() => void archiveMutation({ itemId: selected._id })}
-            >
-              <RiArchiveLine className="size-4" />
-              Archive
-            </Button>
+            {isArchived ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  className="h-8"
+                  onClick={() => void unarchiveItem(selected._id)}
+                >
+                  <RiInboxUnarchiveLine className="size-4" />
+                  Unarchive
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-destructive hover:text-destructive"
+                      />
+                    }
+                  >
+                    <RiDeleteBinLine className="size-4" />
+                    Remove permanently
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Delete this message permanently?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        onClick={() =>
+                          void permanentlyDeleteItem(selected._id)
+                        }
+                      >
+                        Remove permanently
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                className="h-8"
+                onClick={() => void archiveItem(selected._id)}
+              >
+                <RiArchiveLine className="size-4" />
+                Archive
+              </Button>
+            )}
           </motion.div>
         </>
       )}
