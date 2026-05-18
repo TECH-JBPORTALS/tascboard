@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -11,53 +11,117 @@ import {
 } from "@/lib/organization-membership";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function OrgSlugGuard({ children }: { children: React.ReactNode }) {
+function OrganizationRouteSkeleton() {
+  return (
+    <div className="flex h-svh flex-col items-center justify-center gap-3 p-6">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-4 w-64" />
+    </div>
+  );
+}
+
+type OrgSlugGuardProps = {
+  /** Omit on `/` (home); provide under `/[orgSlug]/*` layouts. */
+  children?: ReactNode;
+};
+
+/**
+ * Organization routing for authenticated app shell:
+ * - `/` — resolve destination (create / select / active org) and redirect
+ * - `/[orgSlug]/*` — ensure slug is valid, sync active org, then render children
+ */
+export function OrgSlugGuard({ children }: OrgSlugGuardProps) {
   const router = useRouter();
-  const params = useParams<{ orgSlug: string }>();
-  const [ready, setReady] = useState(false);
+  const params = useParams<{ orgSlug?: string }>();
+  const orgSlug = params.orgSlug;
+  const isHomeRoute = orgSlug === undefined;
+
   const { data: organizations, isPending: orgsPending } =
     authClient.useListOrganizations();
-
   const { data: session, isPending: sessionPending } = authClient.useSession();
 
+  const activeOrganizationId = session?.session.activeOrganizationId;
+  const isLoading = orgsPending || sessionPending;
+
+  const orgList = useMemo(
+    () => (organizations ?? []) as OrganizationListItem[],
+    [organizations],
+  );
+
+  const org = useMemo(
+    () =>
+      isHomeRoute || isLoading
+        ? undefined
+        : findOrganizationBySlug(orgList, orgSlug),
+    [isHomeRoute, isLoading, orgList, orgSlug],
+  );
+
+  const isActive =
+    !isHomeRoute && org !== undefined && activeOrganizationId === org.id;
+
   useEffect(() => {
-    if (orgsPending || sessionPending) {
+    if (isLoading) {
       return;
     }
 
-    const orgList = (organizations ?? []) as OrganizationListItem[];
-    const org = findOrganizationBySlug(orgList, params.orgSlug);
+    if (isHomeRoute) {
+      const destination = resolveOrganizationDestination(
+        orgList,
+        activeOrganizationId,
+      );
+
+      if (destination.type === "organization") {
+        const { id, slug } = destination.organization;
+
+        if (activeOrganizationId === id) {
+          router.replace(`/${slug}`);
+          return;
+        }
+
+        void authClient.organization
+          .setActive({ organizationId: id })
+          .then(() => {
+            router.replace(`/${slug}`);
+          });
+        return;
+      }
+
+      router.replace(organizationPath(destination));
+      return;
+    }
 
     if (!org) {
       const destination = resolveOrganizationDestination(
         orgList,
-        session?.session.activeOrganizationId,
+        activeOrganizationId,
       );
       router.replace(organizationPath(destination));
       return;
     }
 
-    void (async () => {
-      await authClient.organization.setActive({
-        organizationSlug: params.orgSlug,
-      });
-      setReady(true);
-    })();
+    if (activeOrganizationId === org.id) {
+      return;
+    }
+
+    void authClient.organization.setActive({
+      organizationSlug: orgSlug,
+    });
   }, [
-    organizations,
-    orgsPending,
-    params.orgSlug,
+    activeOrganizationId,
+    isHomeRoute,
+    isLoading,
+    org,
+    orgList,
+    orgSlug,
     router,
-    session,
-    sessionPending,
   ]);
 
-  if (!ready) {
-    return (
-      <div className="flex h-svh items-center justify-center p-6">
-        <Skeleton className="h-8 w-48" />
-      </div>
-    );
+  if (isHomeRoute) {
+    return <OrganizationRouteSkeleton />;
+  }
+
+  if (isLoading || !org || !isActive) {
+    return <OrganizationRouteSkeleton />;
   }
 
   return <>{children}</>;

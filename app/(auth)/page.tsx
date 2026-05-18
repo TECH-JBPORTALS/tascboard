@@ -1,5 +1,5 @@
-import { HomeRedirect } from "@/components/organization/HomeRedirect";
+import { OrgSlugGuard } from "@/components/organization/OrgSlugGuard";
 
 export default function Page() {
-  return <HomeRedirect />;
+  return <OrgSlugGuard />;
 }
