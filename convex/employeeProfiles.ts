@@ -280,7 +280,7 @@ export const completeOnboarding = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const { employee } = await requireMembership(ctx);
+    const { orgId, userId, employee } = await requireMembership(ctx);
     const profile = await getOrCreateMyProfile(ctx, employee._id);
 
     if (
@@ -309,6 +309,26 @@ export const completeOnboarding = mutation({
       onboardingStatus: "completed",
       onboardingStep: 4,
     });
+
+    const inboxItems = await ctx.db
+      .query("inboxItems")
+      .withIndex("by_org_recipient_archived", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .eq("recipientUserId", userId)
+          .eq("archived", false),
+      )
+      .take(20);
+
+    for (const item of inboxItems) {
+      if (item.kind !== "onboarding") continue;
+      await ctx.db.patch(item._id, {
+        read: true,
+        archived: true,
+        snippet: "Profile complete — you're all set",
+        body: "Thanks for completing your employee profile. Your details are on file and your team can reach you when needed.",
+      });
+    }
 
     return null;
   },

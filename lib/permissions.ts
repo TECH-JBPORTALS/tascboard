@@ -29,7 +29,7 @@ export const admin = ac.newRole({
   settings: ["read", "update"],
 });
 
-export const member = ac.newRole({
+export const employee = ac.newRole({
   ...memberAc.statements,
   employee: ["read"],
   attendance: ["read"],
@@ -39,7 +39,7 @@ export const member = ac.newRole({
 export const orgRoles = {
   owner,
   admin,
-  member,
+  employee,
 } as const;
 
 export type OrgRole = keyof typeof orgRoles;
@@ -52,7 +52,8 @@ export function checkRolePermission(
   role: string,
   permissions: PermissionRequest,
 ): boolean {
-  const roleKey = role.split(",")[0]?.trim() as OrgRole;
+  const raw = role.split(",")[0]?.trim();
+  const roleKey = (raw === "member" ? "employee" : raw) as OrgRole;
   const roleDef = orgRoles[roleKey];
   if (!roleDef) {
     return false;

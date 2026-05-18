@@ -31,8 +31,8 @@ function StatusIndicator({ active }: { active: boolean }) {
 
 export const employeeColumns: ColumnDef<EmployeeRow>[] = [
   {
-    id: "member",
-    header: "Member",
+    id: "employee",
+    header: "Employee",
     cell: ({ row }) => (
       <div className="flex min-w-0 items-center gap-3 py-1">
         <UserAvatar

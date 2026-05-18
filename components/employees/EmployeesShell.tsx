@@ -26,7 +26,7 @@ export function EmployeesShell({ children }: { children: React.ReactNode }) {
       <PageHeader
         icon={<RiTeamLine />}
         title="Employees"
-        description="Manage organization members and invitations"
+        description="Manage employees and invitations"
         actions={
           org?.id ? (
             <PermissionGate permissions={{ employee: ["invite"] }}>

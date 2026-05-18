@@ -8,7 +8,7 @@ import authConfig from "../auth.config";
 import { organization } from "better-auth/plugins";
 import authSchema from "./schema";
 import { components, internal } from "../_generated/api";
-import { ac, admin, member, owner } from "../../lib/permissions";
+import { ac, admin, employee, owner } from "../../lib/permissions";
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
@@ -75,7 +75,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     plugins: [
       organization({
         ac,
-        roles: { owner, admin, member },
+        roles: { owner, admin, employee },
         async sendInvitationEmail(data) {
           await runAction(ctx, internal.emails.processInvitationEmail, {
             organizationId: data.organization.id,
@@ -100,10 +100,10 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
               await ctx.runMutation(internal.inbox.createInboxItem, {
                 organizationId: invitation.organizationId,
                 recipientUserId: user.id,
-                kind: "system",
-                title: "Welcome to the team",
-                snippet: "Complete your employee onboarding",
-                body: "Fill in your profile, government ID, bank details, and certificates to get started.",
+                kind: "onboarding",
+                title: "Complete your employee profile",
+                snippet: "A few details to get you started — takes about 5 minutes",
+                body: "Welcome aboard. Complete your profile below so payroll, compliance, and your team have what they need.",
               });
             }
           },

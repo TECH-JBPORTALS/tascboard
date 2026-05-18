@@ -26,7 +26,7 @@ const baseColumns: ColumnDef<InvitationRow>[] = [
     header: "Role",
     cell: ({ row }) => (
       <Badge variant="secondary" className="capitalize">
-        {row.original.role ?? "member"}
+        {row.original.role ?? "employee"}
       </Badge>
     ),
   },

@@ -68,7 +68,7 @@ export function InviteEmployeeDialog({
       try {
         const inviteResult = await authClient.organization.inviteMember({
           email,
-          role: "member",
+          role: "employee",
           organizationId,
         });
 

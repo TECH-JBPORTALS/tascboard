@@ -7,6 +7,7 @@ import {
   RiMailLine,
   RiSearch2Line,
   RiInbox2Fill,
+  RiSparklingLine,
 } from "@remixicon/react";
 import {
   InputGroup,
@@ -54,6 +55,8 @@ function kindIcon(kind: InboxItem["kind"]) {
       return <RiChat3Line className={className} />;
     case "invite":
       return <RiMailLine className={className} />;
+    case "onboarding":
+      return <RiSparklingLine className={cn(className, "text-primary")} />;
     default:
       return <RiNotification3Line className={className} />;
   }
@@ -67,6 +70,15 @@ export function InboxSidebar() {
     orgSlug: string;
   }>();
   const router = useRouter();
+
+  const onboardingInboxId = useQuery(
+    api.inbox.getOnboardingInboxItemId,
+    organizationId ? {} : "skip",
+  );
+  const onboardingStatus = useQuery(
+    api.employees.profile.getMyOnboardingStatus,
+    organizationId ? {} : "skip",
+  );
 
   const items = useQuery(
     api.inbox.list,
@@ -97,7 +109,21 @@ export function InboxSidebar() {
       .filter((g) => g.items.length > 0);
   }, [items]);
 
-  // Seed welcome messages
+  useEffect(() => {
+    if (!organizationId || !orgSlug) return;
+    if (inboxItemId) return;
+    if (onboardingStatus?.onboardingStatus !== "pending") return;
+    if (!onboardingInboxId) return;
+    router.replace(`/${orgSlug}/in/${onboardingInboxId}`);
+  }, [
+    organizationId,
+    orgSlug,
+    inboxItemId,
+    onboardingInboxId,
+    onboardingStatus?.onboardingStatus,
+    router,
+  ]);
+
   useEffect(() => {
     if (!organizationId) {
       return;

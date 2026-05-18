@@ -2,7 +2,7 @@ export {
   ac,
   admin,
   checkRolePermission,
-  member,
+  employee,
   orgRoles,
   owner,
   statement,

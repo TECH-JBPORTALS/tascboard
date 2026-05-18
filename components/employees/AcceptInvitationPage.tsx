@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQuery } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -71,6 +71,7 @@ function deriveView(
 export function AcceptInvitationPage() {
   const params = useParams<{ invitationId: string }>();
   const router = useRouter();
+  const convex = useConvex();
   const invitationId = params.invitationId;
   const preview = useQuery(api.employees.auth.getInvitationPreview, {
     invitationId,
@@ -107,7 +108,18 @@ export function AcceptInvitationPage() {
         organizationId: preview.organizationId,
       });
 
-      router.replace("/onboarding");
+      const onboardingInboxId = await convex.query(
+        api.inbox.getOnboardingInboxItemId,
+        {},
+      );
+
+      if (onboardingInboxId) {
+        router.replace(
+          `/${preview.organizationSlug}/in/${onboardingInboxId}`,
+        );
+      } else {
+        router.replace(`/${preview.organizationSlug}`);
+      }
     } finally {
       setIsAccepting(false);
     }
@@ -228,7 +240,7 @@ export function AcceptInvitationPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-center text-sm text-muted-foreground">
           <Badge variant="secondary" className="capitalize">
-            {preview.role ?? "member"}
+            {preview.role ?? "employee"}
           </Badge>
           <p>Invited email: {preview.email}</p>
           {error ? <p className="text-destructive">{error}</p> : null}

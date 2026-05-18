@@ -8,6 +8,7 @@ const inboxKindValidator = v.union(
   v.literal("comment"),
   v.literal("invite"),
   v.literal("system"),
+  v.literal("onboarding"),
 );
 
 const inboxItemReturn = v.object({
@@ -84,15 +85,40 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id("inboxItems") },
+  returns: v.union(inboxItemReturn, v.null()),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
+    const { userId } = await requireIdentity(ctx);
 
-    const unread = await ctx.db
+    const item = await ctx.db.get(args.id);
+    if (!item || item.recipientUserId !== userId) {
+      return null;
+    }
+
+    return item;
+  },
+});
+
+/** Latest onboarding inbox item for the active org (used after accepting an invite). */
+export const getOnboardingInboxItemId = query({
+  args: {},
+  returns: v.union(v.id("inboxItems"), v.null()),
+  handler: async (ctx) => {
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    const items = await ctx.db
       .query("inboxItems")
-      .withIndex("by_id", (q) => q.eq("_id", args.id))
-      .first();
+      .withIndex("by_org_recipient_archived", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .eq("recipientUserId", userId)
+          .eq("archived", false),
+      )
+      .order("desc")
+      .take(20);
 
-    return unread;
+    const onboarding = items.find((item) => item.kind === "onboarding");
+    return onboarding?._id ?? null;
   },
 });
 
@@ -204,7 +230,11 @@ export const seedWelcomeItems = mutation({
           .eq("recipientUserId", userId)
           .eq("archived", false),
       )
-      .take(1);
+      .take(20);
+
+    if (existing.some((item) => item.kind === "onboarding")) {
+      return null;
+    }
 
     if (existing.length > 0) {
       return null;
@@ -248,7 +278,7 @@ export const seedWelcomeItems = mutation({
         recipientUserId: userId,
         kind: "invite",
         title: "Invite: Product team workspace",
-        snippet: "You’ve been invited as a member",
+        snippet: "You’ve been invited as an employee",
         body: "You have access to shared projects and the product roadmap. Say hi in #general when you’re in.",
         read: true,
         archived: false,

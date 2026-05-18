@@ -12,22 +12,19 @@ export function EmployeesPage() {
   const { allowed, isLoading: permissionLoading } = usePermission({
     employee: ["list"],
   });
-  const members = useQuery(
-    api.employees.auth.list,
-    allowed ? {} : "skip",
-  );
+  const employees = useQuery(api.employees.auth.list, allowed ? {} : "skip");
 
   const rows = useMemo<EmployeeRow[]>(() => {
-    if (!members) return [];
-    return members.map((member) => ({
-      id: member.id,
-      name: member.name,
-      email: member.email,
-      image: member.image,
-      role: member.role,
-      active: member.active,
+    if (!employees) return [];
+    return employees.map((employee) => ({
+      id: employee.id,
+      name: employee.name,
+      email: employee.email,
+      image: employee.image,
+      role: employee.role,
+      active: employee.active,
     }));
-  }, [members]);
+  }, [employees]);
 
   if (!permissionLoading && !allowed) {
     return (
@@ -41,14 +38,14 @@ export function EmployeesPage() {
 
   return (
     <div className="flex flex-1 flex-col p-4 md:p-6">
-      {members === undefined ? (
+      {employees === undefined ? (
         <div className="space-y-3">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
         </div>
-      ) : members.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No members yet.</p>
+      ) : employees.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No employees yet.</p>
       ) : (
         <EmployeesDataTable
           columns={employeeColumns}

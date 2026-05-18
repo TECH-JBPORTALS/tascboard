@@ -24,7 +24,7 @@ export const InvitationRowActions = memo(function InvitationRowActions({
     setError(null);
     setPending("resend");
     try {
-      const role = (invitation.role ?? "member") as OrgRole;
+      const role = (invitation.role ?? "employee") as OrgRole;
       const result = await authClient.organization.inviteMember({
         email: invitation.email,
         role,
