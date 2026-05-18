@@ -93,12 +93,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               }
             | {
                 data: {
+                  active: boolean;
                   createdAt: number;
                   organizationId: string;
                   role: string;
                   userId: string;
                 };
-                model: "member";
+                model: "employee";
               }
             | {
                 data: {
@@ -310,7 +311,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 }>;
               }
             | {
-                model: "member";
+                model: "employee";
                 where?: Array<{
                   connector?: "AND" | "OR";
                   field:
@@ -318,6 +319,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userId"
                     | "role"
                     | "createdAt"
+                    | "active"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -604,7 +606,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 }>;
               }
             | {
-                model: "member";
+                model: "employee";
                 where?: Array<{
                   connector?: "AND" | "OR";
                   field:
@@ -612,6 +614,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userId"
                     | "role"
                     | "createdAt"
+                    | "active"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -719,7 +722,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "account"
             | "verification"
             | "organization"
-            | "member"
+            | "employee"
             | "invitation"
             | "jwks";
           offset?: number;
@@ -772,7 +775,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "account"
             | "verification"
             | "organization"
-            | "member"
+            | "employee"
             | "invitation"
             | "jwks";
           select?: Array<string>;
@@ -1034,8 +1037,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 }>;
               }
             | {
-                model: "member";
+                model: "employee";
                 update: {
+                  active?: boolean;
                   createdAt?: number;
                   organizationId?: string;
                   role?: string;
@@ -1048,6 +1052,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userId"
                     | "role"
                     | "createdAt"
+                    | "active"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -1396,8 +1401,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 }>;
               }
             | {
-                model: "member";
+                model: "employee";
                 update: {
+                  active?: boolean;
                   createdAt?: number;
                   organizationId?: string;
                   role?: string;
@@ -1410,6 +1416,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "userId"
                     | "role"
                     | "createdAt"
+                    | "active"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:

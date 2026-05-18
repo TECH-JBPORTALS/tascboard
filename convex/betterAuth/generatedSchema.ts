@@ -75,11 +75,12 @@ export const tables = {
   })
     .index("name", ["name"])
     .index("slug", ["slug"]),
-  member: defineTable({
+  employee: defineTable({
     organizationId: v.string(),
     userId: v.string(),
     role: v.string(),
     createdAt: v.number(),
+    active: v.boolean(),
   })
     .index("organizationId", ["organizationId"])
     .index("userId", ["userId"])

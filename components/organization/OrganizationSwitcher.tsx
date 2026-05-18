@@ -124,7 +124,7 @@ export function OrganizationSwitcher() {
                 const metadata = parseOrganizationMetadata(org.metadata);
                 return (
                   <CommandItem
-                    onClick={() => handleOrganizationChange(org.slug)}
+                    onSelect={() => handleOrganizationChange(org.slug)}
                     key={org.id}
                     value={org.slug}
                   >

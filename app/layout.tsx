@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { getToken } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +34,7 @@ export default async function RootLayout({
     <html
       lang="en"
       className={cn(
-        "font-sans antialiased",
+        "font-sans antialiased dark",
         ibmPlexSans.variable,
         jetbrainsMono.variable,
       )}
@@ -41,6 +42,7 @@ export default async function RootLayout({
       <body>
         <ConvexClientProvider initialToken={token}>
           {children}
+          <Toaster />
         </ConvexClientProvider>
       </body>
     </html>

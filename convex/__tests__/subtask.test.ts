@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
-
-const modules = import.meta.glob("./**/*.ts");
+import { api } from "../_generated/api";
+import schema from "../schema";
+import { DataModel, Id } from "../_generated/dataModel";
+import { modules } from "./testModules";
 
 describe("Subtask", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -85,9 +84,7 @@ describe("Subtask", () => {
       taskId,
     });
 
-    expect(
-      subtasks.some((s) => s.title === "Trimmed Title"),
-    ).toBe(true);
+    expect(subtasks.some((s) => s.title === "Trimmed Title")).toBe(true);
   });
 
   test("create throws if title is empty", async () => {

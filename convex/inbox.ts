@@ -8,6 +8,7 @@ const inboxKindValidator = v.union(
   v.literal("comment"),
   v.literal("invite"),
   v.literal("system"),
+  v.literal("onboarding"),
 );
 
 const inboxItemReturn = v.object({
@@ -84,15 +85,40 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id("inboxItems") },
+  returns: v.union(inboxItemReturn, v.null()),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
+    const { userId } = await requireIdentity(ctx);
 
-    const unread = await ctx.db
+    const item = await ctx.db.get(args.id);
+    if (!item || item.recipientUserId !== userId) {
+      return null;
+    }
+
+    return item;
+  },
+});
+
+/** Latest onboarding inbox item for the active org (used after accepting an invite). */
+export const getOnboardingInboxItemId = query({
+  args: {},
+  returns: v.union(v.id("inboxItems"), v.null()),
+  handler: async (ctx) => {
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    const items = await ctx.db
       .query("inboxItems")
-      .withIndex("by_id", (q) => q.eq("_id", args.id))
-      .first();
+      .withIndex("by_org_recipient_archived", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .eq("recipientUserId", userId)
+          .eq("archived", false),
+      )
+      .order("desc")
+      .take(20);
 
-    return unread;
+    const onboarding = items.find((item) => item.kind === "onboarding");
+    return onboarding?._id ?? null;
   },
 });
 
@@ -148,6 +174,26 @@ export const markUnread = mutation({
   },
 });
 
+export const listArchived = query({
+  args: {},
+  returns: v.array(inboxItemReturn),
+  handler: async (ctx) => {
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    return await ctx.db
+      .query("inboxItems")
+      .withIndex("by_org_recipient_archived", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .eq("recipientUserId", userId)
+          .eq("archived", true),
+      )
+      .order("desc")
+      .take(100);
+  },
+});
+
 export const archive = mutation({
   args: { itemId: v.id("inboxItems") },
   returns: v.null(),
@@ -160,6 +206,64 @@ export const archive = mutation({
     }
     await ctx.db.patch(args.itemId, { archived: true });
     return null;
+  },
+});
+
+export const unarchive = mutation({
+  args: { itemId: v.id("inboxItems") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { userId } = await requireIdentity(ctx);
+
+    const doc = await ctx.db.get(args.itemId);
+    if (!doc || doc.recipientUserId !== userId) {
+      throw new Error("Not found");
+    }
+    await ctx.db.patch(args.itemId, { archived: false });
+    return null;
+  },
+});
+
+export const permanentlyDelete = mutation({
+  args: { itemId: v.id("inboxItems") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { userId } = await requireIdentity(ctx);
+
+    const doc = await ctx.db.get(args.itemId);
+    if (!doc || doc.recipientUserId !== userId) {
+      throw new Error("Not found");
+    }
+    if (!doc.archived) {
+      throw new Error("Only archived messages can be permanently deleted");
+    }
+    await ctx.db.delete(args.itemId);
+    return null;
+  },
+});
+
+export const deleteAllArchived = mutation({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const { userId } = await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    const archived = await ctx.db
+      .query("inboxItems")
+      .withIndex("by_org_recipient_archived", (q) =>
+        q
+          .eq("organizationId", orgId)
+          .eq("recipientUserId", userId)
+          .eq("archived", true),
+      )
+      .take(100);
+
+    for (const item of archived) {
+      await ctx.db.delete(item._id);
+    }
+
+    return archived.length;
   },
 });
 
@@ -204,7 +308,11 @@ export const seedWelcomeItems = mutation({
           .eq("recipientUserId", userId)
           .eq("archived", false),
       )
-      .take(1);
+      .take(20);
+
+    if (existing.some((item) => item.kind === "onboarding")) {
+      return null;
+    }
 
     if (existing.length > 0) {
       return null;
@@ -248,7 +356,7 @@ export const seedWelcomeItems = mutation({
         recipientUserId: userId,
         kind: "invite",
         title: "Invite: Product team workspace",
-        snippet: "You’ve been invited as a member",
+        snippet: "You’ve been invited as an employee",
         body: "You have access to shared projects and the product roadmap. Say hi in #general when you’re in.",
         read: true,
         archived: false,

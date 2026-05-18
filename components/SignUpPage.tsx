@@ -23,7 +23,7 @@ import {
 } from "./ui/input-group";
 import { useState } from "react";
 import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 const signUpSchema = z.object({
@@ -35,6 +35,8 @@ const signUpSchema = z.object({
 export function SignUpPage() {
   const [show, setShow] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -57,7 +59,11 @@ export function SignUpPage() {
           return;
         }
 
-        router.refresh();
+        if (redirect) {
+          router.replace(redirect);
+        } else {
+          router.refresh();
+        }
       });
   }
 

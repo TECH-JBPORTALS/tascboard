@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
-
-const modules = import.meta.glob("./**/*.ts");
+import { api } from "../_generated/api";
+import schema from "../schema";
+import { DataModel, Id } from "../_generated/dataModel";
+import { modules } from "./testModules";
 
 describe("Project", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -139,11 +138,9 @@ describe("Project", () => {
 
     expect(projects.length).toBeGreaterThanOrEqual(2);
 
-    expect(
-      projects.some((x) =>
-        x.name.includes("Employee Attendance"),
-      ),
-    ).toBe(true);
+    expect(projects.some((x) => x.name.includes("Employee Attendance"))).toBe(
+      true,
+    );
   });
 
   test("seedStarterProjects is idempotent", async () => {
@@ -167,12 +164,12 @@ describe("Project", () => {
       endDate: 2,
       status: "active",
     });
-  
+
     const projects = await t.query(api.project.list, {});
-  
+
     expect(projects.length).toBe(2);
-  
-    expect(projects.every(p => p.organizationId === "org-1")).toBe(true);
+
+    expect(projects.every((p) => p.organizationId === "org-1")).toBe(true);
   });
 
   test("users cannot access another organization's project", async () => {
