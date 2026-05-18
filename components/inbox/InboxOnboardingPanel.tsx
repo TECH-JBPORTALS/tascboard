@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import {
-  useForm,
-  Controller,
-  type UseFormReturn,
-} from "react-hook-form";
+import { useForm, Controller, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { api } from "@/convex/_generated/api";
@@ -266,7 +262,9 @@ function useInboxOnboarding({
     }
   }
 
-  async function removeCertificateEntry(certificateId: Id<"employeeCertificates">) {
+  async function removeCertificateEntry(
+    certificateId: Id<"employeeCertificates">,
+  ) {
     await removeCertificate({ certificateId });
     setCertificates((prev) => prev.filter((c) => c.id !== certificateId));
   }
@@ -667,9 +665,11 @@ function BankDetailsStepForm({
                 {...field}
                 type={showAccountNumber ? "text" : "password"}
                 autoComplete="off"
-                className="bg-background/80"
               />
-              <InputGroupButton type="button" onClick={onToggleAccountVisibility}>
+              <InputGroupButton
+                type="button"
+                onClick={onToggleAccountVisibility}
+              >
                 {showAccountNumber ? <RiEyeOffLine /> : <RiEyeLine />}
               </InputGroupButton>
             </InputGroup>
