@@ -26,7 +26,7 @@ export function InvitationsPage() {
   const orgId = (organization as { id: string } | null | undefined)?.id;
 
   const invitations = useQuery(
-    api.employees.listPendingInvitations,
+    api.employees.auth.listPendingInvitations,
     allowed ? {} : "skip",
   );
 

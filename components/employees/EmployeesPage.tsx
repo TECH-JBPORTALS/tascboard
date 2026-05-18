@@ -13,7 +13,7 @@ export function EmployeesPage() {
     employee: ["list"],
   });
   const members = useQuery(
-    api.employees.listMembers,
+    api.employees.auth.list,
     allowed ? {} : "skip",
   );
 

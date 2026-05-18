@@ -25,7 +25,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const activeOrganizationId = session?.session.activeOrganizationId;
 
   const status = useQuery(
-    api.employees.getMyOnboardingStatus,
+    api.employees.profile.getMyOnboardingStatus,
     activeOrganizationId ? {} : "skip",
   );
 

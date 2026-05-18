@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 
 export const resend = new Resend(components.resend, {
-  testMode: false,
+  testMode: process.env.NODE_ENV === "development",
 });
 
 export const sendInvitationEmail = internalMutation({

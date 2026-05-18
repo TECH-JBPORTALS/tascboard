@@ -38,21 +38,21 @@ function runAction(
 
 function runMutation(
   ctx: GenericCtx<DataModel>,
-  mutation: typeof internal.employees.ensureProfileAfterInvite,
+  mutation: typeof internal.employeeProfiles.ensureProfileAfterInvite,
   args: { organizationId: string; userId: string },
 ): Promise<unknown>;
 
 function runMutation(
   ctx: GenericCtx<DataModel>,
-  mutation: typeof internal.employees.deleteInvitationRecord,
+  mutation: typeof internal.employees.auth.deleteInvitationRecord,
   args: { invitationId: string },
 ): Promise<unknown>;
 
 function runMutation(
   ctx: GenericCtx<DataModel>,
   mutation:
-    | typeof internal.employees.ensureProfileAfterInvite
-    | typeof internal.employees.deleteInvitationRecord,
+    | typeof internal.employeeProfiles.ensureProfileAfterInvite
+    | typeof internal.employees.auth.deleteInvitationRecord,
   args: { organizationId: string; userId: string } | { invitationId: string },
 ) {
   if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
@@ -89,7 +89,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           afterAcceptInvitation: async ({ invitation, user }) => {
             await runMutation(
               ctx,
-              internal.employees.ensureProfileAfterInvite,
+              internal.employeeProfiles.ensureProfileAfterInvite,
               {
                 organizationId: invitation.organizationId,
                 userId: user.id,
@@ -108,9 +108,27 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
             }
           },
           afterCancelInvitation: async ({ invitation }) => {
-            await runMutation(ctx, internal.employees.deleteInvitationRecord, {
-              invitationId: invitation.id,
-            });
+            await runMutation(
+              ctx,
+              internal.employees.auth.deleteInvitationRecord,
+              {
+                invitationId: invitation.id,
+              },
+            );
+          },
+        },
+        schema: {
+          member: {
+            modelName: "employee",
+            additionalFields: {
+              active: {
+                type: "boolean",
+                defaultValue: true,
+                required: true,
+                index: true,
+                input: true,
+              },
+            },
           },
         },
       }),

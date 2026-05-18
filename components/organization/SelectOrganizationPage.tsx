@@ -29,7 +29,8 @@ export function SelectOrganizationPage() {
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const orgList = (organizations ?? []) as OrganizationListItem[];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const orgList = organizations ?? [];
   const activeOrganizationId = session?.session.activeOrganizationId;
   const isLoading = orgsPending || sessionPending;
 

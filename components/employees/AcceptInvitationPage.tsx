@@ -72,7 +72,7 @@ export function AcceptInvitationPage() {
   const params = useParams<{ invitationId: string }>();
   const router = useRouter();
   const invitationId = params.invitationId;
-  const preview = useQuery(api.employees.getInvitationPreview, {
+  const preview = useQuery(api.employees.auth.getInvitationPreview, {
     invitationId,
   });
   const { data: session } = authClient.useSession();

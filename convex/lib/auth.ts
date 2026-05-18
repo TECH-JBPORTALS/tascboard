@@ -2,7 +2,7 @@ import { GenericCtx } from "@convex-dev/better-auth";
 import { DataModel } from "../_generated/dataModel";
 import { UserIdentity } from "convex/server";
 import { checkRolePermission, type PermissionRequest } from "./permissions";
-import { getMemberForUser } from "./members";
+import { getEmployeeForUser } from "./employees";
 
 type AppUserIdentity = UserIdentity & {
   userId: string;
@@ -37,24 +37,24 @@ export async function requireOrganization(ctx: GenericCtx<DataModel>) {
 
 export async function requireMembership(ctx: GenericCtx<DataModel>) {
   const { orgId, userId } = await requireOrganization(ctx);
-  const member = await getMemberForUser(ctx, orgId, userId);
+  const employee = await getEmployeeForUser(ctx, orgId, userId);
 
-  if (!member) {
-    throw new Error("You are not a member of this organization.");
+  if (!employee) {
+    throw new Error("You are not an employee of this organization.");
   }
 
-  return { orgId, userId, member };
+  return { orgId, userId, employee };
 }
 
 export async function requirePermission(
   ctx: GenericCtx<DataModel>,
   permissions: PermissionRequest,
 ) {
-  const { orgId, userId, member } = await requireMembership(ctx);
+  const { orgId, userId, employee } = await requireMembership(ctx);
 
-  if (!checkRolePermission(member.role, permissions)) {
+  if (!checkRolePermission(employee.role, permissions)) {
     throw new Error("You do not have permission to perform this action.");
   }
 
-  return { orgId, userId, member };
+  return { orgId, userId, employee };
 }

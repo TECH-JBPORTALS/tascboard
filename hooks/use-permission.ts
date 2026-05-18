@@ -7,18 +7,21 @@ import {
   type PermissionRequest,
 } from "@/lib/permissions";
 
-export function useMemberRole(organizationId?: string) {
+export function useEmployeeRole(organizationId?: string) {
   return useQuery(
-    api.employees.getMemberRole,
+    api.employees.auth.getRole,
     organizationId !== undefined ? { organizationId } : {},
   );
 }
+
+/** @deprecated Use useEmployeeRole */
+export const useMemberRole = useEmployeeRole;
 
 export function usePermission(
   permissions: PermissionRequest,
   organizationId?: string,
 ) {
-  const role = useMemberRole(organizationId);
+  const role = useEmployeeRole(organizationId);
 
   if (role === undefined) {
     return { allowed: false, isLoading: true };

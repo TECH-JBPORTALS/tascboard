@@ -77,12 +77,14 @@ export function OnboardingWizard() {
     Array<{ id: string; fileName: string }>
   >([]);
 
-  const saveGeneral = useMutation(api.employees.saveGeneralInfo);
-  const saveGov = useMutation(api.employees.saveGovernmentId);
-  const saveBank = useMutation(api.employees.saveBankDetails);
-  const addCertificate = useMutation(api.employees.addCertificate);
-  const removeCertificate = useMutation(api.employees.removeCertificate);
-  const completeOnboarding = useMutation(api.employees.completeOnboarding);
+  const saveGeneral = useMutation(api.employees.profile.saveGeneralInfo);
+  const saveGov = useMutation(api.employees.profile.saveGovernmentId);
+  const saveBank = useMutation(api.employees.profile.saveBankDetails);
+  const addCertificate = useMutation(api.employees.profile.addCertificate);
+  const removeCertificate = useMutation(api.employees.profile.removeCertificate);
+  const completeOnboarding = useMutation(
+    api.employees.profile.completeOnboarding,
+  );
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const generalForm = useForm({

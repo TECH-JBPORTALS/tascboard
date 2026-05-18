@@ -11,10 +11,9 @@ import { tables } from "./generatedSchema";
 const schema = defineSchema({
   ...tables,
   // Spread the generated schema and add a custom index
-  member: tables.member.index("by_organization_user", [
-    "organizationId",
-    "userId",
-  ]),
+  employee: tables.employee
+    .index("by_organization_user", ["organizationId", "userId"])
+    .index("by_organization_active", ["organizationId", "active"]),
   invitation: tables.invitation.index("by_organization_status_email", [
     "organizationId",
     "status",
