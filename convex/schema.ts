@@ -72,9 +72,8 @@ export default defineSchema({
     endDate: v.number(),
     status: v.union(
       v.literal("active"),
-      v.literal("completed"),
-      v.literal("archived"),
-      v.literal("on hold"),
+      v.literal("inactive"),
+      v.literal("terminated"),
     ),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
@@ -95,72 +94,11 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   }).index("by_project", { fields: ["projectId"] }),
 
-  employees: defineTable({
-    userId: v.id("users"),
-    organizationId: v.id("organizations"),
-
-    employeeCode: v.string(),
-
-    designation: v.string(),
-
-    joiningDate: v.number(),
-
-    ctc: v.number(),
-
-    leaveQuota: v.number(),
-
-    employmentType: v.union(
-      v.literal("fulltime"),
-      v.literal("intern"),
-      v.literal("contract"),
-    ),
-
-    workMode: v.union(
-      v.literal("wfh"),
-      v.literal("hybrid"),
-      v.literal("onsite"),
-    ),
-
-    workLocation: v.string(),
-
-    profileImage: v.string(),
-
-    address: v.string(),
-    city: v.string(),
-    state: v.string(),
-    country: v.string(),
-    postal_code: v.string(),
-
-    emergencyContactName: v.string(),
-    emergencyContactPhone: v.string(),
-
-    bloodGroup: v.string(),
-
-    status: v.union(
-      v.literal("active"),
-      v.literal("inactive"),
-      v.literal("terminated"),
-    ),
-
-    relievingDate: v.number(),
-
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-
-    bankName: v.string(),
-    bankAccountNumber: v.string(),
-    branchName: v.string(),
-    ifscCode: v.string(),
-  }).index("by_organization", { fields: ["organizationId"] }),
-
   employeePerformancePoints: defineTable({
-    employeeId: v.id("employees"),
+    employeeId: v.id("employee"),
     taskId: v.id("tasks"),
-
     points: v.number(),
-
-    awardedBy: v.id("users"),
-
+    awardedBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -168,7 +106,7 @@ export default defineSchema({
     .index("by_task", ["taskId"]),
 
   attendance: defineTable({
-    employeeId: v.id("employees"),
+    employeeId: v.string(),
     recordDate: v.number(),
     loginTime: v.number(),
     logoutTime: v.optional(v.number()),
@@ -185,7 +123,7 @@ export default defineSchema({
     .index("by_employee", ["employeeId"]),
 
   leaveRequests: defineTable({
-    employeeId: v.id("employees"),
+    employeeId: v.string(),
 
     leaveType: v.union(
       v.literal("sick"),

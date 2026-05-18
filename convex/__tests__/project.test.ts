@@ -60,7 +60,7 @@ describe("Project", () => {
       body: {
         name: " Updated Project ",
         description: " Updated description ",
-        status: "completed",
+        status: "terminated",
       },
     });
 
@@ -70,7 +70,7 @@ describe("Project", () => {
 
     expect(updated?.name).toBe("Updated Project");
     expect(updated?.description).toBe("Updated description");
-    expect(updated?.status).toBe("completed");
+    expect(updated?.status).toBe("terminated");
     expect(updated?.updatedAt).toBeTypeOf("number");
   });
 

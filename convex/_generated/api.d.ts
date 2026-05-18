@@ -9,6 +9,7 @@
  */
 
 import type * as activity from "../activity.js";
+import type * as attendance from "../attendance.js";
 import type * as comment from "../comment.js";
 import type * as emails from "../emails.js";
 import type * as employeeProfiles from "../employeeProfiles.js";
@@ -36,6 +37,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activity: typeof activity;
+  attendance: typeof attendance;
   comment: typeof comment;
   emails: typeof emails;
   employeeProfiles: typeof employeeProfiles;
