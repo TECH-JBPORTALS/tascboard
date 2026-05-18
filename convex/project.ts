@@ -6,9 +6,8 @@ import { requireIdentity, requireOrganization } from "./lib/auth";
 
 const projectStatusValidator = v.union(
   v.literal("active"),
-  v.literal("completed"),
-  v.literal("archived"),
-  v.literal("on hold"),
+  v.literal("inactive"),
+  v.literal("terminated"),
 );
 
 const projectReturn = v.object({
@@ -244,7 +243,7 @@ export const seedStarterProjects = mutation({
           "Automate salary generation and payroll exports.",
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 60,
-        status: "on hold",
+        status: "inactive",
         createdAt: now,
         updatedAt: undefined,
       },
