@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
-
-const modules = import.meta.glob("./**/*.ts");
+import { api } from "../_generated/api";
+import schema from "../schema";
+import { DataModel, Id } from "../_generated/dataModel";
+import { modules } from "./testModules";
 
 describe("Tracks", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -61,10 +60,10 @@ describe("Tracks", () => {
       endDate: Date.now() + 100000,
       status: "active",
     });
-  
+
     // delete project → now it exists in DB structure but is invalid reference
     await t.mutation(api.project.remove, { projectId });
-  
+
     await expect(
       t.mutation(api.track.create, {
         name: "Track X",
@@ -97,17 +96,17 @@ describe("Tracks", () => {
       trackLeaderID: "emp-1",
       status: "active",
     });
-  
+
     // delete it so it becomes "not found"
     await t.mutation(api.track.remove, {
       trackId: tempTrackId,
     });
-  
+
     // now query deleted track
     const result = await t.query(api.track.get, {
       trackId: tempTrackId,
     });
-  
+
     expect(result).toBeNull();
   });
 
@@ -137,9 +136,9 @@ describe("Tracks", () => {
       trackLeaderID: "emp-1",
       status: "active",
     });
-  
+
     await t.mutation(api.track.remove, { trackId });
-  
+
     await expect(
       t.mutation(api.track.update, {
         trackId,
@@ -180,9 +179,9 @@ describe("Tracks", () => {
       trackLeaderID: "emp-1",
       status: "active",
     });
-  
+
     await t.mutation(api.track.remove, { trackId });
-  
+
     await expect(
       t.mutation(api.track.remove, {
         trackId,

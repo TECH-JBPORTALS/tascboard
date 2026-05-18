@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api, internal } from "./_generated/api";
-import schema from "./schema";
-import { DataModel } from "./_generated/dataModel";
+import { api, internal } from "../_generated/api";
+import schema from "../schema";
+import { DataModel } from "../_generated/dataModel";
+import { modules } from "./testModules";
 
 describe("Inbox", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -337,5 +338,3 @@ describe("Inbox", () => {
     expect(unread[0]?.title).toBe("Another unread item");
   });
 });
-
-const modules = import.meta.glob("./**/*.ts");
