@@ -1,9 +1,13 @@
-/**
- * Module map for convex-test (Bun). Keys match paths relative to the convex/ root.
- */
-const convexRoot = new URL("..", import.meta.url).pathname;
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import Bun from "bun";
 
+/** Absolute path to the convex/ directory (parent of __tests__). */
+const convexRoot = join(import.meta.dirname, "..");
+
+/**
+ * Module map for convex-test (Bun). Keys are paths relative to the convex/ root.
+ */
 function loadConvexModules(): Record<string, () => Promise<unknown>> {
   const modules: Record<string, () => Promise<unknown>> = {};
   const glob = new Bun.Glob("**/*.{ts,js}");
@@ -12,15 +16,13 @@ function loadConvexModules(): Record<string, () => Promise<unknown>> {
     cwd: convexRoot,
     onlyFiles: true,
   })) {
-    if (
-      relativePath.startsWith("__tests__/") ||
-      relativePath.endsWith(".d.ts")
-    ) {
+    const normalized = relativePath.replace(/\\/g, "/");
+    if (normalized.startsWith("__tests__/") || normalized.endsWith(".d.ts")) {
       continue;
     }
-    const key = `./${relativePath.replace(/\\/g, "/")}`;
-    const fileUrl = new URL(`../${relativePath}`, import.meta.url).href;
-    modules[key] = () => import(fileUrl);
+    const key = `./${normalized}`;
+    const absolutePath = join(convexRoot, relativePath);
+    modules[key] = () => import(pathToFileURL(absolutePath).href);
   }
 
   return modules;

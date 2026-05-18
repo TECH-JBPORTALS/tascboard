@@ -3,14 +3,13 @@ import { convexTest, TestConvexForDataModel } from "convex-test";
 
 import { api } from "../_generated/api";
 import schema from "../schema";
-import { DataModel, Id } from "../_generated/dataModel";
+import { DataModel } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
 
 describe("Attendance", () => {
   let t: TestConvexForDataModel<DataModel>;
 
   const employeeId = "employee-1";
-4
   beforeEach(() => {
     t = convexTest(schema, modules).withIdentity({
       userId: "user-1",
@@ -19,15 +18,12 @@ describe("Attendance", () => {
   });
 
   test("createAttendance creates attendance record", async () => {
-    const attendanceId = await t.mutation(
-      api.attendance.createAttendance,
-      {
-        employeeId,
-        recordDate: 20240518,
-        loginTime: Date.now(),
-        status: "present",
-      },
-    );
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    });
 
     expect(attendanceId).toBeDefined();
 
@@ -194,20 +190,17 @@ describe("Attendance", () => {
   });
 
   test("updateAttendance throws error for invalid attendance", async () => {
-    const attendanceId = await t.mutation(
-      api.attendance.createAttendance,
-      {
-        employeeId,
-        recordDate: 20240518,
-        loginTime: Date.now(),
-        status: "present",
-      },
-    );
-  
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
+      employeeId,
+      recordDate: 20240518,
+      loginTime: Date.now(),
+      status: "present",
+    });
+
     await t.mutation(api.attendance.deleteAttendance, {
       attendanceId,
     });
-  
+
     await expect(
       t.mutation(api.attendance.updateAttendance, {
         attendanceId,
@@ -216,50 +209,44 @@ describe("Attendance", () => {
     ).rejects.toThrow("Attendance record not found");
   });
 
-test("deleteAttendance throws error for invalid attendance", async () => {
-  const attendanceId = await t.mutation(
-    api.attendance.createAttendance,
-    {
+  test("deleteAttendance throws error for invalid attendance", async () => {
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
       employeeId,
       recordDate: 20240518,
       loginTime: Date.now(),
       status: "present",
-    },
-  );
+    });
 
-  await t.mutation(api.attendance.deleteAttendance, {
-    attendanceId,
+    await t.mutation(api.attendance.deleteAttendance, {
+      attendanceId,
+    });
+
+    await expect(
+      t.mutation(api.attendance.deleteAttendance, {
+        attendanceId,
+      }),
+    ).rejects.toThrow("Attendance record not found");
   });
 
-  await expect(
-    t.mutation(api.attendance.deleteAttendance, {
-      attendanceId,
-    }),
-  ).rejects.toThrow("Attendance record not found");
-});
-
-test("markLogout throws error for invalid attendance", async () => {
-  const attendanceId = await t.mutation(
-    api.attendance.createAttendance,
-    {
+  test("markLogout throws error for invalid attendance", async () => {
+    const attendanceId = await t.mutation(api.attendance.createAttendance, {
       employeeId,
       recordDate: 20240518,
       loginTime: Date.now(),
       status: "present",
-    },
-  );
+    });
 
-  // delete it first so it becomes "missing"
-  await t.mutation(api.attendance.deleteAttendance, {
-    attendanceId,
-  });
-
-  // now second call triggers your real error
-  await expect(
-    t.mutation(api.attendance.markLogout, {
+    // delete it first so it becomes "missing"
+    await t.mutation(api.attendance.deleteAttendance, {
       attendanceId,
-      logoutTime: Date.now(),
-    }),
-  ).rejects.toThrow("Attendance record not found");
-});
+    });
+
+    // now second call triggers your real error
+    await expect(
+      t.mutation(api.attendance.markLogout, {
+        attendanceId,
+        logoutTime: Date.now(),
+      }),
+    ).rejects.toThrow("Attendance record not found");
+  });
 });
