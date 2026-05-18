@@ -3,17 +3,30 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { removeTaskCascade } from "./task";
 
+const trackStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("completed"),
+  v.literal("archived"),
+);
+
 export const create = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
     projectId: v.id("projects"),
+    trackCode: v.string(),
+    trackLeaderID: v.id("employee"),
+    status: trackStatusValidator,
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("tracks", {
       name: args.name,
       description: args.description,
       projectId: args.projectId,
+      trackCode: args.trackCode,
+      trackLeaderID: args.trackLeaderID,
+      status: args.status,
+      createdAt: Date.now(),
     });
   },
 });
@@ -36,6 +49,9 @@ export const update = mutation({
     body: v.object({
       name: v.optional(v.string()),
       description: v.optional(v.string()),
+      trackCode: v.optional(v.string()),
+      trackLeaderID: v.optional(v.id("employee")),
+      status: v.optional(trackStatusValidator),
     }),
   },
   handler: async (ctx, { trackId, body }) => {
@@ -53,7 +69,7 @@ export const update = mutation({
       body = { ...body, description: body.description.trim() };
     }
 
-    await ctx.db.patch(trackId, body);
+    await ctx.db.patch(trackId, { ...body, updatedAt: Date.now() });
   },
 });
 

@@ -1,34 +1,57 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
+import type { DataModelFromSchemaDefinition } from "convex/server";
+import type { GenericId } from "convex/values";
 
 import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
+import projectTestSchema from "./projectTestSchema";
+import { insertTestEmployee } from "./testHelpers";
+
+type SubtaskTestDataModel = DataModelFromSchemaDefinition<
+  typeof projectTestSchema
+>;
 
 describe("Subtask", () => {
-  let t: TestConvexForDataModel<DataModel>;
+  let t: TestConvexForDataModel<SubtaskTestDataModel>;
 
-  let projectId: Id<"projects">;
-  let trackId: Id<"tracks">;
-  let taskId: Id<"tasks">;
-  let subtaskId: Id<"subtasks">;
+  let projectId: GenericId<"projects">;
+  let trackId: GenericId<"tracks">;
+  let taskId: GenericId<"tasks">;
+  let subtaskId: GenericId<"subtasks">;
 
   beforeEach(async () => {
-    t = convexTest(schema).withIdentity({
+    t = convexTest(projectTestSchema).withIdentity({
       tokenIdentifier: "user-1",
+    });
+
+    const organizationId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organization", {
+        name: "Test Org",
+        slug: "test-org",
+        createdAt: Date.now(),
+      });
     });
 
     // Create project
     projectId = await t.mutation(api.project.create, {
+      organizationID: organizationId,
       name: "Project A",
       description: "Test project",
+      startDate: 1700000000000,
+      endDate: 1800000000000,
+      status: "active",
     });
+
+    const trackLeaderID = await insertTestEmployee(t);
 
     // Create track
     trackId = await t.mutation(api.track.create, {
       name: "Track A",
       description: "Test track",
       projectId,
+      trackCode: "TRK-001",
+      trackLeaderID,
+      status: "active",
     });
 
     // Create task

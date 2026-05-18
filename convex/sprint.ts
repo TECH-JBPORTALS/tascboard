@@ -124,7 +124,7 @@ export const remove = mutation({
 });
 
 
-export const addTaskToSprint = mutation({
+export const addTask = mutation({
   args: {
     taskId: v.id("tasks"),
     sprintId: v.id("sprints"),
@@ -155,7 +155,7 @@ export const addTaskToSprint = mutation({
   },
 });
 
-export const getBacklog = query({
+export const Backlog = query({
   args: {
     trackId: v.id("tracks"),
   },
@@ -172,7 +172,7 @@ export const getBacklog = query({
   },
 });
 
-export const getSprintProgress = query({
+export const Progress = query({
   args: {
     sprintId: v.id("sprints"),
   },
@@ -220,7 +220,7 @@ export const getSprintProgress = query({
   },
 });
 
-export const getBurndownChart = query({
+export const BurndownChart = query({
   args: {
     sprintId: v.id("sprints"),
   },

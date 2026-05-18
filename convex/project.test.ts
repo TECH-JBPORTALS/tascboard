@@ -1,22 +1,40 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
+import type { DataModelFromSchemaDefinition } from "convex/server";
+import type { GenericId } from "convex/values";
 
 import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
+import projectTestSchema from "./projectTestSchema";
+
+type ProjectTestDataModel = DataModelFromSchemaDefinition<
+  typeof projectTestSchema
+>;
 
 describe("Project", () => {
-  let t: TestConvexForDataModel<DataModel>;
-  let projectId: Id<"projects">;
+  let t: TestConvexForDataModel<ProjectTestDataModel>;
+  let organizationId: GenericId<"organization">;
+  let projectId: GenericId<"projects">;
 
   beforeEach(async () => {
-    t = convexTest(schema).withIdentity({
+    t = convexTest(projectTestSchema).withIdentity({
       tokenIdentifier: "user-1",
     });
 
+    organizationId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organization", {
+        name: "Test Org",
+        slug: "test-org",
+        createdAt: Date.now(),
+      });
+    });
+
     projectId = await t.mutation(api.project.create, {
+      organizationID: organizationId,
       name: " Project A ",
       description: " Test project ",
+      startDate: 1700000000000,
+      endDate: 1800000000000,
+      status: "active",
     });
   });
 
@@ -29,6 +47,10 @@ describe("Project", () => {
     expect(project).not.toBeNull();
     expect(project?.name).toBe(" Project A ");
     expect(project?.description).toBe(" Test project ");
+    expect(project?.organizationID).toBe(organizationId);
+    expect(project?.status).toBe("active");
+    expect(typeof project?.startDate).toBe("number");
+    expect(typeof project?.endDate).toBe("number");
   });
 
   // 2. GET ALL PROJECTS
@@ -57,6 +79,7 @@ describe("Project", () => {
       body: {
         name: " Updated Project ",
         description: " Updated description ",
+        status: "completed",
       },
     });
 
@@ -66,6 +89,8 @@ describe("Project", () => {
 
     expect(updated?.name).toBe("Updated Project");
     expect(updated?.description).toBe("Updated description");
+    expect(updated?.status).toBe("completed");
+    expect(updated?.updatedAt).toBeTypeOf("number");
   });
 
   // 5. UPDATE VALIDATION
@@ -94,16 +119,16 @@ describe("Project", () => {
   });
 
   // 7. REMOVE NON EXISTING PROJECT
-  test("remove does nothing if project does not exist", async () => {
+  test("remove throws if project does not exist", async () => {
     await t.mutation(api.project.remove, {
       projectId,
     });
-
+  
     await expect(
       t.mutation(api.project.remove, {
         projectId,
       }),
-    ).resolves.not.toThrow("This project doesn't exist");
+    ).rejects.toThrow("Project not found");
   });
 
   // 8. UPDATE TRIMS VALUES

@@ -1,33 +1,59 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { convexTest, TestConvexForDataModel } from "convex-test";
+import type { DataModelFromSchemaDefinition } from "convex/server";
+import type { GenericId } from "convex/values";
 
 import { api, internal } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
+import projectTestSchema from "./projectTestSchema";
+import { insertTestEmployee } from "./testHelpers";
+
+type SprintTestDataModel = DataModelFromSchemaDefinition<
+  typeof projectTestSchema
+>;
 
 describe("Sprint", () => {
-  let t: TestConvexForDataModel<DataModel>;
-  let trackId: Id<"tracks">;
-  let sprintId: Id<"sprints">;
-  let taskId: Id<"tasks">;
+  let t: TestConvexForDataModel<SprintTestDataModel>;
+  let organizationId: GenericId<"organization">;
+  let trackId: GenericId<"tracks">;
+  let sprintId: GenericId<"sprints">;
+  let taskId: GenericId<"tasks">;
 
   beforeEach(async () => {
-    t = convexTest(schema).withIdentity({
+    t = convexTest(projectTestSchema).withIdentity({
       tokenIdentifier: "user-1",
+    });
+
+    organizationId = await t.run(async (ctx) => {
+      return await ctx.db.insert("organization", {
+        name: "Test Org",
+        slug: "test-org",
+        createdAt: Date.now(),
+      });
     });
 
     const projectId = await t.run(async (ctx) => {
       return await ctx.db.insert("projects", {
+        organizationID: organizationId,
         name: "Project A",
         description: "Test project",
+        startDate: 1700000000000,
+        endDate: 1800000000000,
+        status: "active",
+        createdAt: 1700000000000,
       });
     });
+
+    const trackLeaderID = await insertTestEmployee(t);
 
     trackId = await t.run(async (ctx) => {
       return await ctx.db.insert("tracks", {
         name: "Track A",
         description: "Test track",
         projectId,
+        trackCode: "TRK-001",
+        trackLeaderID,
+        status: "active",
+        createdAt: Date.now(),
       });
     });
 
@@ -165,7 +191,7 @@ describe("Sprint", () => {
 
   // 4. ADD TASK TO SPRINT
   test("addTaskToSprint validates same track", async () => {
-    const res = await t.mutation(api.sprint.addTaskToSprint, {
+    const res = await t.mutation(api.sprint.addTask, {
       taskId,
       sprintId,
     });
@@ -192,7 +218,7 @@ describe("Sprint", () => {
     });
   
     await expect(
-      t.mutation(api.sprint.addTaskToSprint, {
+      t.mutation(api.sprint.addTask, {
         taskId: tempTaskId,
         sprintId,
       })
@@ -215,7 +241,7 @@ describe("Sprint", () => {
     });
   
     await expect(
-      t.mutation(api.sprint.addTaskToSprint, {
+      t.mutation(api.sprint.addTask, {
         taskId,
         sprintId: fakeSprintId,
       })
@@ -223,7 +249,7 @@ describe("Sprint", () => {
   });
   // 5. BACKLOG
   test("getBacklog returns tasks for track", async () => {
-    const res = await t.query(api.sprint.getBacklog, {
+    const res = await t.query(api.sprint.Backlog, {
       trackId,
     });
 
@@ -232,19 +258,32 @@ describe("Sprint", () => {
   });
   test("getBacklog returns empty array for invalid track", async () => {
     const fakeTrackId = await t.run(async (ctx) => {
+      const tempLeaderId = await ctx.db.insert("employee", {
+        name: "Temp Leader",
+        createdAt: Date.now(),
+      });
       const id = await ctx.db.insert("tracks", {
         name: "Temp track",
         description: "temp",
         projectId: await ctx.db.insert("projects", {
+          organizationID: organizationId,
           name: "Temp project",
+          startDate: 1700000000000,
+          endDate: 1800000000000,
+          status: "active",
+          createdAt: 1700000000000,
         }),
+        trackCode: "TRK-TMP",
+        trackLeaderID: tempLeaderId,
+        status: "active",
+        createdAt: Date.now(),
       });
   
       await ctx.db.delete(id); // remove immediately
       return id;
     });
   
-    const res = await t.query(api.sprint.getBacklog, {
+    const res = await t.query(api.sprint.Backlog, {
       trackId: fakeTrackId,
     });
   
@@ -252,7 +291,7 @@ describe("Sprint", () => {
   });
   // 6. SPRINT PROGRESS
   test("getSprintProgress calculates correctly", async () => {
-    const res = await t.query(api.sprint.getSprintProgress, {
+    const res = await t.query(api.sprint.Progress, {
       sprintId,
     });
 
@@ -264,7 +303,7 @@ describe("Sprint", () => {
 
   // 7. BURNDOWN CHART
   test("getBurndownChart returns timeline data", async () => {
-    const res = await t.query(api.sprint.getBurndownChart, {
+    const res = await t.query(api.sprint.BurndownChart, {
       sprintId,
     });
 
@@ -282,7 +321,7 @@ describe("Sprint", () => {
   test("burndown works when no tasks exist", async () => {
     const emptyTrackId = trackId;
   
-    const res = await t.query(api.sprint.getBurndownChart, {
+    const res = await t.query(api.sprint.BurndownChart, {
       sprintId,
     });
   

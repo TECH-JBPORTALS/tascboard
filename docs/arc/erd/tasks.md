@@ -21,26 +21,6 @@ erDiagram
         string email
     }
 
-    organization {
-        Id _id
-        string name
-    }
-
-    employees{
-        Id _id
-        string userId FK
-        string organizationId FK
-        string employeeCode
-        string designation
-        number joinedDate
-    }
-    projects {
-        Id _id
-        string organization_id FK
-        string title
-        string description
-    }
-
     tracks {
         Id _id
         number projectId FK
@@ -83,12 +63,5 @@ erDiagram
 
     tracks ||--o{ sprints : has
     tracks ||--o{ tasks : has
-    employees ||--o{ tracks : has
-    employees ||--o{ tasks : has
-    projects ||--o{ tracks : has
-    projects ||--o{ tasks : has
-    organization ||--o{ projects : has
-    organization ||--o{ employees : multiple
-    user ||--|{ employees : have
     user ||--o{ sprints : can create
 ```

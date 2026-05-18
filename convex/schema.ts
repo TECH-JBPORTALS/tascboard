@@ -1,5 +1,7 @@
+import { organization } from "better-auth/plugins";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { id } from "zod/v4/locales";
 
 // The schema is entirely optional.
 // You can delete this file (schema.ts) and the
@@ -39,15 +41,152 @@ export default defineSchema({
     ]),
 
     projects: defineTable({
+      organizationID: v.id("organization"),
       name: v.string(),
       description: v.optional(v.string()),
+      startDate: v.number(),
+      endDate: v.number(),
+      status: v.union(
+        v.literal("active"),
+        v.literal("completed"),
+        v.literal("archived"),
+        v.literal("on hold")
+      ),
+      createdAt: v.number(),
+      updatedAt: v.optional(v.number())
     }),
-    
+
     tracks: defineTable({
       name: v.string(),
       description: v.optional(v.string()),
       projectId: v.id("projects"),
+      trackCode: v.string(),
+      trackLeaderID: v.id("employee"),
+      status: v.union(
+        v.literal("active"),
+        v.literal("completed"),
+        v.literal("archived")
+      ),
+      createdAt: v.number(),
+      updatedAt: v.optional(v.number()),
+
     }).index("by_project", { fields: ["projectId"] }),
+
+    employees: defineTable({
+    userId: v.id("users"),
+    organizationId: v.id("organizations"),
+
+    employeeCode: v.string(),
+
+    designation: v.string(),
+
+    joiningDate: v.number(),
+
+    ctc: v.number(),
+
+    leaveQuota: v.number(),
+
+    employmentType: v.union(
+      v.literal("fulltime"),
+      v.literal("intern"),
+      v.literal("contract")
+    ),
+
+    workMode: v.union(
+      v.literal("wfh"),
+      v.literal("hybrid"),
+      v.literal("onsite")
+    ),
+
+    workLocation: v.string(),
+
+    profileImage: v.string(),
+
+    address: v.string(),
+    city: v.string(),
+    state: v.string(),
+    country: v.string(),
+    postal_code: v.string(),
+
+    emergencyContactName: v.string(),
+    emergencyContactPhone: v.string(),
+
+    bloodGroup: v.string(),
+
+    status: v.union(
+      v.literal("active"),
+      v.literal("inactive"),
+      v.literal("terminated")
+    ),
+
+    relievingDate: v.number(),
+
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+
+  bankName: v.string(),
+    bankAccountNumber: v.string(),
+    branchName: v.string(),
+    ifscCode: v.string(),
+}).index("by_organization", { fields: ["organizationId"] }),
+
+  employeePerformancePoints: defineTable({
+    employeeId: v.id("employees"),
+    taskId: v.id("tasks"),
+
+    points: v.number(),
+
+    awardedBy: v.id("users"), 
+
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_employee", ["employeeId"])
+    .index("by_task", ["taskId"]),
+
+  attendance: defineTable({
+    employeeId: v.id("employees"),
+    recordDate: v.number(),
+    loginTime: v.number(),
+    logoutTime: v.optional(v.number()),
+    status: v.union(
+      v.literal("present"),
+      v.literal("on leave"), 
+      v.literal("late"),
+      v.literal("half day")
+    ),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_employee_and_date", ["employeeId", "recordDate"])
+  .index("by_employee", ["employeeId"]),
+
+
+
+  leaveRequests: defineTable({
+  employeeId: v.id("employees"),
+
+  leaveType: v.union(
+    v.literal("sick"),
+    v.literal("casual"),
+    v.literal("emergency")
+  ),
+
+  startDate: v.number(),
+  endDate: v.number(),
+  reason: v.string(),
+  status: v.union(
+    v.literal("pending"),
+    v.literal("approved"),
+    v.literal("rejected")
+  ),
+  approvedBy: v.optional(v.id("users")),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+  .index("by_employee", ["employeeId"])
+  .index("by_status", ["status"])
+  .index("by_approved_by", ["approvedBy"]),
+
     tasks: defineTable({
       title: v.string(),
       description: v.optional(v.string()),
