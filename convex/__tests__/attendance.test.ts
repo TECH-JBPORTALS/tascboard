@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { DataModel, Id } from "./_generated/dataModel";
+import { api } from "../_generated/api";
+import schema from "../schema";
+import { DataModel, Id } from "../_generated/dataModel";
+import { modules } from "./_modules.test";
 
 describe("Attendance", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -262,5 +263,3 @@ test("markLogout throws error for invalid attendance", async () => {
   ).rejects.toThrow("Attendance record not found");
 });
 });
-
-const modules = import.meta.glob("./**/*.ts");
