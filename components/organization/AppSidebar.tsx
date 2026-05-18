@@ -4,17 +4,18 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { authClient } from "@/lib/auth-client";
 import {
+  RiCalendarCheckFill,
   RiCalendarCheckLine,
+  RiInboxFill,
   RiInboxLine,
   RiSettings3Line,
+  RiTeamFill,
   RiTeamLine,
 } from "@remixicon/react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -23,32 +24,51 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
+import React from "react";
+import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Inbox", href: "", icon: RiInboxLine },
-  { label: "Employees", href: "/employees", icon: RiTeamLine },
-  { label: "Attendance", href: "/attendance", icon: RiCalendarCheckLine },
-  { label: "Settings", href: "/settings", icon: RiSettings3Line },
+  { label: "Inbox", href: "", icon: RiInboxLine, fillIcon: RiInboxFill },
+  {
+    label: "Employees",
+    href: "/employees",
+    icon: RiTeamLine,
+    fillIcon: RiTeamFill,
+  },
+  {
+    label: "Attendance",
+    href: "/attendance",
+    icon: RiCalendarCheckLine,
+    fillIcon: RiCalendarCheckFill,
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: RiSettings3Line,
+    fillIcon: RiSettings3Line,
+  },
 ] as const;
 
-export function AppSidebar() {
+export function AppSidebar({
+  className,
+  showTooltip = false,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { showTooltip?: boolean }) {
   const pathname = usePathname();
   const params = useParams<{ orgSlug: string }>();
   const basePath = `/${params.orgSlug}`;
-  const { data: session } = authClient.useSession();
-  const orgId = session?.session.activeOrganizationId;
-  const unreadCount = useQuery(
-    api.inbox.unreadCount,
-    orgId ? { organizationId: orgId } : "skip",
-  );
+  const unreadCount = useQuery(api.inbox.unreadCount);
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-2">
-        <OrganizationSwitcher />
+    <Sidebar {...props} className={cn("group", className)}>
+      <SidebarHeader className="p-2 h-14  justify-center border-b">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <OrganizationSwitcher />
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -66,10 +86,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      tooltip={item.label}
+                      tooltip={{ children: item.label, hidden: !showTooltip }}
                       render={<Link href={href} />}
                     >
-                      <item.icon />
+                      {isActive ? <item.fillIcon /> : <item.icon />}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                     {item.label === "Inbox" &&
@@ -86,7 +106,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   );
 }

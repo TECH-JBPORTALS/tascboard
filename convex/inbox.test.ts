@@ -9,15 +9,14 @@ describe("Inbox", () => {
   let t: TestConvexForDataModel<DataModel>;
 
   beforeEach(() => {
-    t = convexTest(schema).withIdentity({
-      tokenIdentifier: "user-1",
+    t = convexTest(schema, modules).withIdentity({
+      userId: "user-1",
+      orgId: "org-1",
     });
   });
 
   test("seedWelcomeItems creates default inbox items", async () => {
-    await t.mutation(api.inbox.seedWelcomeItems, {
-      organizationId: "org-1",
-    });
+    await t.mutation(api.inbox.seedWelcomeItems);
 
     const items = await t.query(api.inbox.list, {
       organizationId: "org-1",
@@ -30,13 +29,9 @@ describe("Inbox", () => {
   });
 
   test("seedWelcomeItems is idempotent", async () => {
-    await t.mutation(api.inbox.seedWelcomeItems, {
-      organizationId: "org-1",
-    });
+    await t.mutation(api.inbox.seedWelcomeItems);
 
-    await t.mutation(api.inbox.seedWelcomeItems, {
-      organizationId: "org-1",
-    });
+    await t.mutation(api.inbox.seedWelcomeItems);
 
     const items = await t.query(api.inbox.list, {
       organizationId: "org-1",
@@ -78,9 +73,7 @@ describe("Inbox", () => {
       recipientUserId: "user-1",
     });
 
-    const count = await t.query(api.inbox.unreadCount, {
-      organizationId: "org-1",
-    });
+    const count = await t.query(api.inbox.unreadCount);
 
     expect(count).toBe(1);
   });
@@ -164,9 +157,7 @@ describe("Inbox", () => {
       recipientUserId: "user-1",
     });
 
-    await t.mutation(api.inbox.markAllRead, {
-      organizationId: "org-1",
-    });
+    await t.mutation(api.inbox.markAllRead);
 
     const unread = await t.query(api.inbox.list, {
       organizationId: "org-1",
@@ -245,3 +236,5 @@ describe("Inbox", () => {
     expect(unread[0]?.title).toBe("Another unread item");
   });
 });
+
+const modules = import.meta.glob("./**/*.ts");
