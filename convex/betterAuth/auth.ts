@@ -102,7 +102,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
                 recipientUserId: user.id,
                 kind: "onboarding",
                 title: "Complete your employee profile",
-                snippet: "A few details to get you started — takes about 5 minutes",
+                snippet:
+                  "A few details to get you started — takes about 5 minutes",
                 body: "Welcome aboard. Complete your profile below so payroll, compliance, and your team have what they need.",
               });
             }

@@ -1,0 +1,42 @@
+"use client";
+
+import Link from "next/link";
+import { RiArrowRightSLine } from "@remixicon/react";
+import { ProjectIcon } from "@/components/projects/project-icon";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "../ui/page-header";
+
+type ProjectPageHeaderProps = {
+  orgSlug: string;
+  projectName: string;
+  icon?: string | null;
+  color?: string | null;
+  className?: string;
+};
+
+export function ProjectPageHeader({
+  orgSlug,
+  projectName,
+  icon,
+  color,
+  className,
+}: ProjectPageHeaderProps) {
+  return (
+    <PageHeader
+      className={cn(className)}
+      title={
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/${orgSlug}`}
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Projects
+          </Link>
+          <RiArrowRightSLine className="size-4 text-muted-foreground" />
+          <ProjectIcon icon={icon} color={color} size="sm" />
+          <span className="truncate font-medium text-sm">{projectName}</span>
+        </div>
+      }
+    />
+  );
+}

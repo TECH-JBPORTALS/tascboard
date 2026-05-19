@@ -5,6 +5,7 @@ import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { getToken } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -34,15 +35,17 @@ export default async function RootLayout({
     <html
       lang="en"
       className={cn(
-        "font-sans antialiased dark",
+        "font-sans antialiased",
         ibmPlexSans.variable,
         jetbrainsMono.variable,
       )}
     >
       <body>
         <ConvexClientProvider initialToken={token}>
-          {children}
-          <Toaster />
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </ConvexClientProvider>
       </body>
     </html>
