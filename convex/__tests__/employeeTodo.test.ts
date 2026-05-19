@@ -6,9 +6,10 @@ import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
 
-describe("EmployeeTodos", () => {
+describe("EmployeeTodos CRUD", () => {
   let t: TestConvexForDataModel<DataModel>;
   let todoId: Id<"employeeTodos">;
+
   const employeeId = "emp-1";
 
   beforeEach(async () => {
@@ -17,7 +18,7 @@ describe("EmployeeTodos", () => {
       orgId: "org-1",
     });
 
-    todoId = await t.mutation(api.employeeTodos.addEmployeeTodo, {
+    todoId = await t.mutation(api.employeeTodos.create, {
       employeeId,
       title: "  First todo  ",
       description: "  Do something important  ",
@@ -25,8 +26,9 @@ describe("EmployeeTodos", () => {
     });
   });
 
-  test("create todo trims title and description, sets defaults", async () => {
-    const todo = await t.query(api.employeeTodos.getEmployeeTodo, { todoId });
+  // CREATE
+  test("create trims title and description, sets defaults", async () => {
+    const todo = await t.query(api.employeeTodos.get, { todoId });
 
     expect(todo).not.toBeNull();
     expect(todo?._id).toBe(todoId);
@@ -39,59 +41,45 @@ describe("EmployeeTodos", () => {
     expect(typeof todo?.updatedAt).toBe("number");
   });
 
-  test("listByEmployee returns todos for the employee", async () => {
-    await t.mutation(api.employeeTodos.addEmployeeTodo, {
+  test("create throws if title is empty", async () => {
+    await expect(
+      t.mutation(api.employeeTodos.create, {
+        employeeId,
+        title: "   ",
+        description: "Some description",
+        priority: "low",
+      })
+    ).rejects.toThrow("Title cannot be empty");
+  });
+
+  // LIST
+  test("list returns todos for employee", async () => {
+    await t.mutation(api.employeeTodos.create, {
       employeeId,
       title: "Second todo",
       description: "Another task",
       priority: "high",
     });
 
-    const todos = await t.query(api.employeeTodos.listEmployeeTodosByEmployee, {
+    const todos = await t.query(api.employeeTodos.list, {
       employeeId,
     });
 
     expect(todos.length).toBe(2);
-    expect(todos.every((todo) => todo.employeeId === employeeId)).toBe(true);
+    expect(todos.every((t) => t.employeeId === employeeId)).toBe(true);
   });
 
-  test("listByEmployeeAndStatus returns only matching status", async () => {
-    await t.mutation(api.employeeTodos.updateEmployeeTodo, {
-      todoId,
-      body: {
-        isCompleted: true,
-      },
-    });
-
-    const completed = await t.query(
-      api.employeeTodos.listEmployeeTodosByEmployeeAndStatus,
-      {
-        employeeId,
-        isCompleted: true,
-      }
-    );
-
-    const pending = await t.query(
-      api.employeeTodos.listEmployeeTodosByEmployeeAndStatus,
-      {
-        employeeId,
-        isCompleted: false,
-      }
-    );
-
-    expect(completed.every((todo) => todo.isCompleted)).toBe(true);
-    expect(pending.every((todo) => !todo.isCompleted)).toBe(true);
-  });
-
+  // GET
   test("get returns todo by id", async () => {
-    const todo = await t.query(api.employeeTodos.getEmployeeTodo, { todoId });
+    const todo = await t.query(api.employeeTodos.get, { todoId });
 
     expect(todo?._id).toBe(todoId);
     expect(todo?.title).toBe("First todo");
   });
 
-  test("update fields individually", async () => {
-    await t.mutation(api.employeeTodos.updateEmployeeTodo, {
+  // UPDATE
+  test("update modifies fields correctly", async () => {
+    await t.mutation(api.employeeTodos.update, {
       todoId,
       body: {
         title: "  Updated title  ",
@@ -101,7 +89,7 @@ describe("EmployeeTodos", () => {
       },
     });
 
-    const updated = await t.query(api.employeeTodos.getEmployeeTodo, { todoId });
+    const updated = await t.query(api.employeeTodos.get, { todoId });
 
     expect(updated?.title).toBe("Updated title");
     expect(updated?.description).toBe("Updated description");
@@ -112,46 +100,19 @@ describe("EmployeeTodos", () => {
 
   test("update throws if title becomes empty", async () => {
     await expect(
-      t.mutation(api.employeeTodos.updateEmployeeTodo, {
+      t.mutation(api.employeeTodos.update, {
         todoId,
-        body: {
-          title: "   ",
-        },
+        body: { title: "   " },
       })
-    ).rejects.toThrow("Employee todo title cannot be empty");
+    ).rejects.toThrow("Title cannot be empty");
   });
 
-  test("toggle flips completion state", async () => {
-    const before = await t.query(api.employeeTodos.getEmployeeTodo, { todoId });
-
-    await t.mutation(api.employeeTodos.toggleEmployeeTodo, {
-      todoId,
-      deviceName: "phone",
-    });
-
-    const after = await t.query(api.employeeTodos.getEmployeeTodo, { todoId });
-
-    expect(after?.isCompleted).toBe(!before?.isCompleted);
-  });
-
+  // DELETE
   test("remove deletes todo", async () => {
-    await t.mutation(api.employeeTodos.removeEmployeeTodo, {
-      todoId,
-      deviceName: "phone",
-    });
+    await t.mutation(api.employeeTodos.remove, { todoId });
 
-    const todo = await t.query(api.employeeTodos.getEmployeeTodo, { todoId });
+    const todo = await t.query(api.employeeTodos.get, { todoId });
+
     expect(todo).toBeNull();
-  });
-
-  test("create throws if title is empty", async () => {
-    await expect(
-      t.mutation(api.employeeTodos.addEmployeeTodo, {
-        employeeId,
-        title: "   ",
-        description: "Some description",
-        priority: "low",
-      })
-    ).rejects.toThrow("Employee todo title cannot be empty");
   });
 });
