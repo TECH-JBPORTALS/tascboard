@@ -17,48 +17,51 @@ Configured plugins (see [`convex/betterAuth/auth.ts`](../../../convex/betterAuth
 
 erDiagram
 
-user {
-  Id _id
-  string name
-  string email
-}
+    employee {
+        Id _id
+        string name
+        string email
+    }
 
-task {
-  Id _id
-}
+    task {
+        Id _id
+    }
 
-employee_performance_points {
-  Id _id
+    employeePerformancePoints {
+        Id _id
 
-  Id userId FK
-  Id awardedBy FK
-  Id taskId FK
+        Id employeeId FK
+        Id taskId FK
 
-  number points
+        number points
+        string awardedBy
+        number createdAt
+        number updatedAt
+    }
 
-  number created_at
-  number updated_at
-}
+    employee ||--o{ employeePerformancePoints : receives
+    task ||--o{ employeePerformancePoints : related_to
 
-user ||--o{ employee_performance_points : "employee"
-user ||--o{ employee_performance_points : "awarded_by"
-task ||--o{ employee_performance_points : "source"
-
-
+```
 ## Final notes 
 
-   user — core entity used across the system. Represents employees, managers, and admins. Used for awarding and receiving performance points.
 
-   task — reference entity used as the source of work. Performance points can be linked to a task.
+- `employee` — core entity representing employees in the organization. Employees can receive performance points based on work contributions and evaluations.
 
-   employee_performance_points — stores performance points awarded to a user based on task completion or manual evaluation.
+- `task` — reference entity representing assigned work items. Performance points may be linked to a related task.
 
-   userId — employee receiving the performance points.
+- `employeePerformancePoints` — stores performance rewards, contribution scores, or evaluation points assigned to employees.
 
-   awardedBy — user who assigns points (manager, team lead, or admin).
+- `employeeId` — references the employee receiving the performance points.
 
-   taskId — optional link to the task that triggered the performance reward.
-   
-   points — numeric score representing performance contribution.
+- `taskId` — references the task associated with the awarded performance points.
 
-   created_at / updated_at — timestamps used for tracking when points were awarded and modified.
+- `awardedBy` — stores the identifier of the manager, admin, or team lead who awarded the points.
+
+- `points` — numeric score representing employee performance contribution or achievement level.
+
+- `updatedAt` — optional timestamp updated whenever the performance record is modified.
+
+- `createdAt / updatedAt` — timestamps used for audit tracking and historical record management.
+
+  
