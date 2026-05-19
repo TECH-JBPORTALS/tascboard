@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { ProjectIcon } from "@/components/projects/project-icon";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { NavPermissionGate } from "./NavPermissionGate";
@@ -166,6 +167,11 @@ function ProjectSidebarGroup() {
                   tooltip={{ children: pro.name }}
                   render={<Link href={href} />}
                 >
+                  <ProjectIcon
+                    icon={pro.icon}
+                    color={pro.color}
+                    size="sm"
+                  />
                   <span className="truncate">{pro.name}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

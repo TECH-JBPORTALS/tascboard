@@ -7,6 +7,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
 import { api } from '@/convex/_generated/api';
+import {
+  ProjectIconPicker,
+  useProjectIconPickerState,
+} from '@/components/projects/project-icon-picker';
+import {
+  DEFAULT_PROJECT_COLOR,
+  DEFAULT_PROJECT_ICON,
+} from '@/lib/project-appearance';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,7 +26,6 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 const createProjectSchema = z.object({
   name: z.string().trim().min(1, 'Project name is required'),
@@ -38,6 +45,7 @@ export function CreateProjectDialog({
   const router = useRouter();
   const params = useParams<{ orgSlug: string }>();
   const createProject = useMutation(api.project.create);
+  const { icon, color, setIcon, setColor } = useProjectIconPickerState();
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -47,11 +55,14 @@ export function CreateProjectDialog({
   });
 
   React.useEffect(() => {
-    if (!open) {
+    if (open) {
+      setIcon(DEFAULT_PROJECT_ICON);
+      setColor(DEFAULT_PROJECT_COLOR);
+    } else {
       form.reset();
       setSubmitError(null);
     }
-  }, [form, open]);
+  }, [form, open, setColor, setIcon]);
 
   async function onSubmit(values: CreateProjectValues) {
     setSubmitError(null);
@@ -63,6 +74,8 @@ export function CreateProjectDialog({
 
       const projectId = await createProject({
         name: values.name,
+        icon,
+        color,
         startDate: now,
         endDate: now + thirtyDaysMs,
         status: 'inactive',
@@ -85,7 +98,7 @@ export function CreateProjectDialog({
         <DialogHeader>
           <DialogTitle>Create project</DialogTitle>
           <DialogDescription>
-            Add a new project to document goals, specs, and progress.
+            Name your project and pick an icon and color.
           </DialogDescription>
         </DialogHeader>
 
@@ -93,16 +106,25 @@ export function CreateProjectDialog({
           className="flex flex-col gap-4"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <Field>
-            <Label htmlFor="project-name">Project name</Label>
-            <Input
-              id="project-name"
-              placeholder="e.g. Project Apollo"
-              autoFocus
-              {...form.register('name')}
+          <div className="flex items-start gap-3">
+            <ProjectIconPicker
+              icon={icon}
+              color={color}
+              onIconChange={setIcon}
+              onColorChange={setColor}
+              size="lg"
             />
-            <FieldError errors={[form.formState.errors.name]} />
-          </Field>
+            <Field className="flex-1">
+              <Input
+                id="project-name"
+                placeholder="Project name"
+                autoFocus
+                className="h-10"
+                {...form.register('name')}
+              />
+              <FieldError errors={[form.formState.errors.name]} />
+            </Field>
+          </div>
 
           {submitError ? (
             <p className="text-sm text-destructive">{submitError}</p>

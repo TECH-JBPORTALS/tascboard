@@ -21,7 +21,9 @@ describe("Sprint", () => {
     // create project
     const projectId = await t.mutation(api.project.create, {
       name: "Project A",
-      description: "Test Project",
+      summary: "Test Project",
+      icon: "📁",
+      color: "purple",
       startDate: 1700000000000,
       endDate: 1800000000000,
       status: "active",

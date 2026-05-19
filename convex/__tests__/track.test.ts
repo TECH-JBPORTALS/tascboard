@@ -19,7 +19,9 @@ describe("Tracks", () => {
 
     projectId = await t.mutation(api.project.create, {
       name: "Project A",
-      description: "Test project",
+      summary: "Test project",
+      icon: "📁",
+      color: "purple",
       startDate: 1700000000000,
       endDate: 1800000000000,
       status: "active",
@@ -55,7 +57,9 @@ describe("Tracks", () => {
   test("create fails if project does not belong to org", async () => {
     const projectId = await t.mutation(api.project.create, {
       name: "Valid Project",
-      description: "Test",
+      summary: "Test",
+      icon: "📁",
+      color: "purple",
       startDate: Date.now(),
       endDate: Date.now() + 100000,
       status: "active",

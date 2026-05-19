@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { removeTrackCascade } from "./track";
 import { requireIdentity, requireOrganization } from "./lib/auth";
+import { projectColorValidator } from "./lib/projectAppearance";
 
 const projectStatusValidator = v.union(
   v.literal("active"),
@@ -15,8 +16,10 @@ const projectReturn = v.object({
   _creationTime: v.number(),
   organizationId: v.string(),
   name: v.string(),
-  description: v.optional(v.string()),
-  docContent: v.optional(v.any()),
+  summary: v.optional(v.string()),
+  description: v.optional(v.any()),
+  icon: v.optional(v.string()),
+  color: v.optional(projectColorValidator),
   startDate: v.number(),
   endDate: v.number(),
   status: projectStatusValidator,
@@ -24,10 +27,33 @@ const projectReturn = v.object({
   updatedAt: v.optional(v.number()),
 });
 
+type ProjectDoc = Doc<"projects"> & { docContent?: unknown };
+
+/** Maps legacy docContent / string description into summary + rich description. */
+function normalizeProject(project: ProjectDoc) {
+  let summary = project.summary;
+  let description = project.description;
+
+  if (description === undefined && project.docContent !== undefined) {
+    description = project.docContent;
+  }
+
+  if (typeof description === "string") {
+    if (!summary) {
+      summary = description;
+    }
+    description = undefined;
+  }
+
+  return { ...project, summary, description };
+}
+
 export const create = mutation({
   args: {
     name: v.string(),
-    description: v.optional(v.string()),
+    summary: v.optional(v.string()),
+    icon: v.string(),
+    color: projectColorValidator,
     startDate: v.number(),
     endDate: v.number(),
     status: projectStatusValidator,
@@ -41,7 +67,9 @@ export const create = mutation({
     const insertedProjectId = await ctx.db.insert("projects", {
       organizationId: orgId,
       name: args.name.trim(),
-      description: args.description?.trim(),
+      summary: args.summary?.trim() || undefined,
+      icon: args.icon,
+      color: args.color,
       startDate: args.startDate,
       endDate: args.endDate,
       status: args.status,
@@ -72,7 +100,7 @@ export const list = query({
 
     return await Promise.all(
       projects.map(async (project) => ({
-        ...project,
+        ...normalizeProject(project as ProjectDoc),
         tracks: await ctx.db
           .query("tracks")
           .withIndex("by_project", (q) => q.eq("projectId", project._id))
@@ -94,7 +122,7 @@ export const get = query({
     if (!project || project.organizationId !== orgId) {
       return null;
     }
-    return project;
+    return normalizeProject(project as ProjectDoc);
   },
 });
 
@@ -103,7 +131,9 @@ export const update = mutation({
     projectId: v.id("projects"),
     body: v.object({
       name: v.optional(v.string()),
-      description: v.optional(v.string()),
+      summary: v.optional(v.string()),
+      icon: v.optional(v.string()),
+      color: v.optional(projectColorValidator),
       startDate: v.optional(v.number()),
       endDate: v.optional(v.number()),
       status: v.optional(projectStatusValidator),
@@ -134,8 +164,9 @@ export const update = mutation({
       patch.name = trimmed;
     }
 
-    if (args.body.description !== undefined) {
-      patch.description = args.body.description.trim();
+    if (args.body.summary !== undefined) {
+      const trimmed = args.body.summary.trim();
+      patch.summary = trimmed.length > 0 ? trimmed : undefined;
     }
 
     patch.updatedAt = Date.now();
@@ -146,10 +177,10 @@ export const update = mutation({
   },
 });
 
-export const updateDocContent = mutation({
+export const updateDescription = mutation({
   args: {
     projectId: v.id("projects"),
-    content: v.any(),
+    description: v.any(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -163,7 +194,7 @@ export const updateDocContent = mutation({
     }
 
     await ctx.db.patch(args.projectId, {
-      docContent: args.content,
+      description: args.description,
       updatedAt: Date.now(),
     });
 
@@ -236,8 +267,10 @@ export const seedStarterProjects = internalMutation({
       {
         organizationId: orgId,
         name: "Employee Attendance System",
-        description:
+        summary:
           "Track employee attendance and manage reporting workflows.",
+        icon: "📊",
+        color: "blue",
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 30,
         status: "active",
@@ -247,7 +280,9 @@ export const seedStarterProjects = internalMutation({
       {
         organizationId: orgId,
         name: "Payroll Automation",
-        description: "Automate salary generation and payroll exports.",
+        summary: "Automate salary generation and payroll exports.",
+        icon: "💎",
+        color: "purple",
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 60,
         status: "inactive",

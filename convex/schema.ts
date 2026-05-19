@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { projectColorValidator } from "./lib/projectAppearance";
 
 export const onboardingStatusValidator = v.union(
   v.literal("pending"),
@@ -67,8 +68,10 @@ export default defineSchema({
   projects: defineTable({
     organizationId: v.string(),
     name: v.string(),
-    description: v.optional(v.string()),
-    docContent: v.optional(v.any()),
+    summary: v.optional(v.string()),
+    description: v.optional(v.any()),
+    icon: v.optional(v.string()),
+    color: v.optional(projectColorValidator),
     startDate: v.number(),
     endDate: v.number(),
     status: v.union(

@@ -36,7 +36,7 @@ export function ProjectPlateEditor({
 }: ProjectPlateEditorProps) {
   const mounted = useMounted();
   const { data: session } = authClient.useSession();
-  const updateDocContent = useMutation(api.project.updateDocContent);
+  const updateDescription = useMutation(api.project.updateDescription);
 
   // Seed document once per project; ignore live Convex updates (autosave loop).
   const initialValue = React.useMemo(
@@ -96,26 +96,30 @@ export function ProjectPlateEditor({
     });
 
     const interval = window.setInterval(() => {
-      void updateDocContent({
+      void updateDescription({
         projectId,
-        content: editor.children,
+        description: editor.children,
       });
     }, SAVE_INTERVAL_MS);
 
     return () => {
       window.clearInterval(interval);
-      void updateDocContent({
+      void updateDescription({
         projectId,
-        content: editor.children,
+        description: editor.children,
       });
       editor.getApi(YjsPlugin).yjs.destroy();
     };
-  }, [editor, initialValue, mounted, projectId, updateDocContent]);
+  }, [editor, initialValue, mounted, projectId, updateDescription]);
 
   return (
     <Plate editor={editor}>
-      <EditorContainer variant="default" className="min-h-[60vh] flex-1">
-        <Editor variant="default" placeholder="Document your project…" />
+      <EditorContainer variant="default" className="min-h-[60vh] w-full flex-1">
+        <Editor
+          variant="default"
+          className="w-full sm:px-0!"
+          placeholder="Add description…"
+        />
       </EditorContainer>
     </Plate>
   );

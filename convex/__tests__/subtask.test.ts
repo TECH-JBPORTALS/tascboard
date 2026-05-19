@@ -22,7 +22,9 @@ describe("Subtask", () => {
 
     projectId = await t.mutation(api.project.create, {
       name: "Project A",
-      description: "Test Project",
+      summary: "Test Project",
+      icon: "📁",
+      color: "purple",
       startDate: 1,
       endDate: 2,
       status: "active",
