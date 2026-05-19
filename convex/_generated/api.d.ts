@@ -23,6 +23,8 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_betterAuthAdapter from "../lib/betterAuthAdapter.js";
 import type * as lib_employees from "../lib/employees.js";
 import type * as lib_permissions from "../lib/permissions.js";
+import type * as meeting from "../meeting.js";
+import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
@@ -51,6 +53,8 @@ declare const fullApi: ApiFromModules<{
   "lib/betterAuthAdapter": typeof lib_betterAuthAdapter;
   "lib/employees": typeof lib_employees;
   "lib/permissions": typeof lib_permissions;
+  meeting: typeof meeting;
+  payroll: typeof payroll;
   project: typeof project;
   sprint: typeof sprint;
   subtask: typeof subtask;
