@@ -1,0 +1,64 @@
+import type { MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+
+export const projectActivityKindValidator = [
+  "created",
+  "name_changed",
+  "summary_changed",
+  "status_changed",
+  "start_date_changed",
+  "end_date_changed",
+  "icon_changed",
+  "color_changed",
+] as const;
+
+export type ProjectActivityKind = (typeof projectActivityKindValidator)[number];
+
+type LogProjectActivityArgs = {
+  projectId: Id<"projects">;
+  organizationId: string;
+  actorUserId: string;
+  actorName: string;
+  kind: ProjectActivityKind;
+  fromValue?: string;
+  toValue?: string;
+};
+
+export async function logProjectActivity(
+  ctx: MutationCtx,
+  args: LogProjectActivityArgs,
+) {
+  await ctx.db.insert("projectActivities", {
+    projectId: args.projectId,
+    organizationId: args.organizationId,
+    actorUserId: args.actorUserId,
+    actorName: args.actorName,
+    kind: args.kind,
+    fromValue: args.fromValue,
+    toValue: args.toValue,
+    createdAt: Date.now(),
+  });
+}
+
+export function formatProjectDate(timestamp: number) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(timestamp));
+}
+
+export function actorDisplayName(identity: {
+  name?: string | null;
+  email?: string | null;
+}) {
+  const name = identity.name?.trim();
+  if (name) {
+    return name;
+  }
+  const email = identity.email?.trim();
+  if (email) {
+    return email;
+  }
+  return "Someone";
+}

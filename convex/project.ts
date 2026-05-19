@@ -1,8 +1,14 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { removeTrackCascade } from "./track";
 import { requireIdentity, requireOrganization } from "./lib/auth";
+import {
+  actorDisplayName,
+  formatProjectDate,
+  logProjectActivity,
+} from "./lib/projectActivityLog";
+import { projectColorValidator } from "./lib/projectAppearance";
 
 const projectStatusValidator = v.union(
   v.literal("active"),
@@ -15,7 +21,10 @@ const projectReturn = v.object({
   _creationTime: v.number(),
   organizationId: v.string(),
   name: v.string(),
-  description: v.optional(v.string()),
+  summary: v.optional(v.string()),
+  description: v.optional(v.any()),
+  icon: v.optional(v.string()),
+  color: v.optional(projectColorValidator),
   startDate: v.number(),
   endDate: v.number(),
   status: projectStatusValidator,
@@ -23,25 +32,54 @@ const projectReturn = v.object({
   updatedAt: v.optional(v.number()),
 });
 
+type ProjectDoc = Doc<"projects"> & { docContent?: unknown };
+
+/** Maps legacy docContent / string description into summary + rich description. */
+function normalizeProject(project: ProjectDoc) {
+  let summary = project.summary;
+  let description = project.description;
+
+  if (description === undefined && project.docContent !== undefined) {
+    description = project.docContent;
+  }
+
+  if (typeof description === "string") {
+    if (!summary) {
+      summary = description;
+    }
+    description = undefined;
+  }
+
+  return { ...project, summary, description };
+}
+
 export const create = mutation({
   args: {
     name: v.string(),
-    description: v.optional(v.string()),
+    summary: v.optional(v.string()),
+    icon: v.string(),
+    color: projectColorValidator,
     startDate: v.number(),
     endDate: v.number(),
     status: projectStatusValidator,
   },
   returns: v.id("projects"),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
-    const { orgId } = await requireOrganization(ctx);
+    const identity = await requireIdentity(ctx);
+    const { orgId, userId } = await requireOrganization(ctx);
+
+    if (args.endDate < args.startDate) {
+      throw new Error("End date cannot be before start date");
+    }
+
     const now = Date.now();
-    
 
     const insertedProjectId = await ctx.db.insert("projects", {
       organizationId: orgId,
       name: args.name.trim(),
-      description: args.description?.trim(),
+      summary: args.summary?.trim() || undefined,
+      icon: args.icon,
+      color: args.color,
       startDate: args.startDate,
       endDate: args.endDate,
       status: args.status,
@@ -49,13 +87,21 @@ export const create = mutation({
       updatedAt: undefined,
     });
 
+    await logProjectActivity(ctx, {
+      projectId: insertedProjectId,
+      organizationId: orgId,
+      actorUserId: userId,
+      actorName: actorDisplayName(identity),
+      kind: "created",
+      toValue: args.name.trim(),
+    });
+
     return insertedProjectId;
   },
 });
 
 export const list = query({
-  args: {
-  },
+  args: {},
   returns: v.array(
     v.object({
       ...projectReturn.fields,
@@ -67,20 +113,16 @@ export const list = query({
     const { orgId } = await requireOrganization(ctx);
     const projects = await ctx.db
       .query("projects")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", orgId),
-      )
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
       .order("desc")
       .collect();
 
     return await Promise.all(
       projects.map(async (project) => ({
-        ...project,
+        ...normalizeProject(project as ProjectDoc),
         tracks: await ctx.db
           .query("tracks")
-          .withIndex("by_project", (q) =>
-            q.eq("projectId", project._id),
-          )
+          .withIndex("by_project", (q) => q.eq("projectId", project._id))
           .collect(),
       })),
     );
@@ -93,14 +135,13 @@ export const get = query({
   },
   returns: v.union(projectReturn, v.null()),
   handler: async (ctx, args) => {
-
     await requireIdentity(ctx);
     const { orgId } = await requireOrganization(ctx);
     const project = await ctx.db.get(args.projectId);
     if (!project || project.organizationId !== orgId) {
       return null;
     }
-    return project;
+    return normalizeProject(project as ProjectDoc);
   },
 });
 
@@ -109,7 +150,9 @@ export const update = mutation({
     projectId: v.id("projects"),
     body: v.object({
       name: v.optional(v.string()),
-      description: v.optional(v.string()),
+      summary: v.optional(v.string()),
+      icon: v.optional(v.string()),
+      color: v.optional(projectColorValidator),
       startDate: v.optional(v.number()),
       endDate: v.optional(v.number()),
       status: v.optional(projectStatusValidator),
@@ -117,18 +160,24 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
-const { orgId } = await requireOrganization(ctx);
+    const identity = await requireIdentity(ctx);
+    const { orgId, userId } = await requireOrganization(ctx);
+    const actorName = actorDisplayName(identity);
 
-const project = await ctx.db.get(args.projectId);
+    const project = await ctx.db.get(args.projectId);
 
-if (!project || project.organizationId !== orgId) {
-  throw new Error("Not found");
-}
+    if (!project || project.organizationId !== orgId) {
+      throw new Error("Not found");
+    }
 
-    const patch: Partial<Doc<"projects">> = {
-      ...args.body,
-    };
+    const nextStartDate = args.body.startDate ?? project.startDate;
+    const nextEndDate = args.body.endDate ?? project.endDate;
+
+    if (nextEndDate < nextStartDate) {
+      throw new Error("End date cannot be before start date");
+    }
+
+    const patch: Partial<Doc<"projects">> = {};
 
     if (args.body.name !== undefined) {
       const trimmed = args.body.name.trim();
@@ -137,16 +186,146 @@ if (!project || project.organizationId !== orgId) {
         throw new Error("Project name cannot be empty");
       }
 
+      if (trimmed !== project.name) {
+        await logProjectActivity(ctx, {
+          projectId: args.projectId,
+          organizationId: orgId,
+          actorUserId: userId,
+          actorName,
+          kind: "name_changed",
+          fromValue: project.name,
+          toValue: trimmed,
+        });
+      }
+
       patch.name = trimmed;
     }
 
-    if (args.body.description !== undefined) {
-      patch.description = args.body.description.trim();
+    if (args.body.summary !== undefined) {
+      const trimmed = args.body.summary.trim();
+      const nextSummary = trimmed.length > 0 ? trimmed : undefined;
+
+      if (nextSummary !== (project.summary ?? undefined)) {
+        await logProjectActivity(ctx, {
+          projectId: args.projectId,
+          organizationId: orgId,
+          actorUserId: userId,
+          actorName,
+          kind: "summary_changed",
+          fromValue: project.summary,
+          toValue: nextSummary,
+        });
+      }
+
+      patch.summary = nextSummary;
+    }
+
+    if (
+      args.body.status !== undefined &&
+      args.body.status !== project.status
+    ) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "status_changed",
+        fromValue: project.status,
+        toValue: args.body.status,
+      });
+      patch.status = args.body.status;
+    }
+
+    if (
+      args.body.startDate !== undefined &&
+      args.body.startDate !== project.startDate
+    ) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "start_date_changed",
+        fromValue: formatProjectDate(project.startDate),
+        toValue: formatProjectDate(args.body.startDate),
+      });
+      patch.startDate = args.body.startDate;
+    }
+
+    if (
+      args.body.endDate !== undefined &&
+      args.body.endDate !== project.endDate
+    ) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "end_date_changed",
+        fromValue: formatProjectDate(project.endDate),
+        toValue: formatProjectDate(args.body.endDate),
+      });
+      patch.endDate = args.body.endDate;
+    }
+
+    if (args.body.icon !== undefined && args.body.icon !== project.icon) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "icon_changed",
+        fromValue: project.icon,
+        toValue: args.body.icon,
+      });
+      patch.icon = args.body.icon;
+    }
+
+    if (args.body.color !== undefined && args.body.color !== project.color) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "color_changed",
+        fromValue: project.color,
+        toValue: args.body.color,
+      });
+      patch.color = args.body.color;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return null;
     }
 
     patch.updatedAt = Date.now();
 
     await ctx.db.patch(args.projectId, patch);
+
+    return null;
+  },
+});
+
+export const updateDescription = mutation({
+  args: {
+    projectId: v.id("projects"),
+    description: v.any(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    const project = await ctx.db.get(args.projectId);
+
+    if (!project || project.organizationId !== orgId) {
+      throw new Error("Not found");
+    }
+
+    await ctx.db.patch(args.projectId, {
+      description: args.description,
+      updatedAt: Date.now(),
+    });
 
     return null;
   },
@@ -162,7 +341,7 @@ export const remove = mutation({
   }),
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
-    
+
     const project = await ctx.db.get(args.projectId);
     const { orgId } = await requireOrganization(ctx);
 
@@ -172,9 +351,7 @@ export const remove = mutation({
 
     const tracks = await ctx.db
       .query("tracks")
-      .withIndex("by_project", (q) =>
-        q.eq("projectId", args.projectId),
-      )
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
 
     for (const track of tracks) {
@@ -183,14 +360,10 @@ export const remove = mutation({
 
     const labels = await ctx.db
       .query("labels")
-      .withIndex("by_project", (q) =>
-        q.eq("projectId", args.projectId),
-      )
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
 
-    await Promise.all(
-      labels.map((label) => ctx.db.delete(label._id)),
-    );
+    await Promise.all(labels.map((label) => ctx.db.delete(label._id)));
 
     await ctx.db.delete(args.projectId);
 
@@ -202,7 +375,7 @@ export const remove = mutation({
 });
 
 /** Idempotent seed so new organizations have starter projects */
-export const seedStarterProjects = mutation({
+export const seedStarterProjects = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
@@ -210,9 +383,7 @@ export const seedStarterProjects = mutation({
 
     const existing = await ctx.db
       .query("projects")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", orgId),
-      )
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
       .take(1);
 
     if (existing.length > 0) {
@@ -221,15 +392,14 @@ export const seedStarterProjects = mutation({
 
     const now = Date.now();
 
-    const samples: Omit<
-      Doc<"projects">,
-      "_id" | "_creationTime"
-    >[] = [
+    const samples: Omit<Doc<"projects">, "_id" | "_creationTime">[] = [
       {
         organizationId: orgId,
         name: "Employee Attendance System",
-        description:
+        summary:
           "Track employee attendance and manage reporting workflows.",
+        icon: "📊",
+        color: "blue",
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 30,
         status: "active",
@@ -239,8 +409,9 @@ export const seedStarterProjects = mutation({
       {
         organizationId: orgId,
         name: "Payroll Automation",
-        description:
-          "Automate salary generation and payroll exports.",
+        summary: "Automate salary generation and payroll exports.",
+        icon: "💎",
+        color: "purple",
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 60,
         status: "inactive",

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
+  RiAddLargeFill,
   RiCalendarCheckFill,
   RiCalendarCheckLine,
   RiInboxFill,
@@ -17,6 +19,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
@@ -26,6 +29,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { ProjectIcon } from "@/components/projects/project-icon";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { NavPermissionGate } from "./NavPermissionGate";
@@ -123,7 +128,58 @@ export function AppSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Projects */}
+        <ProjectSidebarGroup />
       </SidebarContent>
     </Sidebar>
+  );
+}
+
+function ProjectSidebarGroup() {
+  const pathname = usePathname();
+  const params = useParams<{ orgSlug: string }>();
+  const basePath = `/${params.orgSlug}`;
+  const projects = useQuery(api.project.list);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>
+        PROJECTS
+        <SidebarGroupAction
+          title="Create project"
+          onClick={() => setCreateOpen(true)}
+        >
+          <RiAddLargeFill />
+        </SidebarGroupAction>
+      </SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {projects?.map((pro) => {
+            const href = `${basePath}/pro/${pro._id}`;
+            const isActive = pathname === href || pathname.startsWith(`${href}/`);
+
+            return (
+              <SidebarMenuItem key={pro._id}>
+                <SidebarMenuButton
+                  isActive={isActive}
+                  tooltip={{ children: pro.name }}
+                  render={<Link href={href} />}
+                >
+                  <ProjectIcon
+                    icon={pro.icon}
+                    color={pro.color}
+                    size="sm"
+                  />
+                  <span className="truncate">{pro.name}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+      <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+    </SidebarGroup>
   );
 }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
@@ -18,7 +18,9 @@ describe("Project", () => {
 
     projectId = await t.mutation(api.project.create, {
       name: " Project A ",
-      description: " Test project ",
+      summary: " Test project ",
+      icon: "📁",
+      color: "purple",
       startDate: 1700000000000,
       endDate: 1800000000000,
       status: "active",
@@ -33,7 +35,7 @@ describe("Project", () => {
     expect(project).not.toBeNull();
 
     expect(project?.name).toBe("Project A");
-    expect(project?.description).toBe("Test project");
+    expect(project?.summary).toBe("Test project");
     expect(project?.status).toBe("active");
   });
 
@@ -59,7 +61,7 @@ describe("Project", () => {
       projectId,
       body: {
         name: " Updated Project ",
-        description: " Updated description ",
+        summary: " Updated summary ",
         status: "terminated",
       },
     });
@@ -69,7 +71,7 @@ describe("Project", () => {
     });
 
     expect(updated?.name).toBe("Updated Project");
-    expect(updated?.description).toBe("Updated description");
+    expect(updated?.summary).toBe("Updated summary");
     expect(updated?.status).toBe("terminated");
     expect(updated?.updatedAt).toBeTypeOf("number");
   });
@@ -109,12 +111,12 @@ describe("Project", () => {
     ).rejects.toThrow("Not found");
   });
 
-  test("update trims name and description", async () => {
+  test("update trims name and summary", async () => {
     await t.mutation(api.project.update, {
       projectId,
       body: {
         name: "   Trimmed Name   ",
-        description: "   Trimmed Description   ",
+        summary: "   Trimmed Summary   ",
       },
     });
 
@@ -123,7 +125,60 @@ describe("Project", () => {
     });
 
     expect(updated?.name).toBe("Trimmed Name");
-    expect(updated?.description).toBe("Trimmed Description");
+    expect(updated?.summary).toBe("Trimmed Summary");
+  });
+
+  test("update rejects end date before start date", async () => {
+    await expect(
+      t.mutation(api.project.update, {
+        projectId,
+        body: {
+          endDate: 1600000000000,
+        },
+      }),
+    ).rejects.toThrow("End date cannot be before start date");
+  });
+
+  test("create logs activity and updateDescription does not", async () => {
+    const afterCreate = await t.query(api.projectActivity.list, {
+      projectId,
+    });
+
+    expect(afterCreate.length).toBe(1);
+    expect(afterCreate[0]?.kind).toBe("created");
+
+    await t.mutation(api.project.update, {
+      projectId,
+      body: { status: "inactive" },
+    });
+
+    await t.mutation(api.project.updateDescription, {
+      projectId,
+      description: [{ type: "p", children: [{ text: "Docs" }] }],
+    });
+
+    const activities = await t.query(api.projectActivity.list, {
+      projectId,
+    });
+
+    expect(activities.some((a) => a.kind === "status_changed")).toBe(true);
+    expect(activities.some((a) => a.kind === "created")).toBe(true);
+    expect(activities.length).toBe(2);
+  });
+
+  test("updateDescription saves plate content", async () => {
+    const plateValue = [
+      { type: "p", children: [{ text: "Rich project description" }] },
+    ];
+
+    await t.mutation(api.project.updateDescription, {
+      projectId,
+      description: plateValue,
+    });
+
+    const updated = await t.query(api.project.get, { projectId });
+
+    expect(updated?.description).toEqual(plateValue);
   });
 
   test("seedStarterProjects creates default projects", async () => {
@@ -132,7 +187,7 @@ describe("Project", () => {
       orgId: "org-2",
     });
 
-    await isolated.mutation(api.project.seedStarterProjects);
+    await isolated.mutation(internal.project.seedStarterProjects);
 
     const projects = await isolated.query(api.project.list, {});
 
@@ -149,8 +204,8 @@ describe("Project", () => {
       orgId: "org-3",
     });
 
-    await isolated.mutation(api.project.seedStarterProjects);
-    await isolated.mutation(api.project.seedStarterProjects);
+    await isolated.mutation(internal.project.seedStarterProjects);
+    await isolated.mutation(internal.project.seedStarterProjects);
 
     const projects = await isolated.query(api.project.list, {});
 
@@ -160,6 +215,8 @@ describe("Project", () => {
   test("list only returns current organization projects", async () => {
     await t.mutation(api.project.create, {
       name: "Other org project",
+      icon: "📁",
+      color: "purple",
       startDate: 1,
       endDate: 2,
       status: "active",
@@ -193,6 +250,8 @@ describe("Project", () => {
 
     const projectId = await owner.mutation(api.project.create, {
       name: "Private Project",
+      icon: "📁",
+      color: "purple",
       startDate: 1,
       endDate: 2,
       status: "active",
