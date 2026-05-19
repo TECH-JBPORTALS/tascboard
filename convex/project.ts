@@ -3,6 +3,11 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { removeTrackCascade } from "./track";
 import { requireIdentity, requireOrganization } from "./lib/auth";
+import {
+  actorDisplayName,
+  formatProjectDate,
+  logProjectActivity,
+} from "./lib/projectActivityLog";
 import { projectColorValidator } from "./lib/projectAppearance";
 
 const projectStatusValidator = v.union(
@@ -60,8 +65,13 @@ export const create = mutation({
   },
   returns: v.id("projects"),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
-    const { orgId } = await requireOrganization(ctx);
+    const identity = await requireIdentity(ctx);
+    const { orgId, userId } = await requireOrganization(ctx);
+
+    if (args.endDate < args.startDate) {
+      throw new Error("End date cannot be before start date");
+    }
+
     const now = Date.now();
 
     const insertedProjectId = await ctx.db.insert("projects", {
@@ -75,6 +85,15 @@ export const create = mutation({
       status: args.status,
       createdAt: now,
       updatedAt: undefined,
+    });
+
+    await logProjectActivity(ctx, {
+      projectId: insertedProjectId,
+      organizationId: orgId,
+      actorUserId: userId,
+      actorName: actorDisplayName(identity),
+      kind: "created",
+      toValue: args.name.trim(),
     });
 
     return insertedProjectId;
@@ -141,8 +160,9 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
-    const { orgId } = await requireOrganization(ctx);
+    const identity = await requireIdentity(ctx);
+    const { orgId, userId } = await requireOrganization(ctx);
+    const actorName = actorDisplayName(identity);
 
     const project = await ctx.db.get(args.projectId);
 
@@ -150,9 +170,14 @@ export const update = mutation({
       throw new Error("Not found");
     }
 
-    const patch: Partial<Doc<"projects">> = {
-      ...args.body,
-    };
+    const nextStartDate = args.body.startDate ?? project.startDate;
+    const nextEndDate = args.body.endDate ?? project.endDate;
+
+    if (nextEndDate < nextStartDate) {
+      throw new Error("End date cannot be before start date");
+    }
+
+    const patch: Partial<Doc<"projects">> = {};
 
     if (args.body.name !== undefined) {
       const trimmed = args.body.name.trim();
@@ -161,12 +186,116 @@ export const update = mutation({
         throw new Error("Project name cannot be empty");
       }
 
+      if (trimmed !== project.name) {
+        await logProjectActivity(ctx, {
+          projectId: args.projectId,
+          organizationId: orgId,
+          actorUserId: userId,
+          actorName,
+          kind: "name_changed",
+          fromValue: project.name,
+          toValue: trimmed,
+        });
+      }
+
       patch.name = trimmed;
     }
 
     if (args.body.summary !== undefined) {
       const trimmed = args.body.summary.trim();
-      patch.summary = trimmed.length > 0 ? trimmed : undefined;
+      const nextSummary = trimmed.length > 0 ? trimmed : undefined;
+
+      if (nextSummary !== (project.summary ?? undefined)) {
+        await logProjectActivity(ctx, {
+          projectId: args.projectId,
+          organizationId: orgId,
+          actorUserId: userId,
+          actorName,
+          kind: "summary_changed",
+          fromValue: project.summary,
+          toValue: nextSummary,
+        });
+      }
+
+      patch.summary = nextSummary;
+    }
+
+    if (
+      args.body.status !== undefined &&
+      args.body.status !== project.status
+    ) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "status_changed",
+        fromValue: project.status,
+        toValue: args.body.status,
+      });
+      patch.status = args.body.status;
+    }
+
+    if (
+      args.body.startDate !== undefined &&
+      args.body.startDate !== project.startDate
+    ) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "start_date_changed",
+        fromValue: formatProjectDate(project.startDate),
+        toValue: formatProjectDate(args.body.startDate),
+      });
+      patch.startDate = args.body.startDate;
+    }
+
+    if (
+      args.body.endDate !== undefined &&
+      args.body.endDate !== project.endDate
+    ) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "end_date_changed",
+        fromValue: formatProjectDate(project.endDate),
+        toValue: formatProjectDate(args.body.endDate),
+      });
+      patch.endDate = args.body.endDate;
+    }
+
+    if (args.body.icon !== undefined && args.body.icon !== project.icon) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "icon_changed",
+        fromValue: project.icon,
+        toValue: args.body.icon,
+      });
+      patch.icon = args.body.icon;
+    }
+
+    if (args.body.color !== undefined && args.body.color !== project.color) {
+      await logProjectActivity(ctx, {
+        projectId: args.projectId,
+        organizationId: orgId,
+        actorUserId: userId,
+        actorName,
+        kind: "color_changed",
+        fromValue: project.color,
+        toValue: args.body.color,
+      });
+      patch.color = args.body.color;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return null;
     }
 
     patch.updatedAt = Date.now();

@@ -1,7 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { projectColorValidator } from "./lib/projectAppearance";
-import { title } from "process";
 
 export const onboardingStatusValidator = v.union(
   v.literal("pending"),
@@ -83,6 +82,26 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }).index("by_organization", ["organizationId"]),
+
+  projectActivities: defineTable({
+    projectId: v.id("projects"),
+    organizationId: v.string(),
+    actorUserId: v.string(),
+    actorName: v.string(),
+    kind: v.union(
+      v.literal("created"),
+      v.literal("name_changed"),
+      v.literal("summary_changed"),
+      v.literal("status_changed"),
+      v.literal("start_date_changed"),
+      v.literal("end_date_changed"),
+      v.literal("icon_changed"),
+      v.literal("color_changed"),
+    ),
+    fromValue: v.optional(v.string()),
+    toValue: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_project", ["projectId"]),
 
   tracks: defineTable({
     name: v.string(),
@@ -180,7 +199,9 @@ export default defineSchema({
     endDate: v.number(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_track", ["trackId"]),
+  })
+    .index("by_track", ["trackId"])
+    .index("by_project", ["projectId"]),
 
   labels: defineTable({
     name: v.string(),
@@ -264,6 +285,66 @@ export default defineSchema({
   .index("by_employee",["employeeId"])
   .index("by_employee_and_status", ["employeeId", "isCompleted"]),
 
+  meeting: defineTable({
+    organizationId: v.string(),
+    createdBy: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    recurrenceType: v.union(
+      v.literal("none"),
+      v.literal("daily"),
+      v.literal("weekly"),
+    ),
+    recurrenceDays: v.array(v.union(
+      v.literal("monday"),
+      v.literal("tuesday"),
+      v.literal("wednesday"),
+      v.literal("thursday"),
+      v.literal("friday"),
+      v.literal("saturday"),
+      v.literal("sunday"),
+    )),
+    startTime: v.number(),
+    endTime: v.number(),
+    meetingLink: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }),
+
+  meetingRecipient: defineTable({
+    meetingId: v.id("meeting"),
+    employeeId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  scheduleMeeting: defineTable({
+    meetingId: v.id("meeting"),
+    startTime: v.number(),
+    endTime: v.number(),
+    finalNotes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number())
+  }),
+
+  meetingAttendee: defineTable({
+    scheduleMeetingId: v.id("scheduleMeeting"),
+    employeeId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  payroll: defineTable({
+    employeeId: v.string(),
+    creditedAt: v.number(),
+    basicSalary: v.float64(),
+    deduction: v.float64(),
+    overtimePay: v.float64(),
+    bonus: v.float64(),
+    netSalary: v.float64(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }),
 
 });
 

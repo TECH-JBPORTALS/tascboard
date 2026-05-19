@@ -7,8 +7,13 @@ import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { ProjectPlateEditor } from "@/components/projects/project-plate-editor";
 import { ProjectIconPicker } from "@/components/projects/project-icon-picker";
+import {
+  ProjectDetailPanel,
+  ProjectDetailPanelToggle,
+} from "@/components/projects/project-detail-panel";
 import { ProjectPageHeader } from "@/components/projects/project-page-header";
 import { ProjectProperties } from "@/components/projects/project-properties";
+import { useProjectDetailPanel } from "@/hooks/use-project-detail-panel";
 import { ProjectSummary } from "@/components/projects/project-summary";
 import { ProjectTitle } from "@/components/projects/project-title";
 import type { ProjectColorId } from "@/lib/project-appearance";
@@ -19,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 export default function ProjectPage() {
   const params = useParams<{ orgSlug: string; projectId: string }>();
   const projectId = params.projectId as Id<"projects">;
+  const { open: panelOpen, toggle: togglePanel, hydrated } = useProjectDetailPanel();
 
   const project = useQuery(api.project.get, { projectId });
 
@@ -44,25 +50,29 @@ export default function ProjectPage() {
         projectName={project.name}
         icon={project.icon}
         color={project.color}
+        actions={
+          hydrated ? (
+            <ProjectDetailPanelToggle open={panelOpen} onToggle={togglePanel} />
+          ) : null
+        }
       />
 
-      <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col px-6 py-8">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col overflow-y-auto px-6 py-8">
         <div className="flex flex-col items-start gap-3">
           <div className="flex gap-3">
             <ProjectIconPickerField project={project} />
             <ProjectTitle projectId={project._id} name={project.name} />
           </div>
           <div className="min-w-0 w-full pt-0.5">
-            <ProjectSummary
-              projectId={project._id}
-              summary={project.summary}
-            />
+            <ProjectSummary projectId={project._id} summary={project.summary} />
           </div>
         </div>
 
         <div className="mt-5">
           <ProjectProperties
             projectId={project._id}
+            startDate={project.startDate}
             endDate={project.endDate}
             status={project.status}
           />
@@ -71,13 +81,20 @@ export default function ProjectPage() {
         <Separator className="my-5" />
 
         <section className="flex min-h-0 flex-1 flex-col">
-          <p className="text-sm text-muted-foreground">Description</p>
+          <p className="text-sm text-muted-foreground font-semibold">
+            Description
+          </p>
           <ProjectPlateEditor
             key={project._id}
             projectId={project._id}
             initialContent={project.description}
           />
         </section>
+      </div>
+
+      {hydrated ? (
+        <ProjectDetailPanel projectId={project._id} open={panelOpen} />
+      ) : null}
       </div>
     </div>
   );

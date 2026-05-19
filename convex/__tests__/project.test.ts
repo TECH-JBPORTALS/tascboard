@@ -128,6 +128,44 @@ describe("Project", () => {
     expect(updated?.summary).toBe("Trimmed Summary");
   });
 
+  test("update rejects end date before start date", async () => {
+    await expect(
+      t.mutation(api.project.update, {
+        projectId,
+        body: {
+          endDate: 1600000000000,
+        },
+      }),
+    ).rejects.toThrow("End date cannot be before start date");
+  });
+
+  test("create logs activity and updateDescription does not", async () => {
+    const afterCreate = await t.query(api.projectActivity.list, {
+      projectId,
+    });
+
+    expect(afterCreate.length).toBe(1);
+    expect(afterCreate[0]?.kind).toBe("created");
+
+    await t.mutation(api.project.update, {
+      projectId,
+      body: { status: "inactive" },
+    });
+
+    await t.mutation(api.project.updateDescription, {
+      projectId,
+      description: [{ type: "p", children: [{ text: "Docs" }] }],
+    });
+
+    const activities = await t.query(api.projectActivity.list, {
+      projectId,
+    });
+
+    expect(activities.some((a) => a.kind === "status_changed")).toBe(true);
+    expect(activities.some((a) => a.kind === "created")).toBe(true);
+    expect(activities.length).toBe(2);
+  });
+
   test("updateDescription saves plate content", async () => {
     const plateValue = [
       { type: "p", children: [{ text: "Rich project description" }] },
