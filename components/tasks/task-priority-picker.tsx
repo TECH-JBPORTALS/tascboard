@@ -9,23 +9,31 @@ import {
 } from "@/lib/task-utils";
 import { TaskCommandPopover } from "@/components/tasks/task-command-popover";
 import { TaskPriorityIcon } from "@/components/tasks/task-priority-icon";
-import { useTaskUpdate } from "@/components/tasks/use-task-update";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
-type TaskPriorityPickerProps = {
-  taskId: Id<"tasks">;
+type TaskPriorityPickerBaseProps = {
   value: TaskPriority;
   trigger: React.ReactElement;
   className?: string;
+  placeholder?: string;
 };
 
+type TaskPriorityPickerProps = TaskPriorityPickerBaseProps &
+  (
+    | { taskId: Id<"tasks">; onSelect?: (priority: TaskPriority) => void }
+    | { taskId?: undefined; onSelect: (priority: TaskPriority) => void }
+  );
+
 export function TaskPriorityPicker({
-  taskId,
   value,
   trigger,
   className,
+  placeholder = "Change priority to…",
+  ...mode
 }: TaskPriorityPickerProps) {
   const [open, setOpen] = React.useState(false);
-  const updateTask = useTaskUpdate(taskId);
+  const updateTaskMutation = useMutation(api.task.update);
 
   const options = taskPriorityOrder.map((priority) => {
     const config = taskPriorityConfig[priority];
@@ -37,18 +45,26 @@ export function TaskPriorityPicker({
     };
   });
 
+  const handleSelect = (priority: TaskPriority) => {
+    if (mode.onSelect) {
+      mode.onSelect(priority);
+      return;
+    }
+    if (mode.taskId) {
+      void updateTaskMutation({ taskId: mode.taskId, body: { priority } });
+    }
+  };
+
   return (
     <TaskCommandPopover
       open={open}
       onOpenChange={setOpen}
       trigger={trigger}
-      placeholder="Change priority to…"
+      placeholder={placeholder}
       shortcutKey="P"
       options={options}
       value={value}
-      onSelect={(priority) => {
-        void updateTask({ priority });
-      }}
+      onSelect={handleSelect}
       className={className}
     />
   );

@@ -20,16 +20,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useTaskUpdate } from "@/components/tasks/use-task-update";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
-
-type TaskDueDatePickerProps = {
-  taskId: Id<"tasks">;
-  endDate: number;
-  startDate: number;
-  trigger: React.ReactElement;
-  className?: string;
-};
 
 type DueDatePreset = {
   id: string;
@@ -63,29 +56,75 @@ function buildPresets(): DueDatePreset[] {
   ];
 }
 
+type TaskDueDatePickerBaseProps = {
+  endDate: number;
+  startDate: number;
+  trigger: React.ReactElement;
+  className?: string;
+  align?: "start" | "center" | "end";
+  /** When set, overrides the distinct-due check (e.g. create-task form). */
+  hasDueDate?: boolean;
+};
+
+type TaskDueDatePickerProps = TaskDueDatePickerBaseProps &
+  (
+    | {
+        taskId: Id<"tasks">;
+        onSelect?: (date: Date) => void;
+        onClear?: () => void;
+      }
+    | {
+        taskId?: undefined;
+        onSelect: (date: Date) => void;
+        onClear?: () => void;
+      }
+  );
+
 export function TaskDueDatePicker({
-  taskId,
   endDate,
   startDate,
   trigger,
   className,
+  align = "end",
+  hasDueDate: hasDueDateProp,
+  ...mode
 }: TaskDueDatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [showCalendar, setShowCalendar] = React.useState(false);
   const [calendarDate, setCalendarDate] = React.useState<Date>(
     () => new Date(endDate),
   );
-  const updateTask = useTaskUpdate(taskId);
+  const updateTaskMutation = useMutation(api.task.update);
 
   const presets = buildPresets();
   const due = new Date(endDate);
   const hasDistinctDue =
+    hasDueDateProp ??
     startOfDay(due).getTime() !== startOfDay(new Date(startDate)).getTime();
 
   const applyDate = async (date: Date) => {
-    await updateTask({ endDate: startOfDay(date).getTime() });
+    if (mode.onSelect) {
+      mode.onSelect(date);
+    } else if (mode.taskId) {
+      await updateTaskMutation({
+        taskId: mode.taskId,
+        body: { endDate: startOfDay(date).getTime() },
+      });
+    }
     setOpen(false);
     setShowCalendar(false);
+  };
+
+  const clearDueDate = async () => {
+    if (mode.onClear) {
+      mode.onClear();
+    } else if (mode.taskId) {
+      await updateTaskMutation({
+        taskId: mode.taskId,
+        body: { endDate: startOfDay(new Date(startDate)).getTime() },
+      });
+    }
+    setOpen(false);
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -101,7 +140,7 @@ export function TaskDueDatePicker({
       <PopoverTrigger render={trigger} />
       <PopoverContent
         className={cn("w-64 p-0", className)}
-        align="end"
+        align={align}
         sideOffset={4}
       >
         {showCalendar ? (
@@ -127,12 +166,7 @@ export function TaskDueDatePicker({
                 {hasDistinctDue ? (
                   <CommandItem
                     value="remove due date"
-                    onSelect={() => {
-                      void updateTask({
-                        endDate: startOfDay(new Date(startDate)).getTime(),
-                      });
-                      setOpen(false);
-                    }}
+                    onSelect={() => void clearDueDate()}
                   >
                     <RiCalendarCloseLine className="size-3.5 text-muted-foreground" />
                     <span className="flex-1">Remove due date</span>

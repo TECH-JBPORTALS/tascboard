@@ -3,36 +3,31 @@
 import * as React from "react";
 import { useMutation, useQuery } from "convex/react";
 import { format, startOfDay } from "date-fns";
+import { motion } from "motion/react";
+import {
+  RiCalendarLine,
+  RiCloseLine,
+  RiContractLeftRightLine,
+  RiExpandDiagonalLine,
+} from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { authClient } from "@/lib/auth-client";
 import { nextTaskCode } from "@/lib/track-utils";
-import { taskStatusLabels, taskStatusOrder } from "@/lib/task-utils";
+import {
+  taskPriorityConfig,
+  taskStatusConfig,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/task-utils";
+import { TaskDueDatePicker } from "@/components/tasks/task-due-date-picker";
+import { TaskPriorityPicker } from "@/components/tasks/task-priority-picker";
+import { TaskPriorityIcon } from "@/components/tasks/task-priority-icon";
+import { TaskStatusPicker } from "@/components/tasks/task-status-picker";
+import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 type CreateTaskDialogProps = {
   open: boolean;
@@ -42,6 +37,30 @@ type CreateTaskDialogProps = {
   sprintId?: Id<"sprints">;
   defaultStatus?: Doc<"tasks">["status"];
 };
+
+const COMPACT_WIDTH = 480;
+const EXPANDED_WIDTH = 640;
+
+function PropertyChip({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className={cn(
+        "h-7 gap-1.5 rounded-md border-border/80 bg-muted/30 px-2.5 font-normal text-muted-foreground shadow-none hover:bg-muted/60 hover:text-foreground",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
 
 export function CreateTaskDialog({
   open,
@@ -56,35 +75,48 @@ export function CreateTaskDialog({
   const existingTasks = useQuery(api.task.listByTrack, { trackId: track._id });
   const { data: session } = authClient.useSession();
 
+  const [expanded, setExpanded] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
-  const [status, setStatus] =
-    React.useState<Doc<"tasks">["status"]>(defaultStatus);
-  const [priority, setPriority] =
-    React.useState<Doc<"tasks">["priority"]>("medium");
+  const [status, setStatus] = React.useState<TaskStatus>(defaultStatus);
+  const [priority, setPriority] = React.useState<TaskPriority>("medium");
   const [dueDate, setDueDate] = React.useState<Date>(() => new Date());
-  const [dateOpen, setDateOpen] = React.useState(false);
+  const [dueDateSet, setDueDateSet] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const titleRef = React.useRef<HTMLTextAreaElement>(null);
   const userId = session?.user?.id ?? "unassigned";
+  const startDate = startOfDay(new Date()).getTime();
+
+  function resetForm() {
+    setExpanded(false);
+    setTitle("");
+    setDescription("");
+    setStatus(defaultStatus);
+    setPriority("medium");
+    setDueDate(new Date());
+    setDueDateSet(false);
+    setError(null);
+  }
+
+  function handleOpenChange(next: boolean) {
+    if (!next) resetForm();
+    onOpenChange(next);
+  }
 
   React.useEffect(() => {
-    if (!open) {
-      setTitle("");
-      setDescription("");
-      setStatus(defaultStatus);
-      setPriority("medium");
-      setDueDate(new Date());
-      setError(null);
-    }
-  }, [open, defaultStatus]);
+    if (!open) return;
+    const id = window.requestAnimationFrame(() => titleRef.current?.focus());
+    return () => window.cancelAnimationFrame(id);
+  }, [open]);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSubmit(event?: React.FormEvent) {
+    event?.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) {
       setError("Title is required");
+      titleRef.current?.focus();
       return;
     }
 
@@ -93,7 +125,7 @@ export function CreateTaskDialog({
 
     try {
       const codes = existingTasks?.map((t) => t.taskCode) ?? [];
-      const due = startOfDay(dueDate).getTime();
+      const end = dueDateSet ? startOfDay(dueDate).getTime() : startDate;
 
       const taskId = await createTask({
         trackId: track._id,
@@ -106,15 +138,15 @@ export function CreateTaskDialog({
         assignedBy: userId,
         priority,
         complexity: "medium",
-        startDate: Date.now(),
-        endDate: due,
+        startDate,
+        endDate: end,
       });
 
       if (sprintId) {
         await addToSprint({ taskId, sprintId });
       }
 
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create task");
     } finally {
@@ -122,112 +154,184 @@ export function CreateTaskDialog({
     }
   }
 
+  const statusLabel = taskStatusConfig[status].label;
+  const priorityLabel = taskPriorityConfig[priority].label;
+  const endDate = dueDateSet ? startOfDay(dueDate).getTime() : startDate;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>New task</DialogTitle>
-            <DialogDescription>
-              Add an issue to this track.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="task-title">Title</Label>
-              <Input
-                id="task-title"
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="grid w-auto max-w-[calc(100%-2rem)] gap-0 overflow-hidden border-border/80 p-0 sm:max-w-[640px]"
+      >
+        <motion.div
+          layout
+          initial={false}
+          animate={{
+            width: expanded ? EXPANDED_WIDTH : COMPACT_WIDTH,
+          }}
+          transition={{ type: "spring", stiffness: 420, damping: 36 }}
+          className="w-full min-w-0"
+        >
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full min-w-0 flex-col"
+          >
+            <motion.div
+              layout
+              className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3"
+            >
+              <motion.div
+                layout
+                className="flex min-w-0 items-center gap-1.5 text-sm"
+              >
+                <span className="truncate font-medium text-muted-foreground">
+                  {track.trackCode}
+                </span>
+                <span className="text-muted-foreground/60">›</span>
+                <DialogTitle className="truncate text-sm font-medium text-foreground">
+                  New task
+                </DialogTitle>
+              </motion.div>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  onClick={() => setExpanded((v) => !v)}
+                  className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label={expanded ? "Collapse dialog" : "Expand dialog"}
+                >
+                  <motion.span
+                    initial={false}
+                    animate={{ rotate: expanded ? 180 : 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                    className="inline-flex"
+                  >
+                    {expanded ? (
+                      <RiContractLeftRightLine className="size-4" />
+                    ) : (
+                      <RiExpandDiagonalLine className="size-4" />
+                    )}
+                  </motion.span>
+                </motion.button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground"
+                  onClick={() => handleOpenChange(false)}
+                  aria-label="Close"
+                >
+                  <RiCloseLine className="size-4" />
+                </Button>
+              </div>
+            </motion.div>
+
+            <motion.div layout className="px-4 pt-4">
+              <textarea
+                ref={titleRef}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handleSubmit();
+                  }
+                }}
                 placeholder="Task title"
-                autoFocus
+                rows={1}
+                className="w-full resize-none bg-transparent text-lg font-medium leading-snug text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="task-description">Description</Label>
-              <Textarea
-                id="task-description"
+              <motion.textarea
+                layout
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add a description…"
-                rows={4}
+                placeholder="Add description…"
+                animate={{
+                  height: expanded ? "320px" : "72px",
+                }}
+                transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                className="mt-2 w-full resize-none bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label>Status</Label>
-                <Select
-                  value={status}
-                  onValueChange={(v) => setStatus(v as Doc<"tasks">["status"])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {taskStatusOrder.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {taskStatusLabels[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Priority</Label>
-                <Select
-                  value={priority}
-                  onValueChange={(v) =>
-                    setPriority(v as Doc<"tasks">["priority"])
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>Due date</Label>
-              <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                <PopoverTrigger render={<Button type="button" variant="outline" className="justify-start" />}>
-                  {format(dueDate, "MMM d, yyyy")}
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={(date) => {
-                      if (!date) return;
-                      setDueDate(date);
-                      setDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+            </motion.div>
+
+            <motion.div
+              layout
+              className="flex flex-wrap items-center gap-1.5 px-4 py-4"
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating…" : "Create task"}
-            </Button>
-          </DialogFooter>
-        </form>
+              <TaskStatusPicker
+                value={status}
+                onSelect={setStatus}
+                placeholder="Set status to…"
+                trigger={
+                  <PropertyChip>
+                    <TaskStatusIcon status={status} className="size-3.5" />
+                    <span className="text-foreground">{statusLabel}</span>
+                  </PropertyChip>
+                }
+              />
+
+              <TaskPriorityPicker
+                value={priority}
+                onSelect={setPriority}
+                placeholder="Set priority to…"
+                trigger={
+                  <PropertyChip>
+                    <TaskPriorityIcon priority={priority} />
+                    <span
+                      className={cn(
+                        priority === "medium"
+                          ? "text-muted-foreground"
+                          : "text-foreground",
+                      )}
+                    >
+                      {priority === "medium" ? "Priority" : priorityLabel}
+                    </span>
+                  </PropertyChip>
+                }
+              />
+
+              <TaskDueDatePicker
+                endDate={endDate}
+                startDate={startDate}
+                hasDueDate={dueDateSet}
+                align="start"
+                onSelect={(date) => {
+                  setDueDate(date);
+                  setDueDateSet(true);
+                }}
+                onClear={() => setDueDateSet(false)}
+                trigger={
+                  <PropertyChip>
+                    <RiCalendarLine className="size-3.5 shrink-0" />
+                    {dueDateSet
+                      ? format(dueDate, "MMM d, yyyy")
+                      : "Set due date"}
+                  </PropertyChip>
+                }
+              />
+            </motion.div>
+
+            {error ? (
+              <p className="px-4 pb-2 text-sm text-destructive">{error}</p>
+            ) : null}
+
+            <motion.div
+              layout
+              className="flex items-center justify-end gap-2 border-t border-border/60 px-4 py-3"
+            >
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting}
+                className="min-w-28"
+              >
+                {isSubmitting ? "Creating…" : "Create task"}
+              </Button>
+            </motion.div>
+          </form>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

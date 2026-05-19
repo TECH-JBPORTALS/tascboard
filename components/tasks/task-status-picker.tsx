@@ -9,22 +9,31 @@ import {
 } from "@/lib/task-utils";
 import { TaskCommandPopover } from "@/components/tasks/task-command-popover";
 import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
-import { useTaskUpdate } from "@/components/tasks/use-task-update";
-type TaskStatusPickerProps = {
-  taskId: Id<"tasks">;
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+type TaskStatusPickerBaseProps = {
   value: TaskStatus;
   trigger: React.ReactElement;
   className?: string;
+  placeholder?: string;
 };
 
+type TaskStatusPickerProps = TaskStatusPickerBaseProps &
+  (
+    | { taskId: Id<"tasks">; onSelect?: (status: TaskStatus) => void }
+    | { taskId?: undefined; onSelect: (status: TaskStatus) => void }
+  );
+
 export function TaskStatusPicker({
-  taskId,
   value,
   trigger,
   className,
+  placeholder = "Change status…",
+  ...mode
 }: TaskStatusPickerProps) {
   const [open, setOpen] = React.useState(false);
-  const updateTask = useTaskUpdate(taskId);
+  const updateTaskMutation = useMutation(api.task.update);
 
   const options = taskStatusOrder.map((status) => {
     const config = taskStatusConfig[status];
@@ -36,18 +45,26 @@ export function TaskStatusPicker({
     };
   });
 
+  const handleSelect = (status: TaskStatus) => {
+    if (mode.onSelect) {
+      mode.onSelect(status);
+      return;
+    }
+    if (mode.taskId) {
+      void updateTaskMutation({ taskId: mode.taskId, body: { status } });
+    }
+  };
+
   return (
     <TaskCommandPopover
       open={open}
       onOpenChange={setOpen}
       trigger={trigger}
-      placeholder="Change status…"
+      placeholder={placeholder}
       shortcutKey="S"
       options={options}
       value={value}
-      onSelect={(status) => {
-        void updateTask({ status });
-      }}
+      onSelect={handleSelect}
       className={className}
     />
   );
