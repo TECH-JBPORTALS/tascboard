@@ -83,6 +83,26 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   }).index("by_organization", ["organizationId"]),
 
+  projectActivities: defineTable({
+    projectId: v.id("projects"),
+    organizationId: v.string(),
+    actorUserId: v.string(),
+    actorName: v.string(),
+    kind: v.union(
+      v.literal("created"),
+      v.literal("name_changed"),
+      v.literal("summary_changed"),
+      v.literal("status_changed"),
+      v.literal("start_date_changed"),
+      v.literal("end_date_changed"),
+      v.literal("icon_changed"),
+      v.literal("color_changed"),
+    ),
+    fromValue: v.optional(v.string()),
+    toValue: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_project", ["projectId"]),
+
   tracks: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
@@ -179,7 +199,9 @@ export default defineSchema({
     endDate: v.number(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_track", ["trackId"]),
+  })
+    .index("by_track", ["trackId"])
+    .index("by_project", ["projectId"]),
 
   labels: defineTable({
     name: v.string(),

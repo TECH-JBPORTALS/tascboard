@@ -1,5 +1,6 @@
 "use client";
 
+import type * as React from "react";
 import Link from "next/link";
 import { RiArrowRightSLine } from "@remixicon/react";
 import { ProjectIcon } from "@/components/projects/project-icon";
@@ -11,6 +12,7 @@ type ProjectPageHeaderProps = {
   projectName: string;
   icon?: string | null;
   color?: string | null;
+  actions?: React.ReactNode;
   className?: string;
 };
 
@@ -19,11 +21,13 @@ export function ProjectPageHeader({
   projectName,
   icon,
   color,
+  actions,
   className,
 }: ProjectPageHeaderProps) {
   return (
     <PageHeader
       className={cn(className)}
+      actions={actions}
       title={
         <div className="flex items-center gap-2">
           <Link

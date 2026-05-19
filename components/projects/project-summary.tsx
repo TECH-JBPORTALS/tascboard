@@ -1,31 +1,27 @@
-'use client';
+"use client";
 
-import { useMutation } from 'convex/react';
-import * as React from 'react';
-import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
-import { cn } from '@/lib/utils';
+import { useMutation } from "convex/react";
+import * as React from "react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
 
 type ProjectSummaryProps = {
-  projectId: Id<'projects'>;
+  projectId: Id<"projects">;
   summary?: string | null;
 };
 
 export function ProjectSummary({ projectId, summary }: ProjectSummaryProps) {
   const updateProject = useMutation(api.project.update);
-  const [value, setValue] = React.useState(summary ?? '');
+  const [value, setValue] = React.useState(summary ?? "");
   const [isSaving, setIsSaving] = React.useState(false);
-
-  React.useEffect(() => {
-    setValue(summary ?? '');
-  }, [summary]);
 
   async function saveSummary() {
     const trimmed = value.trim();
-    const current = (summary ?? '').trim();
+    const current = (summary ?? "").trim();
 
     if (trimmed === current) {
-      setValue(summary ?? '');
+      setValue(summary ?? "");
       return;
     }
 
@@ -37,7 +33,7 @@ export function ProjectSummary({ projectId, summary }: ProjectSummaryProps) {
         body: { summary: trimmed.length > 0 ? trimmed : undefined },
       });
     } catch {
-      setValue(summary ?? '');
+      setValue(summary ?? "");
     } finally {
       setIsSaving(false);
     }
@@ -49,14 +45,14 @@ export function ProjectSummary({ projectId, summary }: ProjectSummaryProps) {
       onChange={(event) => setValue(event.target.value)}
       onBlur={() => void saveSummary()}
       onKeyDown={(event) => {
-        if (event.key === 'Enter') {
+        if (event.key === "Enter") {
           event.currentTarget.blur();
         }
       }}
       disabled={isSaving}
       className={cn(
-        'w-full border-none bg-transparent text-sm text-muted-foreground outline-none',
-        'placeholder:text-muted-foreground/70 focus-visible:text-foreground',
+        "w-full border-none bg-transparent text-sm text-muted-foreground outline-none",
+        "placeholder:text-muted-foreground/70 focus-visible:text-foreground",
       )}
       placeholder="Add a short summary…"
       aria-label="Project summary"
