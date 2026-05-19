@@ -29,6 +29,7 @@ import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as task from "../task.js";
 import type * as track from "../track.js";
+import type * as employeeTodos from "../employeeTodos.js";
 
 import type {
   ApiFromModules,
@@ -42,8 +43,11 @@ declare const fullApi: ApiFromModules<{
   comment: typeof comment;
   emails: typeof emails;
   employeeProfiles: typeof employeeProfiles;
+  employeeTodos: typeof employeeTodos;
+
   "employees/auth": typeof employees_auth;
   "employees/profile": typeof employees_profile;
+  
   files: typeof files;
   http: typeof http;
   inbox: typeof inbox;
@@ -58,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   subtask: typeof subtask;
   task: typeof task;
   track: typeof track;
+  
 }>;
 
 /**
