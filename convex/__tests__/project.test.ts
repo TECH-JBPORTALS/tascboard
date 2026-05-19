@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
@@ -132,7 +132,7 @@ describe("Project", () => {
       orgId: "org-2",
     });
 
-    await isolated.mutation(api.project.seedStarterProjects);
+    await isolated.mutation(internal.project.seedStarterProjects);
 
     const projects = await isolated.query(api.project.list, {});
 
@@ -149,8 +149,8 @@ describe("Project", () => {
       orgId: "org-3",
     });
 
-    await isolated.mutation(api.project.seedStarterProjects);
-    await isolated.mutation(api.project.seedStarterProjects);
+    await isolated.mutation(internal.project.seedStarterProjects);
+    await isolated.mutation(internal.project.seedStarterProjects);
 
     const projects = await isolated.query(api.project.list, {});
 

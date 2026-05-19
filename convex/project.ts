@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { removeTrackCascade } from "./track";
@@ -16,6 +16,7 @@ const projectReturn = v.object({
   organizationId: v.string(),
   name: v.string(),
   description: v.optional(v.string()),
+  docContent: v.optional(v.any()),
   startDate: v.number(),
   endDate: v.number(),
   status: projectStatusValidator,
@@ -36,7 +37,6 @@ export const create = mutation({
     await requireIdentity(ctx);
     const { orgId } = await requireOrganization(ctx);
     const now = Date.now();
-    
 
     const insertedProjectId = await ctx.db.insert("projects", {
       organizationId: orgId,
@@ -54,8 +54,7 @@ export const create = mutation({
 });
 
 export const list = query({
-  args: {
-  },
+  args: {},
   returns: v.array(
     v.object({
       ...projectReturn.fields,
@@ -67,9 +66,7 @@ export const list = query({
     const { orgId } = await requireOrganization(ctx);
     const projects = await ctx.db
       .query("projects")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", orgId),
-      )
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
       .order("desc")
       .collect();
 
@@ -78,9 +75,7 @@ export const list = query({
         ...project,
         tracks: await ctx.db
           .query("tracks")
-          .withIndex("by_project", (q) =>
-            q.eq("projectId", project._id),
-          )
+          .withIndex("by_project", (q) => q.eq("projectId", project._id))
           .collect(),
       })),
     );
@@ -93,7 +88,6 @@ export const get = query({
   },
   returns: v.union(projectReturn, v.null()),
   handler: async (ctx, args) => {
-
     await requireIdentity(ctx);
     const { orgId } = await requireOrganization(ctx);
     const project = await ctx.db.get(args.projectId);
@@ -118,13 +112,13 @@ export const update = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
-const { orgId } = await requireOrganization(ctx);
+    const { orgId } = await requireOrganization(ctx);
 
-const project = await ctx.db.get(args.projectId);
+    const project = await ctx.db.get(args.projectId);
 
-if (!project || project.organizationId !== orgId) {
-  throw new Error("Not found");
-}
+    if (!project || project.organizationId !== orgId) {
+      throw new Error("Not found");
+    }
 
     const patch: Partial<Doc<"projects">> = {
       ...args.body,
@@ -152,6 +146,31 @@ if (!project || project.organizationId !== orgId) {
   },
 });
 
+export const updateDocContent = mutation({
+  args: {
+    projectId: v.id("projects"),
+    content: v.any(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    const project = await ctx.db.get(args.projectId);
+
+    if (!project || project.organizationId !== orgId) {
+      throw new Error("Not found");
+    }
+
+    await ctx.db.patch(args.projectId, {
+      docContent: args.content,
+      updatedAt: Date.now(),
+    });
+
+    return null;
+  },
+});
+
 export const remove = mutation({
   args: {
     projectId: v.id("projects"),
@@ -162,7 +181,7 @@ export const remove = mutation({
   }),
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
-    
+
     const project = await ctx.db.get(args.projectId);
     const { orgId } = await requireOrganization(ctx);
 
@@ -172,9 +191,7 @@ export const remove = mutation({
 
     const tracks = await ctx.db
       .query("tracks")
-      .withIndex("by_project", (q) =>
-        q.eq("projectId", args.projectId),
-      )
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
 
     for (const track of tracks) {
@@ -183,14 +200,10 @@ export const remove = mutation({
 
     const labels = await ctx.db
       .query("labels")
-      .withIndex("by_project", (q) =>
-        q.eq("projectId", args.projectId),
-      )
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
 
-    await Promise.all(
-      labels.map((label) => ctx.db.delete(label._id)),
-    );
+    await Promise.all(labels.map((label) => ctx.db.delete(label._id)));
 
     await ctx.db.delete(args.projectId);
 
@@ -202,7 +215,7 @@ export const remove = mutation({
 });
 
 /** Idempotent seed so new organizations have starter projects */
-export const seedStarterProjects = mutation({
+export const seedStarterProjects = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
@@ -210,9 +223,7 @@ export const seedStarterProjects = mutation({
 
     const existing = await ctx.db
       .query("projects")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", orgId),
-      )
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
       .take(1);
 
     if (existing.length > 0) {
@@ -221,10 +232,7 @@ export const seedStarterProjects = mutation({
 
     const now = Date.now();
 
-    const samples: Omit<
-      Doc<"projects">,
-      "_id" | "_creationTime"
-    >[] = [
+    const samples: Omit<Doc<"projects">, "_id" | "_creationTime">[] = [
       {
         organizationId: orgId,
         name: "Employee Attendance System",
@@ -239,8 +247,7 @@ export const seedStarterProjects = mutation({
       {
         organizationId: orgId,
         name: "Payroll Automation",
-        description:
-          "Automate salary generation and payroll exports.",
+        description: "Automate salary generation and payroll exports.",
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 60,
         status: "inactive",

@@ -68,6 +68,7 @@ export default defineSchema({
     organizationId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
+    docContent: v.optional(v.any()),
     startDate: v.number(),
     endDate: v.number(),
     status: v.union(

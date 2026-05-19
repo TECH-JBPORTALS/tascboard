@@ -59,8 +59,6 @@ export function OrgSlugGuard({ children }: OrgSlugGuardProps) {
   const isActive =
     !isHomeRoute && org !== undefined && activeOrganizationId === org.id;
 
-  const { data: session, isPending: sessionPending } = authClient.useSession();
-
   useEffect(() => {
     if (isLoading) {
       return;
