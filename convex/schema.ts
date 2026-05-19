@@ -174,10 +174,12 @@ export default defineSchema({
   tasks: defineTable({
     trackId: v.id("tracks"),
     projectId: v.id("projects"),
+    sprintId: v.optional(v.id("sprints")),
     taskCode: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
     status: v.union(
+      v.literal("backlog"),
       v.literal("todo"),
       v.literal("in_progress"),
       v.literal("done"),
@@ -201,7 +203,8 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index("by_track", ["trackId"])
-    .index("by_project", ["projectId"]),
+    .index("by_project", ["projectId"])
+    .index("by_sprint", ["sprintId"]),
 
   labels: defineTable({
     name: v.string(),

@@ -25,6 +25,8 @@ import type * as lib_employees from "../lib/employees.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_projectActivityLog from "../lib/projectActivityLog.js";
 import type * as lib_projectAppearance from "../lib/projectAppearance.js";
+import type * as meeting from "../meeting.js";
+import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
 import type * as projectActivity from "../projectActivity.js";
 import type * as sprint from "../sprint.js";
@@ -56,6 +58,8 @@ declare const fullApi: ApiFromModules<{
   "lib/permissions": typeof lib_permissions;
   "lib/projectActivityLog": typeof lib_projectActivityLog;
   "lib/projectAppearance": typeof lib_projectAppearance;
+  meeting: typeof meeting;
+  payroll: typeof payroll;
   project: typeof project;
   projectActivity: typeof projectActivity;
   sprint: typeof sprint;

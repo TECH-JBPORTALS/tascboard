@@ -2,11 +2,13 @@ import { mutation, query, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { Id } from "./_generated/dataModel";
+import { requireIdentity } from "./lib/auth";
 
 const statusValidator = v.union(
+  v.literal("backlog"),
   v.literal("todo"),
   v.literal("in_progress"),
-  v.literal("done")
+  v.literal("done"),
 );
 
 const priorityValidator = v.union(
@@ -39,6 +41,8 @@ export const create = mutation({
     endDate: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+
     const taskId = await ctx.db.insert("tasks", {
       trackId: args.trackId,
       projectId: args.projectId,
@@ -90,6 +94,20 @@ export const get = query({
     };
   },
 });
+export const listByTrack = query({
+  args: {
+    trackId: v.id("tracks"),
+  },
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_track", (q) => q.eq("trackId", args.trackId))
+      .collect();
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -143,9 +161,12 @@ export const update = mutation({
       complexity: v.optional(complexityValidator),
       startDate: v.optional(v.number()),
       endDate: v.optional(v.number()),
+      sprintId: v.optional(v.union(v.id("sprints"), v.null())),
     }),
   },
   handler: async (ctx, { taskId, body }) => {
+    await requireIdentity(ctx);
+
     const task = await ctx.db.get(taskId);
 
     if (!task) {
@@ -169,6 +190,9 @@ export const update = mutation({
     if (body.complexity !== undefined) patch.complexity = body.complexity;
     if (body.startDate !== undefined) patch.startDate = body.startDate;
     if (body.endDate !== undefined) patch.endDate = body.endDate;
+    if (body.sprintId !== undefined) {
+      patch.sprintId = body.sprintId ?? undefined;
+    }
 
     patch.updatedAt = Date.now();
 
