@@ -1,81 +1,37 @@
-'use client';
+"use client";
 
-import { normalizeStaticValue } from 'platejs';
-import { Plate, usePlateEditor } from 'platejs/react';
+import { normalizeStaticValue, Value } from "platejs";
+import { Plate, usePlateEditor } from "platejs/react";
 
-import { BasicNodesKit } from '@/components/editor/plugins/basic-nodes-kit';
-import { Editor, EditorContainer } from '@/components/ui/editor';
+import { BasicNodesKit } from "@/components/editor/plugins/basic-nodes-kit";
+import { Editor, EditorContainer } from "@/components/ui/editor";
+import { SlashKit } from "./plugins/slash-kit";
+import { ListKit } from "./plugins/list-kit";
+import { ToggleKit } from "./plugins/toggle-kit";
+import { CodeBlockKit } from "./plugins/code-block-kit";
 
-export function PlateEditor() {
+export function PlateEditor({
+  value,
+  ...props
+}: Omit<React.ComponentProps<typeof Plate>, "editor" | "children"> & {
+  value: Value;
+}) {
   const editor = usePlateEditor({
-    plugins: BasicNodesKit,
-    value,
+    plugins: [
+      ...BasicNodesKit,
+      ...SlashKit,
+      ...ListKit,
+      ...ToggleKit,
+      ...CodeBlockKit,
+    ],
+    value: normalizeStaticValue(value),
   });
 
   return (
-    <Plate editor={editor}>
+    <Plate {...props} editor={editor}>
       <EditorContainer>
-        <Editor variant="demo" placeholder="Type..." />
+        <Editor variant="fullWidth" placeholder="Add description..." />
       </EditorContainer>
     </Plate>
   );
 }
-
-const value = normalizeStaticValue([
-  {
-    children: [{ text: 'Basic Editor' }],
-    type: 'h1',
-  },
-  {
-    children: [{ text: 'Heading 2' }],
-    type: 'h2',
-  },
-  {
-    children: [{ text: 'Heading 3' }],
-    type: 'h3',
-  },
-  {
-    children: [
-      {
-        children: [{ text: 'This blockquote contains more than one block.' }],
-        type: 'p',
-      },
-      {
-        children: [
-          {
-            text: 'It can also wrap nested quotes instead of flattening them.',
-          },
-        ],
-        type: 'p',
-      },
-      {
-        children: [
-          {
-            children: [
-              {
-                text: 'Nested blockquotes keep the quote hierarchy intact.',
-              },
-            ],
-            type: 'p',
-          },
-        ],
-        type: 'blockquote',
-      },
-    ],
-    type: 'blockquote',
-  },
-  {
-    children: [
-      { text: 'Basic marks: ' },
-      { bold: true, text: 'bold' },
-      { text: ', ' },
-      { italic: true, text: 'italic' },
-      { text: ', ' },
-      { text: 'underline', underline: true },
-      { text: ', ' },
-      { strikethrough: true, text: 'strikethrough' },
-      { text: '.' },
-    ],
-    type: 'p',
-  },
-]);

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { initialsFromId } from "@/lib/track-utils";
@@ -35,6 +37,13 @@ function RowTrigger({
 }
 
 export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
+  const params = useParams<{
+    orgSlug: string;
+    projectId: string;
+    trackId: string;
+  }>();
+  const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`;
+
   return (
     <div
       className={cn(
@@ -52,9 +61,12 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
         }
       />
 
-      <span className="w-18 shrink-0 truncate font-mono text-xs text-muted-foreground">
+      <Link
+        href={href}
+        className="w-18 shrink-0 truncate font-mono text-xs text-muted-foreground hover:text-foreground"
+      >
         {task.taskCode}
-      </span>
+      </Link>
 
       <TaskStatusPicker
         taskId={task._id}
@@ -66,7 +78,12 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
         }
       />
 
-      <span className="min-w-0 flex-1 truncate">{task.title}</span>
+      <Link
+        href={href}
+        className="min-w-0 flex-1 truncate hover:text-foreground"
+      >
+        {task.title}
+      </Link>
 
       <TaskDueDatePicker
         taskId={task._id}

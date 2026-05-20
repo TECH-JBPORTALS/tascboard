@@ -177,7 +177,7 @@ export default defineSchema({
     sprintId: v.optional(v.id("sprints")),
     taskCode: v.string(),
     title: v.string(),
-    description: v.optional(v.string()),
+    description: v.optional(v.any()),
     status: v.union(
       v.literal("backlog"),
       v.literal("todo"),
@@ -229,6 +229,7 @@ export default defineSchema({
   activities: defineTable({
     taskId: v.id("tasks"),
     deviceName: v.string(),
+    actorUserId: v.optional(v.string()),
     kind: v.union(
       v.literal("created"),
       v.literal("title_changed"),
@@ -241,6 +242,7 @@ export default defineSchema({
     fromValue: v.optional(v.string()),
     toValue: v.optional(v.string()),
     meta: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
   }).index("by_task", { fields: ["taskId"] }),
 
   comments: defineTable({
@@ -248,7 +250,7 @@ export default defineSchema({
     // `null` for top-level (root of a thread), otherwise the parent comment's id
     parentCommentId: v.union(v.id("comments"), v.null()),
     deviceName: v.string(),
-    body: v.string(),
+    body: v.any(),
     editedAt: v.optional(v.number()),
     // When true, marks this comment as the resolution of its thread
     isResolution: v.optional(v.boolean()),
