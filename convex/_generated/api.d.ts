@@ -13,6 +13,7 @@ import type * as attendance from "../attendance.js";
 import type * as comment from "../comment.js";
 import type * as emails from "../emails.js";
 import type * as employeeProfiles from "../employeeProfiles.js";
+import type * as employeeTodos from "../employeeTodos.js";
 import type * as employees_auth from "../employees/auth.js";
 import type * as employees_profile from "../employees/profile.js";
 import type * as files from "../files.js";
@@ -25,13 +26,15 @@ import type * as lib_employees from "../lib/employees.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_projectActivityLog from "../lib/projectActivityLog.js";
 import type * as lib_projectAppearance from "../lib/projectAppearance.js";
+import type * as meeting from "../meeting.js";
+import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
 import type * as projectActivity from "../projectActivity.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as task from "../task.js";
 import type * as track from "../track.js";
-import type * as employeeTodos from "../employeeTodos.js";
+import type * as trackMember from "../trackMember.js";
 
 import type {
   ApiFromModules,
@@ -46,10 +49,8 @@ declare const fullApi: ApiFromModules<{
   emails: typeof emails;
   employeeProfiles: typeof employeeProfiles;
   employeeTodos: typeof employeeTodos;
-
   "employees/auth": typeof employees_auth;
   "employees/profile": typeof employees_profile;
-  
   files: typeof files;
   http: typeof http;
   inbox: typeof inbox;
@@ -60,13 +61,15 @@ declare const fullApi: ApiFromModules<{
   "lib/permissions": typeof lib_permissions;
   "lib/projectActivityLog": typeof lib_projectActivityLog;
   "lib/projectAppearance": typeof lib_projectAppearance;
+  meeting: typeof meeting;
+  payroll: typeof payroll;
   project: typeof project;
   projectActivity: typeof projectActivity;
   sprint: typeof sprint;
   subtask: typeof subtask;
   task: typeof task;
   track: typeof track;
-  
+  trackMember: typeof trackMember;
 }>;
 
 /**
