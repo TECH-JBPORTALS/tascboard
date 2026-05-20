@@ -12,20 +12,17 @@ Configured plugins (see [`convex/betterAuth/auth.ts`](../../../convex/betterAuth
 
 ## Meeting
 
-
 ```mermaid
 
 erDiagram
-user{
+user {
     Id _id
-    name string
-    email string
+    string name
+    string email
 }
 
-organization
-{
+organization {
     Id _id
-    user
 }
 
   meeting {
@@ -45,7 +42,7 @@ organization
   }
 
    meeting_recipients {
-    Id _id PK
+    Id _id 
     Id meetingId FK
     Id userId FK
     number createdAt
@@ -53,7 +50,7 @@ organization
   }
 
    schedule_meetings {
-    Id _id PK
+    Id _id 
     Id meetingId FK
     Id userId FK
     number start_time
@@ -73,14 +70,13 @@ organization
     number updatedAt
   }
 
- 
-user ||--o{ meeting : "creates"
-organization ||--o{ meeting : "contains"
-meeting ||--o{ meeting_recipients : "has recipients"
-user ||--o{ meeting_recipients : "is invited"
-meeting ||--o{ schedule_meetings : "generates"
-schedule_meetings ||--o{ meetingAttendees : "tracks attendance"
-user ||--o{ meetingAttendees : "attends"
+    user ||--o{ meeting : creates
+    organization ||--o{ meeting : contains
+    meeting ||--o{ meeting_recipients : has_recipients
+    user ||--o{ meeting_recipients : is_invited
+    meeting ||--o{ schedule_meetings : generates
+    schedule_meetings ||--o{ meetingAttendees : tracks_attendance
+    user ||--o{ meetingAttendees : attends
 ```
 
 ---
