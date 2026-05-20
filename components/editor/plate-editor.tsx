@@ -30,7 +30,11 @@ export function PlateEditor({
   return (
     <Plate {...props} editor={editor}>
       <EditorContainer>
-        <Editor variant="fullWidth" placeholder="Add description..." />
+        <Editor
+          variant="fullWidth"
+          className="pb-7"
+          placeholder="Add description..."
+        />
       </EditorContainer>
     </Plate>
   );

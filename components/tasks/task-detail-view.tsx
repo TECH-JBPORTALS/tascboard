@@ -12,6 +12,7 @@ import { TaskPageHeader } from "@/components/tasks/task-page-header";
 import { TaskSubtasksSection } from "@/components/tasks/task-subtasks-section";
 import { cn } from "@/lib/utils";
 import { PlateEditor } from "../editor/plate-editor";
+import { TaskTitleInput } from "./task-title-input";
 
 type TaskDetail = Doc<"tasks"> & {
   track: Doc<"tracks"> | null;
@@ -28,20 +29,14 @@ export function TaskDetailView({ orgSlug, task }: TaskDetailViewProps) {
   const updateDescription = useMutation(api.task.updateDescription);
   const updateTask = useMutation(api.task.update);
   const [title, setTitle] = React.useState(task.title);
-  const [savingTitle, setSavingTitle] = React.useState(false);
 
   async function saveTitle() {
     const trimmed = title.trim();
     if (!trimmed || trimmed === task.title) return;
-    setSavingTitle(true);
-    try {
-      await updateTask({
-        taskId: task._id,
-        body: { title: trimmed },
-      });
-    } finally {
-      setSavingTitle(false);
-    }
+    await updateTask({
+      taskId: task._id,
+      body: { title: trimmed },
+    });
   }
 
   const track = task.track;
@@ -65,23 +60,10 @@ export function TaskDetailView({ orgSlug, task }: TaskDetailViewProps) {
         />
         <div className="min-h-0 flex-1">
           <div className="mx-auto max-w-3xl px-4 py-6 md:px-8">
-            <textarea
+            <TaskTitleInput
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => void saveTitle()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void saveTitle();
-                  (e.target as HTMLInputElement).blur();
-                }
-              }}
-              name="task-title"
-              className={cn(
-                "mb-4 w-full bg-transparent text-2xl font-semibold resize-none min-h-10 h-fit! text-foreground outline-none",
-                savingTitle && "opacity-70",
-              )}
-              aria-label="Task title"
+              onChange={(value) => setTitle(value)}
+              onSave={saveTitle}
             />
 
             <div className="mb-4">

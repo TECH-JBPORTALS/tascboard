@@ -53,7 +53,7 @@ export function TaskSubtasksSection({ taskId }: TaskSubtasksSectionProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-xs font-medium text-muted-foreground">
-            Sub-tasks
+            Sub tasks
           </h3>
           <span className="rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
             {completed}/{total}
