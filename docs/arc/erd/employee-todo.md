@@ -15,7 +15,6 @@ Configured plugins (see [`convex/betterAuth/auth.ts`](../../../convex/betterAuth
 ```mermaid
 
 erDiagram
-
 user {
   Id _id
   string name
@@ -25,38 +24,33 @@ user {
 employee_todos {
   Id _id
   Id employee_id
-
   string title
   string description
   string priority
   boolean is_complete
-
   number created_at
   number updated_at
 }
 
 user ||--o{ employee_todos : "assigned to"
+```
 
 
-
-
+---
 ## Field Notes
 
-  employee_todos — stores todo items for employees including task details, priority, and completion status.
+  *`employee_todos`* — stores todo items for employees including task details, priority, and completion status.
+  *`employee_id `* — references the user who owns the todo.
+  *`title`* — short name of the task.
+  *`description`* — detailed explanation of the task.
 
-  employee_id — references the user who owns the todo.
-  
-  title — short name of the task.
-
-  description — detailed explanation of the task.
-
-  priority — defines importance level:
+  *`priority`* — defines importance level:
        -"low"
        -"medium"
        -"high"
 
-  is_complete — indicates task status:
+  *`is_complete`* — indicates task status:
         false → pending
         true → completed
 
-   created_at / updated_at — timestamps for tracking creation and updates.
+   *`created_at / updated_at`* — timestamps for tracking creation and updates.

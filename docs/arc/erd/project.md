@@ -11,86 +11,64 @@ These tables live in the root Convex application schema.
 ```mermaid
 erDiagram
 
-    user {
-        Id _id
-
-    }
-
     organization {
-       Id _id
+        string _id
     }
 
     project {
         Id _id
-        Id organizationId FK
-        Id createdBy FK 
-        string title
-        string description
-        string status
+        string organizationId FK
+        string name
+        string summary
+        any description
+        string icon
+        string color
         number startDate
-        number deadline
+        number endDate
+        string status
         number createdAt
         number updatedAt
     }
-     projectMember {
-        Id _id
-        Id projectId FK
-        Id userId FK
-        string role
-        number createdAt
-        number updatedAt 
-    }
-    
-     organization ||--o{ project : manages
 
-    user ||--o{ project : creates
-
-    project ||--o{ projectMember : has
-
-    user ||--o{ projectMember : joins
-    
+    organization ||--o{ project : contains
 ```
 
 ## Field notes
 
-### project.status values
-- `todo`
-- `in_progress`
-- `completed`
-- `cancelled`
+  - **`organizationId`** — References the organization that owns the project. Used for multi-organization isolation.
 
-### projectMember.role values
-- `admin`
-- `developer`
-- `tester`
-- `viewer`
+  -**`name`** — Stores the project title or display name.
 
----
+  - **`summary`** — Optional short overview or lightweight description of the project.
 
-## Field notes
-  
-  user — core entity representing system users. Used as project creator and project members.
-  
-  organization — top-level container for projects. All projects belong to one organization for multi-tenant isolation.
+  - **`description`** — Optional collaborative rich-text editor content stored as structured JSON data.
 
-  project — main entity representing a work item or initiative. Created by a user and belongs to an organization. Tracks lifecycle, timeline, and status.
-  
-  project.status — defines project lifecycle:
-       "todo" → not started
-       "in_progress" → currently active
-       "completed" → finished
-       "cancelled" → stopped or discarded
+  - **`icon`** — Optional emoji or icon representation used for project appearance customization.
 
-  projectMember — junction table connecting users and projects. Defines team participation and role-based access.
-  
-  projectMember.role — defines responsibility level in a project:
+  - **`color`** — Optional UI theme color associated with the project icon and appearance.
 
-     "admin" → full control over project
-     "developer" → works on implementation
-     "tester" → handles testing and QA
+  - **`status`** — Defines the current lifecycle state of the project.
 
-  createdBy — user who created the project. Used for ownership tracking.
-  
-  startDate / deadline — defines project timeline for scheduling and tracking progress.
-  
-  createdAt / updatedAt — timestamps used for audit and tracking changes.
+### `project.status` values
+
+   - `active`
+   - `inactive`
+   - `terminated`
+
+### `project.status` meanings
+
+   - `active` — Project is currently running.
+
+   - `inactive` — Project is temporarily paused.
+
+   -  `terminated` — Project has been permanently stopped.
+
+- **`startDate / endDate`** — Defines the project schedule and duration.
+
+- **`createdAt`** — Timestamp indicating when the project was created.
+
+- **`updatedAt`** — Optional timestamp indicating the most recent project update.
+
+- **Optional fields** — `summary`, `description`, `icon`, `color`, and `updatedAt` are optional fields and may contain `undefined` values depending on project configuration or updates.
+
+-**Indexes** — Projects are indexed using `by_organization` for efficient organization-based project queries.
