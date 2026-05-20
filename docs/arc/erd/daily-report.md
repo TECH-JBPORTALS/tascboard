@@ -15,10 +15,10 @@ These tables live in the root Convex application schema.
 ```mermaid
 
 erDiagram
-
 user {
     Id _id
 }
+
 project {
     Id _id
     string name
@@ -30,9 +30,7 @@ track {
     Id projectId FK
     string name
     string status
-
 }
-
 
 task {
     Id _id
@@ -46,7 +44,6 @@ task {
     number createdAt
     number updatedAt
 }
-
 
 daily_reports {
     Id _id
@@ -65,23 +62,21 @@ daily_reports {
 project ||--o{ track : contains
 track ||--o{ task : contains
 task ||--o{ daily_reports : has
-
 user ||--o{ daily_reports : submits
 user ||--o{ daily_reports : reviews
-
+```
 
 ---
 ## Final Notes
 
-  employee_todos — stores personal todo tasks assigned to employees, including task details, priority levels, and completion tracking.
+  *` daily_reports`* — stores personal todo tasks assigned to employees, including task details, priority levels, and completion tracking.
 
 ## Functional Purpose
 
-   The employee_todos table helps employees:
-
-      manage daily tasks
-      organize personal work items
-      track task completion status
-      prioritize important activities
+   The daily_reports table helps employees:
+       `manage daily tasks`
+       `organize personal work items`
+       `track task completion status`
+       `prioritize important activities`
 
 It also supports productivity tracking and task management within the organization.

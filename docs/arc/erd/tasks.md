@@ -8,18 +8,14 @@ These tables live in the **Better Auth Convex component** (`betterAuth`), not in
 
 Configured plugins (see [`convex/betterAuth/auth.ts`](../../../convex/betterAuth/auth.ts)): **Convex adapter**, **email/password**, **organization**.
 
----
+
 
 ---
-## Sprint Management
+## task Management
 
 ```mermaid
 
 erDiagram
-
-
-erDiagram
-
     projects {
         Id _id
     }
@@ -29,12 +25,11 @@ erDiagram
         Id projectId FK
     }
 
-
     tasks {
         Id _id
         Id projectId FK
         Id trackId FK
-        Id sprintId FK (optional)
+        Id sprintId FK 
         string taskCode
         string title
         string description
@@ -48,7 +43,7 @@ erDiagram
         number createdAt
         number updatedAt
     }
-
+    
     labels {
         Id _id
         Id projectId FK
@@ -83,7 +78,7 @@ erDiagram
     comments {
         Id _id
         Id taskId FK
-        Id parentCommentId FK (optional)
+        Id parentCommentId FK 
         string deviceName
         string body
         boolean isResolution
@@ -107,16 +102,14 @@ erDiagram
     tracks ||--o{ sprints : has
     tracks ||--o{ tasks : contains
     sprints ||--o{ tasks : schedules
-
     tasks ||--o{ subtasks : has
     tasks ||--o{ activities : logs
     tasks ||--o{ comments : has
     tasks ||--o{ taskLabels : tagged
-
     labels ||--o{ taskLabels : maps
 ```
 
-
+---
 ## Final Notes — Task Management Data Model
 
 * `task` — core entity representing a unit of work inside a track and project. It holds execution details such as status, priority, assignment, and timeline.
