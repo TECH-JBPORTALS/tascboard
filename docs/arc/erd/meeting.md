@@ -21,6 +21,7 @@ user{
     name string
     email string
 }
+
 organization
 {
     Id _id
@@ -31,19 +32,14 @@ organization
     Id _id
     Id organizationId FK
     Id createdBy FK
-
     string title
     string description
     string meetingLink
-
     string recurrenceType
     string recurrenceDays
-
     string status
-
     number startTime
     number endTime
-
     number createdAt
     number updatedAt
   }
@@ -52,7 +48,6 @@ organization
     Id _id PK
     Id meetingId FK
     Id userId FK
-
     number createdAt
     number updatedAt
   }
@@ -63,11 +58,8 @@ organization
     Id userId FK
     number start_time
     number end_time
-
     string status
-
     string final_notes
-
     number createdAt
     number updatedAt
   }
@@ -76,47 +68,38 @@ organization
     Id _id
     Id scheduleMeetingId FK
     Id userId FK
-
     string status
-
     number createdAt
     number updatedAt
   }
 
  
-
 user ||--o{ meeting : "creates"
 organization ||--o{ meeting : "contains"
-
 meeting ||--o{ meeting_recipients : "has recipients"
 user ||--o{ meeting_recipients : "is invited"
-
 meeting ||--o{ schedule_meetings : "generates"
-
 schedule_meetings ||--o{ meetingAttendees : "tracks attendance"
 user ||--o{ meetingAttendees : "attends"
+```
 
-
-
+---
 ## Field notes
 
-  user — core entity used across the system. Acts as meeting creator, recipient, and attendee. name and email are required.
+ *` user`* — core entity used across the system. Acts as meeting creator, recipient, and attendee. name and email are  required.
 
-  organization — only _id. Used for multi-tenant separation. Every meeting belongs to one organization.
+  *`organization`* — only _id. Used for multi-tenant separation. Every meeting belongs to one organization.
 
-  meeting — template definition of a meeting. createdBy tracks who created it. Actual instances are generated in schedule_meetings.
+  *`meeting`* — template definition of a meeting. createdBy tracks who created it. Actual instances are generated in schedule_meetings.
 
-  recurrenceType — defines repetition logic:
-    - "daily" → every day
-    - "weekly" → selected weekdays
-    - "monthly" → selected weekdays per month
+  *`recurrenceType`* — defines repetition logic:
+     - "daily" → every day
+     - "weekly" → selected weekdays
+     - "monthly" → selected weekdays per month
 
-  recurrenceDays — optional. Used only for "weekly" and "monthly".
-
-  meeting_recipients — stores invited users. Does not track attendance.
-  
-  schedule_meetings — actual meeting occurrences with real start_time, end_time, and status.
-
-   meetingAttendees — tracks who attended each scheduled meeting with status: "present", "absent", "late".
+  *`recurrenceDays`*     — optional. Used only for "weekly" and "monthly".
+  *`meeting_recipients`* — stores invited users. Does not track attendance.
+  *`schedule_meetings`*  — actual meeting occurrences with real start_time, end_time, and status.
+  *`meetingAttendees`*   — tracks who attended each scheduled meeting with status: "present", "absent", "late".
 
    
