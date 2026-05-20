@@ -29,7 +29,7 @@ erDiagram
         Id _id
         Id projectId FK
         Id trackId FK
-        Id sprintId FK (optional)
+        Id sprintId FK 
         string taskCode
         string title
         string description
@@ -78,7 +78,7 @@ erDiagram
     comments {
         Id _id
         Id taskId FK
-        Id parentCommentId FK (optional)
+        Id parentCommentId FK 
         string deviceName
         string body
         boolean isResolution
