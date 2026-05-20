@@ -11,6 +11,7 @@
 import type * as activity from "../activity.js";
 import type * as attendance from "../attendance.js";
 import type * as comment from "../comment.js";
+import type * as dailyReport from "../dailyReport.js";
 import type * as emails from "../emails.js";
 import type * as employeeProfiles from "../employeeProfiles.js";
 import type * as employeeTodos from "../employeeTodos.js";
@@ -20,6 +21,7 @@ import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as inbox from "../inbox.js";
 import type * as label from "../label.js";
+import type * as leaveRequest from "../leaveRequest.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_betterAuthAdapter from "../lib/betterAuthAdapter.js";
 import type * as lib_employees from "../lib/employees.js";
@@ -30,6 +32,7 @@ import type * as meeting from "../meeting.js";
 import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
 import type * as projectActivity from "../projectActivity.js";
+import type * as projectMember from "../projectMember.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as task from "../task.js";
@@ -46,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   activity: typeof activity;
   attendance: typeof attendance;
   comment: typeof comment;
+  dailyReport: typeof dailyReport;
   emails: typeof emails;
   employeeProfiles: typeof employeeProfiles;
   employeeTodos: typeof employeeTodos;
@@ -55,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   inbox: typeof inbox;
   label: typeof label;
+  leaveRequest: typeof leaveRequest;
   "lib/auth": typeof lib_auth;
   "lib/betterAuthAdapter": typeof lib_betterAuthAdapter;
   "lib/employees": typeof lib_employees;
@@ -65,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   payroll: typeof payroll;
   project: typeof project;
   projectActivity: typeof projectActivity;
+  projectMember: typeof projectMember;
   sprint: typeof sprint;
   subtask: typeof subtask;
   task: typeof task;

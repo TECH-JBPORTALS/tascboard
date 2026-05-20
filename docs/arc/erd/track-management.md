@@ -21,9 +21,6 @@ represent teams, modules, or feature groups
 ```mermaid
 
 erDiagram
-
-erDiagram
-
     user {
         Id _id
     }
@@ -46,7 +43,6 @@ erDiagram
 
     project ||--o{ track : contains
     user ||--o{ track : leads
-
 ```
 
 ## Field notes
