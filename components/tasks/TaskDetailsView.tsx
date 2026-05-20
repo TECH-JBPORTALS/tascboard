@@ -64,7 +64,7 @@ export function TaskDetailView({ orgSlug, task }: TaskDetailViewProps) {
         task={task}
         className="top-0 z-20"
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-start lg:gap-4 lg:pr-4">
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="min-h-0 flex-1">
             <div className="mx-auto max-w-3xl px-4 py-6 md:px-8">

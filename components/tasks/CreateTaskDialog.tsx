@@ -21,13 +21,18 @@ import {
   type TaskStatus,
 } from "@/lib/task-utils";
 import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
-import { TaskPriorityPicker } from "@/components/tasks/TaskPriorityPicker";
-import { TaskPriorityIcon } from "@/components/tasks/TaskPriorityIcon";
-import { TaskStatusPicker } from "@/components/tasks/TaskStatusPicker";
-import { TaskStatusIcon } from "@/components/tasks/TaskStatusIcon";
+import {
+  TaskPriorityIcon,
+  TaskPriorityPicker,
+} from "@/components/tasks/TaskPriorityPicker";
+import {
+  TaskStatusIcon,
+  TaskStatusPicker,
+} from "@/components/tasks/TaskStatusPicker";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { TaskTitleInput } from "./TaskTitleInput";
 
 type CreateTaskDialogProps = {
   open: boolean;
@@ -229,19 +234,11 @@ export function CreateTaskDialog({
             </motion.div>
 
             <motion.div layout className="px-4 pt-4">
-              <textarea
-                ref={titleRef}
+              <TaskTitleInput
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSubmit();
-                  }
-                }}
+                onChange={(markdown) => setTitle(markdown)}
                 placeholder="Task title"
-                rows={1}
-                className="w-full resize-none bg-transparent text-lg font-medium leading-snug text-foreground placeholder:text-muted-foreground/70 outline-none"
+                className="text-lg! pb-0!"
               />
               <motion.textarea
                 layout

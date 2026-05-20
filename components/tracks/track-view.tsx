@@ -2,14 +2,10 @@
 
 import * as React from "react";
 import { useQuery } from "convex/react";
-import {
-  RiAddLine,
-  RiFilter3Line,
-  RiLayoutGridLine,
-} from "@remixicon/react";
+import { RiAddLine, RiFilter3Line, RiLayoutGridLine } from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { CreateTaskDialog } from "@/components/tracks/create-task-dialog";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { TrackIssuesList } from "@/components/tracks/track-issues-list";
 import { TrackPageHeader } from "@/components/tracks/track-page-header";
 import { Button } from "@/components/ui/button";
@@ -83,9 +79,7 @@ function ViewTab({
     <span
       className={cn(
         "rounded-md px-2.5 py-1 text-sm font-medium",
-        active
-          ? "bg-muted text-foreground"
-          : "text-muted-foreground",
+        active ? "bg-muted text-foreground" : "text-muted-foreground",
       )}
     >
       {children}

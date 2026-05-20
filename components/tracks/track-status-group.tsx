@@ -5,7 +5,7 @@ import { RiAddLine, RiPlayFill } from "@remixicon/react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { taskStatusLabels, type TaskStatus } from "@/lib/task-utils";
 import { TaskIssueRow } from "@/components/tasks/TaskIssueRow";
-import { CreateTaskDialog } from "@/components/tracks/create-task-dialog";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,

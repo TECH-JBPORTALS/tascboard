@@ -7,9 +7,9 @@ import { Editor, EditorContainer } from "@/components/ui/editor";
 import * as React from "react";
 
 type TaskTitleInputProps = {
-  onChange: (value: string) => void;
-  value: string;
-  onSave: (value: string) => void;
+  onChange?: (value: string) => void;
+  value?: string;
+  onSave?: (value: string) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -34,13 +34,13 @@ export function TaskTitleInput({
   }, []);
 
   const editor = usePlateEditor({
-    value: normalizeStaticValue(toPlateValue(value)),
+    value: normalizeStaticValue(toPlateValue(value ?? "")),
   });
 
   React.useEffect(() => {
     if (latestTextRef.current === value) return;
     latestTextRef.current = value;
-    editor.tf.setValue(normalizeStaticValue(toPlateValue(value)));
+    editor.tf.setValue(normalizeStaticValue(toPlateValue(value ?? "")));
   }, [editor, toPlateValue, value]);
 
   return (
@@ -48,7 +48,7 @@ export function TaskTitleInput({
       editor={editor}
       onTextChange={({ text }) => {
         latestTextRef.current = text;
-        onChange(text);
+        onChange?.(text);
       }}
     >
       <EditorContainer>
@@ -60,11 +60,11 @@ export function TaskTitleInput({
           )}
           placeholder={placeholder}
           disabled={disabled}
-          onBlur={() => onSave(latestTextRef.current)}
+          onBlur={() => onSave?.(latestTextRef.current ?? "")}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
-              onSave(latestTextRef.current);
+              onSave?.(latestTextRef.current ?? "");
               event.currentTarget.blur();
             }
           }}
