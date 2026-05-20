@@ -378,6 +378,16 @@ export default defineSchema({
   .index("by_project_manager",["projectId","manager"])
   .index("by_employee",["employeeId"]),
 
-  
+  trackMember:defineTable({
+    trackId: v.id("tracks"),
+    employeeId: v.string(),
+    lead: v.boolean(),
+    assignedAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_track_employee",["trackId","employeeId"])
+  .index("by_track",["trackId"])
+  .index("by_employee",["employeeId"]),
+   
 });
 
