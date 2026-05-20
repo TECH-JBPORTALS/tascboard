@@ -107,10 +107,35 @@ export const addTask = mutation({
       );
     }
 
+    await ctx.db.patch(args.taskId, {
+      sprintId: args.sprintId,
+      updatedAt: Date.now(),
+    });
+
     return {
       success: true,
-      message: "Task is valid for this sprint",
+      message: "Task added to sprint",
     };
+  },
+});
+
+export const listTasksBySprint = query({
+  args: {
+    sprintId: v.id("sprints"),
+  },
+  returns: v.array(v.any()),
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+
+    const sprint = await ctx.db.get(args.sprintId);
+    if (!sprint) {
+      throw new Error("Sprint not found");
+    }
+
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_sprint", (q) => q.eq("sprintId", args.sprintId))
+      .collect();
   },
 });
 
@@ -176,12 +201,12 @@ export const backlog = query({
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
 
-    return await ctx.db
+    const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_track", (q) =>
-        q.eq("trackId", args.trackId)
-      )
+      .withIndex("by_track", (q) => q.eq("trackId", args.trackId))
       .collect();
+
+    return tasks.filter((task) => task.sprintId === undefined);
   },
 });
 
@@ -196,15 +221,14 @@ export const progress = query({
 
     const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_track", (q) =>
-        q.eq("trackId", sprint.trackId)
-      )
+      .withIndex("by_sprint", (q) => q.eq("sprintId", args.sprintId))
       .collect();
 
     const total = tasks.length;
-    const done = tasks.filter(t => t.status === "done").length;
-    const inProgress = tasks.filter(t => t.status === "in_progress").length;
-    const todo = tasks.filter(t => t.status === "todo").length;
+    const done = tasks.filter((t) => t.status === "done").length;
+    const inProgress = tasks.filter((t) => t.status === "in_progress").length;
+    const todo = tasks.filter((t) => t.status === "todo").length;
+    const backlog = tasks.filter((t) => t.status === "backlog").length;
 
     return {
       sprintId: args.sprintId,
@@ -213,6 +237,7 @@ export const progress = query({
       done,
       inProgress,
       todo,
+      backlog,
       progress: total === 0 ? 0 : (done / total) * 100,
     };
   },
@@ -244,16 +269,12 @@ export const burndownChart = query({
 
     const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_track", (q) =>
-        q.eq("trackId", sprint.trackId)
-      )
+      .withIndex("by_sprint", (q) => q.eq("sprintId", args.sprintId))
       .collect();
 
     const totalTasks = tasks.length;
 
-    const doneTasks = tasks.filter(
-      (t) => t.status === "done"
-    ).length;
+    const doneTasks = tasks.filter((t) => t.status === "done").length;
 
     const start = sprint.startDate;
     const end = sprint.endDate;

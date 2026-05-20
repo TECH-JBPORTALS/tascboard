@@ -22,6 +22,11 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@plate": "https://platejs.org/r/{name}.json"
+    "@plate": {
+      "url": "https://platejs.org/r/{name}.json",
+      "params": {
+        "iconLibrary": "remixicon"
+      }
+    }
   }
 }

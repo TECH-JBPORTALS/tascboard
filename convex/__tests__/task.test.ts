@@ -124,6 +124,16 @@ describe("Task", () => {
   // --------------------
   // UPDATE
   // --------------------
+  test("update task status to backlog", async () => {
+    await t.mutation(api.task.update, {
+      taskId,
+      body: { status: "backlog" },
+    });
+
+    const task = await t.query(api.task.get, { taskId });
+    expect(task?.status).toBe("backlog");
+  });
+
   test("update task fields", async () => {
     await t.mutation(api.task.update, {
       taskId,

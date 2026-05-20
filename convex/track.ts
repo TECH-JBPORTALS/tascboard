@@ -57,6 +57,28 @@ export const create = mutation({
   },
 });
 
+// -------------------- LIST BY PROJECT --------------------
+export const listByProject = query({
+  args: {
+    projectId: v.id("projects"),
+  },
+  returns: v.array(trackReturn),
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+    const { orgId } = await requireOrganization(ctx);
+
+    const project = await ctx.db.get(args.projectId);
+    if (!project || project.organizationId !== orgId) {
+      throw new Error("Not found");
+    }
+
+    return await ctx.db
+      .query("tracks")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+  },
+});
+
 // -------------------- GET --------------------
 export const get = query({
   args: {
@@ -134,6 +156,15 @@ export async function removeTrackCascade(
   ctx: MutationCtx,
   trackId: Id<"tracks">
 ) {
+  const sprints = await ctx.db
+    .query("sprints")
+    .withIndex("by_track", (q) => q.eq("trackId", trackId))
+    .collect();
+
+  for (const sprint of sprints) {
+    await ctx.db.delete(sprint._id);
+  }
+
   const tasks = await ctx.db
     .query("tasks")
     .withIndex("by_track", (q) => q.eq("trackId", trackId))
