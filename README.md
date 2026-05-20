@@ -1,40 +1,110 @@
-# Welcome to your Convex + Next.js app
+# Tascboard — Task Management System
 
-This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
+Tascboard is a full-stack **task and workflow management system** built using **Convex + Next.js**.  
+It is designed to manage projects, tasks, sprints, meetings, employee todos, daily reports, payroll, and collaboration in a structured workflow system.
 
-After the initial setup (<2 minutes) you'll have a working full-stack app using:
+---
 
-- Convex as your backend (database, server logic)
-- [React](https://react.dev/) as your frontend (web page interactivity)
-- [Next.js](https://nextjs.org/) for optimized web hosting and page routing
-- [Tailwind](https://tailwindcss.com/) for building great looking accessible UI
+## Tech Stack
 
-## Get started
+- **Convex** — Backend (Database + Server Functions)
+- **Next.js** — Frontend Framework
+- **React** — UI Components
+- **Tailwind CSS** — Styling
 
-If you just cloned this codebase and didn't use `npm create convex`, run:
+---
 
+## Learn More
+
+### Convex Documentation
+
+[https://docs.convex.dev](https://docs.convex.dev)
+
+### Next.js Documentation
+
+[https://nextjs.org/docs](https://nextjs.org/docs)
+
+### React Documentation
+
+[https://react.dev](https://react.dev)
+
+### Tailwind CSS Documentation
+
+[https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+
+---
+
+## Features
+
+- Project → Track → Task hierarchy
+- Sprint planning system
+- Task assignment with priority & status tracking
+- Subtasks, labels, and activity logs
+- Meeting management system (recurrence support)
+- Employee todo tracking system
+- Daily report system
+- Payroll management system
+- Comments & collaboration system
+- Attendance management system
+- Leave request system
+
+---
+
+## Setup Instructions
+
+### 1. Clone repository
+
+```bash
+git clone <repo-url>
+cd tascboard
 ```
-npm install
-npm run dev
+
+### 2. Install dependencies
+
+```bash
+bun install
 ```
 
-If you're reading this README on GitHub and want to use this template, run:
+---
 
+### 3. Setup Convex backend
+
+Start Convex locally:
+
+```bash
+bunx convex dev
 ```
-npm create convex@latest -- -t nextjs
+
+This will:
+
+- Start the local Convex backend
+- Generate `.env.local`
+- Provide required environment variables
+
+---
+
+### 4. Environment variables
+
+After running `bunx convex dev`, a `.env.local` file is created automatically.
+
+Example:
+
+```env
+CONVEX_DEPLOYMENT=anonymous:anonymous-tascboard
+NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210
+NEXT_PUBLIC_CONVEX_SITE_URL=http://127.0.0.1:3211
 ```
 
-## Learn more
+You can find these values:
 
-To learn more about developing your project with Convex, check out:
+- In `.env.local`
+- Or in the terminal output of `bunx convex dev`
 
-- The [Tour of Convex](https://docs.convex.dev/get-started) for a thorough introduction to Convex principles.
-- The rest of [Convex docs](https://docs.convex.dev/) to learn about all Convex features.
-- [Stack](https://stack.convex.dev/) for in-depth articles on advanced topics.
+---
 
-## Join the community
+### 5. Start development server
 
-Join thousands of developers building full-stack apps with Convex:
+```bash
+bun run dev
+```
 
-- Join the [Convex Discord community](https://convex.dev/community) to get help in real-time.
-- Follow [Convex on GitHub](https://github.com/get-convex/), star and contribute to the open-source implementation of Convex.
