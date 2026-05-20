@@ -7,10 +7,10 @@ import {
   taskStatusOrder,
   type TaskStatus,
 } from "@/lib/task-utils";
-import { TaskCommandPopover } from "@/components/tasks/task-command-popover";
-import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
+import { TaskCommandPopover } from "@/components/tasks/TaskCommandPopover";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { cn } from "@/lib/utils";
 
 type TaskStatusPickerBaseProps = {
   value: TaskStatus;
@@ -67,5 +67,19 @@ export function TaskStatusPicker({
       onSelect={handleSelect}
       className={className}
     />
+  );
+}
+
+type TaskStatusIconProps = {
+  status: TaskStatus;
+  className?: string;
+};
+
+export function TaskStatusIcon({ status, className }: TaskStatusIconProps) {
+  const config = taskStatusConfig[status];
+  const Icon = config.icon;
+
+  return (
+    <Icon className={cn("size-4 shrink-0", config.iconClassName, className)} />
   );
 }

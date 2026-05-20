@@ -12,7 +12,6 @@ import {
 } from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { TaskPlateEditor } from "@/components/tasks/task-plate-editor";
 import { useActor } from "@/hooks/use-actor";
 import { isPlateContentEmpty, PLATE_DEFAULT_VALUE } from "@/lib/plate-content";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { PlateEditor } from "../editor/plate-editor";
 
 type TaskCommentsSectionProps = {
   taskId: Id<"tasks">;
@@ -119,7 +119,7 @@ function CommentItem({
 }) {
   const editComment = useMutation(api.comment.edit);
   const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState<unknown>(comment.body);
+  const [draft, setDraft] = React.useState(comment.body);
 
   const authorLabel =
     comment.deviceName === deviceName ? displayName : comment.deviceName;
@@ -164,12 +164,10 @@ function CommentItem({
 
       {editing ? (
         <div className="space-y-2">
-          <TaskPlateEditor
-            editorKey={`edit-${comment._id}`}
-            initialContent={draft}
+          <PlateEditor
+            value={typeof draft === "string" ? draft : ""}
             onSave={setDraft}
-            variant="comment"
-            onSubmit={(value) => void handleSave(value)}
+            onChange={setDraft}
           />
           <div className="flex gap-2">
             <Button
@@ -243,13 +241,11 @@ function ReplyComposer({
 
   return (
     <div className="ml-8 space-y-2 border-l-2 border-border/60 pl-4">
-      <TaskPlateEditor
-        editorKey={`reply-${parentCommentId}`}
-        initialContent={PLATE_DEFAULT_VALUE}
-        onSave={setValue}
-        variant="comment"
+      <PlateEditor
+        value={typeof value === "string" ? value : ""}
+        onChange={setValue}
         placeholder="Leave a reply…"
-        onSubmit={(nextValue) => void handleSubmit(nextValue)}
+        onSave={(markdown) => void handleSubmit(markdown)}
       />
       <div className="flex justify-end gap-2">
         <Button
@@ -328,13 +324,11 @@ export function TaskCommentsSection({ taskId }: TaskCommentsSectionProps) {
       ))}
 
       <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-        <TaskPlateEditor
-          editorKey={`new-comment-${taskId}`}
-          initialContent={PLATE_DEFAULT_VALUE}
-          onSave={setDraft}
-          variant="comment"
+        <PlateEditor
+          value={typeof draft === "string" ? draft : ""}
+          onChange={setDraft}
           placeholder="Leave a comment…"
-          onSubmit={(nextValue) => void handleSubmit(nextValue)}
+          onSave={(markdown) => void handleSubmit(markdown)}
         />
         <div className="mt-2 flex justify-end">
           <Button

@@ -20,11 +20,11 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/task-utils";
-import { TaskDueDatePicker } from "@/components/tasks/task-due-date-picker";
-import { TaskPriorityPicker } from "@/components/tasks/task-priority-picker";
-import { TaskPriorityIcon } from "@/components/tasks/task-priority-icon";
-import { TaskStatusPicker } from "@/components/tasks/task-status-picker";
-import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
+import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
+import { TaskPriorityPicker } from "@/components/tasks/TaskPriorityPicker";
+import { TaskPriorityIcon } from "@/components/tasks/TaskPriorityIcon";
+import { TaskStatusPicker } from "@/components/tasks/TaskStatusPicker";
+import { TaskStatusIcon } from "@/components/tasks/TaskStatusIcon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";

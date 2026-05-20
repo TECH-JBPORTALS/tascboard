@@ -5,11 +5,15 @@ import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { initialsFromId } from "@/lib/track-utils";
-import { TaskDueDatePicker } from "@/components/tasks/task-due-date-picker";
-import { TaskPriorityPicker } from "@/components/tasks/task-priority-picker";
-import { TaskPriorityIcon } from "@/components/tasks/task-priority-icon";
-import { TaskStatusPicker } from "@/components/tasks/task-status-picker";
-import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
+import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
+import {
+  TaskPriorityIcon,
+  TaskPriorityPicker,
+} from "@/components/tasks/TaskPriorityPicker";
+import {
+  TaskStatusIcon,
+  TaskStatusPicker,
+} from "@/components/tasks/TaskStatusPicker";
 import { cn } from "@/lib/utils";
 
 type TaskIssueRowProps = {

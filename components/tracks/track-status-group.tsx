@@ -4,8 +4,7 @@ import * as React from "react";
 import { RiAddLine, RiPlayFill } from "@remixicon/react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { taskStatusLabels, type TaskStatus } from "@/lib/task-utils";
-import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
-import { TaskIssueRow } from "@/components/tasks/task-issue-row";
+import { TaskIssueRow } from "@/components/tasks/TaskIssueRow";
 import { CreateTaskDialog } from "@/components/tracks/create-task-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { TaskStatusIcon } from "../tasks/TaskStatusPicker";
 
 type TrackStatusGroupProps = {
   status: TaskStatus;

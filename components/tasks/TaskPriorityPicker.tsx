@@ -7,10 +7,11 @@ import {
   taskPriorityOrder,
   type TaskPriority,
 } from "@/lib/task-utils";
-import { TaskCommandPopover } from "@/components/tasks/task-command-popover";
-import { TaskPriorityIcon } from "@/components/tasks/task-priority-icon";
+import { TaskCommandPopover } from "@/components/tasks/TaskCommandPopover";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { RiSubtractLine } from "@remixicon/react";
+import { cn } from "@/lib/utils";
 
 type TaskPriorityPickerBaseProps = {
   value: TaskPriority;
@@ -66,6 +67,38 @@ export function TaskPriorityPicker({
       value={value}
       onSelect={handleSelect}
       className={className}
+    />
+  );
+}
+
+type TaskPriorityIconProps = {
+  priority: TaskPriority;
+  className?: string;
+};
+
+export function TaskPriorityIcon({
+  priority,
+  className,
+}: TaskPriorityIconProps) {
+  const config = taskPriorityConfig[priority];
+  const Icon = config.icon;
+
+  if (priority === "medium") {
+    return (
+      <span
+        className={cn(
+          "inline-flex size-3.5 items-center justify-center",
+          className,
+        )}
+      >
+        <RiSubtractLine className="size-3 text-muted-foreground" />
+      </span>
+    );
+  }
+
+  return (
+    <Icon
+      className={cn("size-3.5 shrink-0", config.iconClassName, className)}
     />
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
-import { normalizeStaticValue, Value } from "platejs";
+import * as React from "react";
+import { normalizeStaticValue, type Value } from "platejs";
 import { Plate, usePlateEditor } from "platejs/react";
+import { MarkdownPlugin, deserializeMd, serializeMd } from "@platejs/markdown";
 
 import { BasicNodesKit } from "@/components/editor/plugins/basic-nodes-kit";
 import { Editor, EditorContainer } from "@/components/ui/editor";
@@ -10,30 +12,69 @@ import { ListKit } from "./plugins/list-kit";
 import { ToggleKit } from "./plugins/toggle-kit";
 import { CodeBlockKit } from "./plugins/code-block-kit";
 
+const EMPTY_VALUE: Value = [{ type: "p", children: [{ text: "" }] }];
+
+type PlateEditorProps = {
+  value?: string;
+  onChange?: (markdown: string) => void;
+  onSave?: (markdown: string) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+};
+
 export function PlateEditor({
   value,
-  ...props
-}: Omit<React.ComponentProps<typeof Plate>, "editor" | "children"> & {
-  value: Value;
-}) {
+  onChange,
+  onSave,
+  placeholder = "Add description...",
+  className,
+  disabled,
+}: PlateEditorProps) {
+  const markdownValue = value ?? "";
+  const latestMarkdownRef = React.useRef(markdownValue);
   const editor = usePlateEditor({
     plugins: [
       ...BasicNodesKit,
+      MarkdownPlugin,
       ...SlashKit,
       ...ListKit,
       ...ToggleKit,
       ...CodeBlockKit,
     ],
-    value: normalizeStaticValue(value),
+    value: normalizeStaticValue(EMPTY_VALUE),
   });
 
+  React.useEffect(() => {
+    if (latestMarkdownRef.current === markdownValue) return;
+    latestMarkdownRef.current = markdownValue;
+    const nextValue = normalizeStaticValue(deserializeMd(editor, markdownValue));
+    editor.tf.setValue(nextValue);
+  }, [editor, markdownValue]);
+
+  React.useEffect(() => {
+    if (!markdownValue) return;
+    const nextValue = normalizeStaticValue(deserializeMd(editor, markdownValue));
+    editor.tf.setValue(nextValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
+
   return (
-    <Plate {...props} editor={editor}>
+    <Plate
+      editor={editor}
+      onChange={() => {
+        const markdown = serializeMd(editor);
+        latestMarkdownRef.current = markdown;
+        onChange?.(markdown);
+      }}
+    >
       <EditorContainer>
         <Editor
           variant="fullWidth"
-          className="pb-7"
-          placeholder="Add description..."
+          className={className ?? "pb-7"}
+          placeholder={placeholder}
+          disabled={disabled}
+          onBlur={() => onSave?.(latestMarkdownRef.current)}
         />
       </EditorContainer>
     </Plate>

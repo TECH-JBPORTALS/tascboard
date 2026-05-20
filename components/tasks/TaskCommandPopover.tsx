@@ -44,7 +44,6 @@ export function TaskCommandPopover<T extends string>({
   onOpenChange,
   trigger,
   placeholder,
-  shortcutKey,
   options,
   value,
   onSelect,

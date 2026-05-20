@@ -2,23 +2,19 @@
 
 import { format } from "date-fns";
 import Link from "next/link";
-import {
-  RiCalendarLine,
-  RiPriceTag3Line,
-  RiStackLine,
-  RiUserLine,
-} from "@remixicon/react";
+import { RiCalendarLine, RiStackLine, RiUserLine } from "@remixicon/react";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { TaskDueDatePicker } from "@/components/tasks/task-due-date-picker";
-import { TaskLabelPicker } from "@/components/tasks/task-label-picker";
-import { TaskPriorityPicker } from "@/components/tasks/task-priority-picker";
-import { TaskPriorityIcon } from "@/components/tasks/task-priority-icon";
-import { TaskStatusPicker } from "@/components/tasks/task-status-picker";
-import { TaskStatusIcon } from "@/components/tasks/task-status-icon";
+import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
+import { TaskLabelPicker } from "@/components/tasks/TaskLabelPicker";
 import {
-  taskPriorityConfig,
-  taskStatusConfig,
-} from "@/lib/task-utils";
+  TaskPriorityIcon,
+  TaskPriorityPicker,
+} from "@/components/tasks/TaskPriorityPicker";
+import {
+  TaskStatusIcon,
+  TaskStatusPicker,
+} from "@/components/tasks/TaskStatusPicker";
+import { taskPriorityConfig, taskStatusConfig } from "@/lib/task-utils";
 import { initialsFromId } from "@/lib/track-utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -126,10 +122,6 @@ export function TaskDetailSidebar({
       </SidebarRow>
 
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RiPriceTag3Line className="size-3.5" />
-          <span>Labels</span>
-        </div>
         <TaskLabelPicker
           taskId={task._id}
           projectId={project._id}
@@ -148,9 +140,8 @@ export function TaskDetailSidebar({
           variant="outline"
           size="sm"
           className="h-7 w-full justify-start gap-1.5 font-normal"
-          render={
-            <Link href={`/${orgSlug}/pro/${project._id}`} />
-          }
+          render={<Link href={`/${orgSlug}/pro/${project._id}`} />}
+          nativeButton={false}
         >
           {project.name}
         </Button>

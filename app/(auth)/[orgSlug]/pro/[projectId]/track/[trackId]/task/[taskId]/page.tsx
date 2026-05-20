@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { TaskDetailView } from "@/components/tasks/task-detail-view";
+import { TaskDetailView } from "@/components/tasks/TaskDetailsView";
 import { Button } from "@/components/ui/button";
 import { PAGE_HEADER_HEIGHT_CLASS } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,7 +70,9 @@ export default function TaskDetailPage() {
 function TaskDetailSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className={`border-b border-border/60 px-4 ${PAGE_HEADER_HEIGHT_CLASS}`}>
+      <div
+        className={`border-b border-border/60 px-4 ${PAGE_HEADER_HEIGHT_CLASS}`}
+      >
         <div className="flex h-full items-center gap-3">
           <Skeleton className="size-8 rounded-lg" />
           <div className="space-y-1">
