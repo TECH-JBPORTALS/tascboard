@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { RiUser3Fill } from "@remixicon/react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export function UserAvatar({
   name,
@@ -20,20 +21,11 @@ export function UserAvatar({
     .toUpperCase();
 
   return (
-    <div
-      className={cn(
-        "flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted text-xs font-medium text-muted-foreground",
-        className,
-      )}
-    >
-      {imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt={name} className="size-full object-cover" />
-      ) : (
-        <span className="flex size-full items-center justify-center bg-primary/10 text-primary">
-          {initials || <RiUser3Fill className="size-4" />}
-        </span>
-      )}
-    </div>
+    <Avatar className={cn(className)}>
+      <AvatarImage src={imageUrl ?? ""} alt={name} />
+      <AvatarFallback>
+        {initials || <RiUser3Fill className="size-4" />}
+      </AvatarFallback>
+    </Avatar>
   );
 }

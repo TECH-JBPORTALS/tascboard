@@ -28,6 +28,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { ProjectMangerPicker } from "./ProjectManagerPicker";
+import { ProjectMembersPicker } from "./ProjectMembersPicker";
 
 type ProjectStatus = Doc<"projects">["status"];
 
@@ -163,6 +165,9 @@ export function ProjectProperties({
             </Command>
           </PopoverContent>
         </Popover>
+
+        <ProjectMangerPicker />
+        <ProjectMembersPicker />
 
         <Popover open={dateOpen} onOpenChange={handleDateOpenChange}>
           <PropertyTrigger render={<PopoverTrigger />}>

@@ -35,7 +35,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
-import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { ProjectIcon } from "@/components/projects/project-icon";
 import React from "react";
 import { cn } from "@/lib/utils";
@@ -181,8 +181,7 @@ function ProjectSidebarGroup() {
             const href = `${basePath}/pro/${pro._id}`;
             const isProjectActive =
               pathname === href || pathname.startsWith(`${href}/`);
-            const isExpanded =
-              expandedProjects.has(pro._id) || isProjectActive;
+            const isExpanded = expandedProjects.has(pro._id) || isProjectActive;
             const tracks = pro.tracks ?? [];
             const hasTracks = tracks.length > 0;
             const Chevron = isExpanded ? RiArrowDownSLine : RiArrowRightSLine;
@@ -194,11 +193,7 @@ function ProjectSidebarGroup() {
                   tooltip={{ children: pro.name }}
                   render={<Link href={href} />}
                 >
-                  <ProjectIcon
-                    icon={pro.icon}
-                    color={pro.color}
-                    size="sm"
-                  />
+                  <ProjectIcon icon={pro.icon} color={pro.color} size="sm" />
                   <span className="truncate">{pro.name}</span>
                 </SidebarMenuButton>
                 {hasTracks ? (
