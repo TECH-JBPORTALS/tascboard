@@ -13,12 +13,7 @@ export function UserAvatar({
   imageUrl?: string | null;
   className?: string;
 }) {
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = name.charAt(0).toUpperCase();
 
   return (
     <Avatar className={cn(className)}>

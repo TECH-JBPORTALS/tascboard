@@ -166,7 +166,7 @@ export function ProjectProperties({
           </PopoverContent>
         </Popover>
 
-        <ProjectMangerPicker />
+        <ProjectMangerPicker projectId={projectId} />
         <ProjectMembersPicker />
 
         <Popover open={dateOpen} onOpenChange={handleDateOpenChange}>
