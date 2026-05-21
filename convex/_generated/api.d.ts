@@ -25,6 +25,7 @@ import type * as leaveRequest from "../leaveRequest.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_betterAuthAdapter from "../lib/betterAuthAdapter.js";
 import type * as lib_employees from "../lib/employees.js";
+import type * as lib_getUser from "../lib/getUser.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_projectActivityLog from "../lib/projectActivityLog.js";
 import type * as lib_projectAppearance from "../lib/projectAppearance.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/betterAuthAdapter": typeof lib_betterAuthAdapter;
   "lib/employees": typeof lib_employees;
+  "lib/getUser": typeof lib_getUser;
   "lib/permissions": typeof lib_permissions;
   "lib/projectActivityLog": typeof lib_projectActivityLog;
   "lib/projectAppearance": typeof lib_projectAppearance;
