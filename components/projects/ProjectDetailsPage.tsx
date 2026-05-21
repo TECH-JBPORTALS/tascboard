@@ -7,6 +7,10 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useParams } from "next/navigation";
 import { ProjectTitle } from "./ProjectTitle";
 import { ProjectProperties } from "./ProjectProperties";
+import { ProjectDescription } from "./ProjectDescription";
+import { ProjectSummary } from "./ProjectSummary";
+import { Separator } from "../ui/separator";
+import { ProjectTracksSection } from "../tracks/project-tracks-section";
 
 export function ProjectDetailsPage() {
   const { projectId, orgSlug } = useParams<{
@@ -24,12 +28,19 @@ export function ProjectDetailsPage() {
       <ProjectPageHeader projectName={project.name ?? ""} orgSlug={orgSlug} />
       <div className="px-67 py-6 space-y-4">
         <ProjectTitle projectId={projectId} name={project.name ?? ""} />
+        <ProjectSummary projectId={projectId} />
         <ProjectProperties
           projectId={projectId}
           startDate={project.startDate}
           endDate={project.endDate}
           status={project.status}
         />
+        <Separator />
+        <ProjectDescription
+          projectId={projectId}
+          initialDescription={project.description}
+        />
+        <ProjectTracksSection projectId={projectId} orgSlug={orgSlug} />
       </div>
     </>
   );

@@ -34,25 +34,6 @@ const projectReturn = v.object({
 
 type ProjectDoc = Doc<"projects"> & { docContent?: unknown };
 
-/** Maps legacy docContent / string description into summary + rich description. */
-function normalizeProject(project: ProjectDoc) {
-  let summary = project.summary;
-  let description = project.description;
-
-  if (description === undefined && project.docContent !== undefined) {
-    description = project.docContent;
-  }
-
-  if (typeof description === "string") {
-    if (!summary) {
-      summary = description;
-    }
-    description = undefined;
-  }
-
-  return { ...project, summary, description };
-}
-
 export const create = mutation({
   args: {
     name: v.string(),
@@ -108,7 +89,7 @@ export const list = query({
       tracks: v.array(v.any()),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     await requireIdentity(ctx);
     const { orgId } = await requireOrganization(ctx);
     const projects = await ctx.db
@@ -119,7 +100,7 @@ export const list = query({
 
     return await Promise.all(
       projects.map(async (project) => ({
-        ...normalizeProject(project as ProjectDoc),
+        ...project,
         tracks: await ctx.db
           .query("tracks")
           .withIndex("by_project", (q) => q.eq("projectId", project._id))
@@ -141,7 +122,7 @@ export const get = query({
     if (!project || project.organizationId !== orgId) {
       return null;
     }
-    return normalizeProject(project as ProjectDoc);
+    return project;
   },
 });
 
@@ -220,10 +201,7 @@ export const update = mutation({
       patch.summary = nextSummary;
     }
 
-    if (
-      args.body.status !== undefined &&
-      args.body.status !== project.status
-    ) {
+    if (args.body.status !== undefined && args.body.status !== project.status) {
       await logProjectActivity(ctx, {
         projectId: args.projectId,
         organizationId: orgId,
@@ -396,8 +374,7 @@ export const seedStarterProjects = internalMutation({
       {
         organizationId: orgId,
         name: "Employee Attendance System",
-        summary:
-          "Track employee attendance and manage reporting workflows.",
+        summary: "Track employee attendance and manage reporting workflows.",
         icon: "📊",
         color: "blue",
         startDate: now,
