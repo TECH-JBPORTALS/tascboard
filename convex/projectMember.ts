@@ -1,7 +1,8 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireIdentity } from "./lib/auth";
 import type { Doc } from "./_generated/dataModel";
+import { requireIdentity } from "./lib/auth";
+import { getUserByUserId } from "./lib/getUser";
 const projectMemberReturn = v.object({
   _id: v.id("projectMember"),
   _creationTime: v.number(),
@@ -13,159 +14,162 @@ const projectMemberReturn = v.object({
   updatedAt: v.optional(v.number()),
 });
 
-export const add = mutation({
+export const toggleMember = mutation({
   args: {
-    projectId: v.id("projects"),
     employeeId: v.string(),
-    manager: v.optional(v.boolean()),
+    projectId: v.id("projects"),
   },
-  returns: v.id("projectMember"),
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { userId } = await requireIdentity(ctx);
 
-    const existingMember = await ctx.db
+    const existing = await ctx.db
       .query("projectMember")
       .withIndex("by_project_employee", (q) =>
-        q
-          .eq("projectId", args.projectId)
-          .eq("employeeId", args.employeeId),
+        q.eq("projectId", args.projectId).eq("employeeId", args.employeeId),
       )
       .unique();
 
-    if (existingMember) {
-      throw new Error("Employee is already a member of this project");
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      return null;
     }
 
-    if (args.manager === true) {
-      const existingManager = await ctx.db
-        .query("projectMember")
-        .withIndex("by_project_manager", (q) =>
-          q
-            .eq("projectId", args.projectId)
-            .eq("manager", true),
-        )
-        .unique();
-
-      if (existingManager) {
-        throw new Error("Project already has a manager");
-      }
-    }
-
-    const insertedId = await ctx.db.insert("projectMember", {
+    await ctx.db.insert("projectMember", {
       projectId: args.projectId,
       employeeId: args.employeeId,
-      manager: args.manager ?? false,
+      manager: false,
       assignedBy: userId,
       createAt: Date.now(),
     });
 
-    return insertedId;
+    return null;
   },
 });
 
-export const update = mutation({
-    args: {
-      memberId: v.id("projectMember"),
-      manager: v.optional(v.boolean()),
-    },
-    returns: v.null(),
-    handler: async (ctx, args) => {
-      await requireIdentity(ctx);
-  
-      const member = await ctx.db.get(args.memberId);
-  
-      if (!member) {
-        throw new Error("Project member not found");
-      }
-  
-      // If promoting to manager, ensure only one manager exists
-      if (args.manager === true && member.manager !== true) {
-        const existingManager = await ctx.db
-          .query("projectMember")
-          .withIndex("by_project_manager", (q) =>
-            q.eq("projectId", member.projectId).eq("manager", true),
-          )
-          .unique();
-  
-        if (existingManager) {
-          throw new Error("Project already has a manager");
-        }
-      }
-  
-      await ctx.db.patch(args.memberId, {
-        manager: args.manager ?? member.manager,
-        updatedAt: Date.now(),
-      });
-  
-      return null;
-    },
-  });
-
-export const remove = mutation({
+export const setManager = mutation({
   args: {
-    memberId: v.id("projectMember"),
+    employeeId: v.string(),
+    projectId: v.id("projects"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
 
-    const member = await ctx.db.get(args.memberId);
+    const existingMember = await ctx.db
+      .query("projectMember")
+      .withIndex("by_project_employee", (q) =>
+        q.eq("projectId", args.projectId).eq("employeeId", args.employeeId),
+      )
+      .unique();
 
-    if (!member) {
-      throw new Error("Project member not found");
+    const existingManager = await ctx.db
+      .query("projectMember")
+      .withIndex("by_project_manager", (q) =>
+        q.eq("projectId", args.projectId).eq("manager", true),
+      )
+      .unique();
+
+    if (existingManager && existingManager.employeeId !== args.employeeId) {
+      throw new Error("Project already has a manager");
     }
 
-    await ctx.db.delete(args.memberId);
+    if (existingMember) {
+      await ctx.db.patch(existingMember._id, {
+        manager: true,
+        updatedAt: Date.now(),
+      });
+      return null;
+    }
+    const { userId } = await requireIdentity(ctx);
+    await ctx.db.insert("projectMember", {
+      projectId: args.projectId,
+      employeeId: args.employeeId,
+      manager: true,
+      assignedBy: userId,
+      createAt: Date.now(),
+    });
+
+    return null;
+  },
+});
+
+/**
+ * REMOVE MANAGER ROLE ONLY
+ * (still remains a member)
+ */
+export const removeManager = mutation({
+  args: {
+    employeeId: v.string(),
+    projectId: v.id("projects"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+
+    const member = await ctx.db
+      .query("projectMember")
+      .withIndex("by_project_employee", (q) =>
+        q.eq("projectId", args.projectId).eq("employeeId", args.employeeId),
+      )
+      .unique();
+
+    if (!member) {
+      throw new Error("Member not found");
+    }
+
+    await ctx.db.patch(member._id, {
+      manager: false,
+      updatedAt: Date.now(),
+    });
 
     return null;
   },
 });
 export const list = query({
-    args: {},
-    handler: async (ctx) => {
-      const { userId } = await requireIdentity(ctx);
-      const memberships = await ctx.db
-        .query("projectMember")
-        .withIndex("by_employee", (q) =>
-          q.eq("employeeId", userId),
-        )
-        .collect();
-  
-      if (memberships.length === 0) {
-        return [];
-      }
-  
-      const projects = await Promise.all(
-        memberships.map(async (member) => {
-          return await ctx.db.get(member.projectId);
-        }),
-      );
-  
-      return projects.filter(
-        (project): project is NonNullable<typeof project> =>
-          project !== null,
-      );
-    },
-  });
+  args: {
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
 
-  export const get = query({
-    args: { projectId: v.id("projects") },
-    handler: async (ctx, args) => {
-      const { userId } = await requireIdentity(ctx);
-  
-      const member = await ctx.db
-        .query("projectMember")
-        .withIndex("by_project_employee", (q) =>
-          q
-            .eq("projectId", args.projectId)
-            .eq("employeeId", userId),
-        )
-        .unique();
-  
-      if (!member) {
-        throw new Error("Not authorized to view this project");
-      }
-  
-      return await ctx.db.get(args.projectId);
-    },
-  });
+    const members = await ctx.db
+      .query("projectMember")
+      .withIndex("by_project", (q) =>
+        q.eq("projectId", args.projectId),
+      )
+      .collect();
+
+    const results = await Promise.all(
+      members.map(async (member) => {
+        const profile = await ctx.db
+          .query("employeeProfiles")
+          .withIndex("by_employee", (q) =>
+            q.eq("employeeId", member.employeeId),
+          )
+          .unique();
+
+        const user = await getUserByUserId(ctx, member.employeeId);
+
+        const image = profile?.profilePhotoStorageId
+          ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
+          : "";
+
+        return {
+          _id: member._id,
+          employeeId: member.employeeId,
+          employee: {
+            _id: profile?.employeeId ?? member.employeeId,
+            name: profile
+              ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim()
+              : "Unknown",
+            image: image ?? "",
+            email: user?.email ?? "",
+          },
+        };
+      }),
+    );
+
+    return results;
+  },
+});

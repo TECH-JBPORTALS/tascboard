@@ -1,287 +1,168 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api } from "../_generated/api";
+import { api, components } from "../_generated/api";
 import schema from "../schema";
-import { DataModel } from "../_generated/dataModel";
+import { DataModel, Id } from "../_generated/dataModel";
+
 import { modules } from "./_modules.test";
 
-describe("Project Member", () => {
-  let t: TestConvexForDataModel<DataModel>;
 
-  beforeEach(() => {
+import { vi } from "bun:test";
+
+vi.mock("../lib/getUser", () => ({
+  getUserByUserId: async () => ({
+    email: "test@email.com",
+  }),
+}));
+
+describe("ProjectMember", () => {
+  let t: TestConvexForDataModel<DataModel>;
+  let projectId: Id<"projects">;
+
+  beforeEach(async () => {
     t = convexTest(schema, modules).withIdentity({
       userId: "user-1",
-    });
-  });
-
-  test("add project member", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    const memberId = await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: false,
-    });
-
-    expect(memberId).toBeDefined();
-
-    const projects = await t.query(api.projectMember.list, {});
-    expect(projects.length).toBe(1);
-  });
-
-  test("prevents duplicate member", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: false,
-    });
-
-    await expect(
-      t.mutation(api.projectMember.add, {
-        projectId,
-        employeeId: "user-1",
-        manager: false,
-      }),
-    ).rejects.toThrow("Employee is already a member of this project");
-  });
-
-  test("only one manager per project", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: true,
-    });
-
-    await expect(
-      t.mutation(api.projectMember.add, {
-        projectId,
-        employeeId: "user-2",
-        manager: true,
-      }),
-    ).rejects.toThrow("Project already has a manager");
-  });
-
-  test("remove project member", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    const memberId = await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: false,
-    });
-
-    await t.mutation(api.projectMember.remove, {
-      memberId,
-    });
-
-    const projects = await t.query(api.projectMember.list, {});
-    expect(projects.length).toBe(0);
-  });
-
-  test("get project only for member", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: false,
-    });
-
-    const project = await t.query(api.projectMember.get, {
-      projectId,
-    });
-
-    expect(project?._id).toBe(projectId);
-  });
-
-  test("reject non-member access", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-
-    await expect(
-      t.query(api.projectMember.get, {
-        projectId,
-      }),
-    ).rejects.toThrow("Not authorized to view this project");
-  });
-
-  test("list returns only projects where user is a member", async () => {
-    const project1 = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project A",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
+      orgId: "org-1",
     });
   
-    const project2 = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project B",
-        summary: "Test project B",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
+    projectId = await t.mutation(api.project.create, {
+      name: "Test Project",
+      summary: "Test project",
+      icon: "📁",
+      color: "purple",
+      startDate: Date.now(),
+      endDate: Date.now() + 100000,
+      status: "active",
     });
-  
-    // only add user to project1
-    await t.mutation(api.projectMember.add, {
-      projectId: project1,
-      employeeId: "user-1",
-      manager: false,
-    });
-  
-    const projects = await t.query(api.projectMember.list, {});
-  
-    expect(projects.length).toBe(1);
-    expect(projects[0]?._id).toBe(project1);
   });
-  test("update prevents second manager assignment", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-  
-    const member1 = await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: true,
-    });
-  
-    await t.mutation(api.projectMember.add, {
-      projectId,
+  // --------------------
+  // TOGGLE MEMBER
+  // --------------------
+  test("toggleMember adds a member if not exists", async () => {
+    await t.mutation(api.projectMember.toggleMember, {
       employeeId: "user-2",
-      manager: false,
-    });
-  
-    const member2 = await t.mutation(api.projectMember.add, {
       projectId,
-      employeeId: "user-3",
-      manager: false,
     });
-  
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    });
+
+    expect(members.length).toBe(1);
+    expect(members[0]?.employeeId).toBe("user-2");
+  });
+
+  test("toggleMember removes member if already exists", async () => {
+    await t.mutation(api.projectMember.toggleMember, {
+      employeeId: "user-2",
+      projectId,
+    });
+
+    await t.mutation(api.projectMember.toggleMember, {
+      employeeId: "user-2",
+      projectId,
+    });
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    });
+
+    expect(members.length).toBe(0);
+  });
+
+  // --------------------
+  // SET MANAGER
+  // --------------------
+  test("setManager assigns manager role", async () => {
+    await t.mutation(api.projectMember.toggleMember, {
+      employeeId: "user-2",
+      projectId,
+    });
+
+    await t.mutation(api.projectMember.setManager, {
+      employeeId: "user-2",
+      projectId,
+    });
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    });
+
+    expect(members[0]?.employeeId).toBe("user-2");
+  });
+
+  test("setManager creates member if not exists", async () => {
+    await t.mutation(api.projectMember.setManager, {
+      employeeId: "user-3",
+      projectId,
+    });
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    });
+
+    expect(members.length).toBe(1);
+    expect(members[0]?.employeeId).toBe("user-3");
+  });
+
+  test("setManager enforces single manager per project", async () => {
+    await t.mutation(api.projectMember.setManager, {
+      employeeId: "user-2",
+      projectId,
+    });
+
     await expect(
-      t.mutation(api.projectMember.update, {
-        memberId: member2,
-        manager: true,
+      t.mutation(api.projectMember.setManager, {
+        employeeId: "user-3",
+        projectId,
       }),
     ).rejects.toThrow("Project already has a manager");
   });
 
-  test("update without manager change keeps existing state", async () => {
-    const projectId = await t.run(async (ctx) => {
-      return await ctx.db.insert("projects", {
-        organizationId: "org-1",
-        name: "Project A",
-        summary: "Test project",
-        description: "Desc",
-        startDate: Date.now(),
-        endDate: Date.now(),
-        status: "active",
-        createdAt: Date.now(),
-      });
-    });
-  
-    const memberId = await t.mutation(api.projectMember.add, {
-      projectId,
-      employeeId: "user-1",
-      manager: false,
-    });
-  
-    await t.mutation(api.projectMember.update, {
-      memberId,
-    });
-  
-    const project = await t.query(api.projectMember.get, {
+  // --------------------
+  // REMOVE MANAGER
+  // --------------------
+  test("removeManager removes manager role but keeps member", async () => {
+    await t.mutation(api.projectMember.setManager, {
+      employeeId: "user-2",
       projectId,
     });
-  
-    expect(project?._id).toBe(projectId);
+
+    await t.mutation(api.projectMember.removeManager, {
+      employeeId: "user-2",
+      projectId,
+    });
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    });
+
+    expect(members.length).toBe(1);
+    expect(members[0]?.employeeId).toBe("user-2");
+  });
+
+  // --------------------
+  // LIST
+  // --------------------
+  test("list returns enriched employee data structure", async () => {
+    await t.mutation(api.projectMember.toggleMember, {
+      employeeId: "user-2",
+      projectId,
+    });
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    });
+
+    expect(members.length).toBe(1);
+
+    const member = members[0];
+
+    expect(member).toBeDefined();
+    expect(member?.employee).toBeDefined();
+    expect(member?.employee.email).toBeDefined();
+    expect(typeof member?.employee.name).toBe("string");
+    expect(typeof member?.employee.email).toBe("string");
   });
 });
