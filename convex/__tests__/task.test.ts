@@ -78,7 +78,32 @@ describe("Task", () => {
     expect(task?.status).toBe("todo");
     expect(task?.priority).toBe("medium");
   });
+  test("prevents duplicate task activity spam for same user same day", async () => {
 
+    await t.mutation(api.task.update, {
+      taskId,
+      body: {
+        status: "in_progress",
+      },
+    });
+  
+    await t.mutation(api.task.update, {
+      taskId,
+      body: {
+        status: "in_progress",
+      },
+    });
+  
+    const activities = await t
+      .query(api.activity.listByTask, { taskId })
+      .catch(() => []);
+  
+    const statusActivities = activities.filter(
+      (a: any) => a.kind === "status_changed",
+    );
+  
+    expect(statusActivities.length).toBe(1);
+  });
   // --------------------
   // GET
   // --------------------
