@@ -15,11 +15,11 @@ type TaskTitleInputProps = {
   disabled?: boolean;
 };
 
-export function TaskTitleInput({
+export function TitleInput({
   value,
   onChange,
   onSave,
-  placeholder = "Task title",
+  placeholder = "Enter title",
   className,
   disabled,
 }: TaskTitleInputProps) {
@@ -51,11 +51,11 @@ export function TaskTitleInput({
         onChange?.(text);
       }}
     >
-      <EditorContainer>
+      <EditorContainer className="h-fit overflow-y-hidden">
         <Editor
           variant="fullWidth"
           className={cn(
-            "pb-5 pt-0 text-xl leading-tight font-semibold sm:text-2xl",
+            "pb-5 pt-0 text-xl h-fit leading-tight font-semibold sm:text-2xl",
             className,
           )}
           placeholder={placeholder}
