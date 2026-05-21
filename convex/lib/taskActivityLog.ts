@@ -24,10 +24,40 @@ type LogTaskActivityArgs = {
   meta?: string;
 };
 
+function getStartOfToday() {
+  const now = new Date();
+
+  now.setHours(0, 0, 0, 0);
+
+  return now.getTime();
+}
+
 export async function logTaskActivity(
   ctx: MutationCtx,
   args: LogTaskActivityArgs,
 ) {
+  const startOfToday = getStartOfToday();
+
+  const existingActivities = await ctx.db
+    .query("activities")
+    .withIndex("by_task", (q) =>
+      q.eq("taskId", args.taskId),
+    )
+    .collect();
+
+    const duplicateActivity = existingActivities.find(
+      (activity) =>
+        activity.actorUserId === args.actorUserId &&
+        activity.kind === args.kind &&
+        activity.fromValue === args.fromValue &&
+        activity.toValue === args.toValue &&
+        (activity.createdAt ?? 0) >= startOfToday,
+    );
+
+  if (duplicateActivity) {
+    return;
+  }
+
   await ctx.db.insert("activities", {
     taskId: args.taskId,
     deviceName: args.actorName,
@@ -39,7 +69,10 @@ export async function logTaskActivity(
     createdAt: Date.now(),
   });
 }
+
 export { actorDisplayName };
+
+
 
 export function formatTaskDate(timestamp: number) {
   return new Intl.DateTimeFormat("en-US", {

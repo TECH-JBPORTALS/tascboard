@@ -79,7 +79,7 @@ describe("Task", () => {
     expect(task?.priority).toBe("medium");
   });
   test("prevents duplicate task activity spam for same user same day", async () => {
-    // First update (creates activity)
+
     await t.mutation(api.task.update, {
       taskId,
       body: {
@@ -87,7 +87,6 @@ describe("Task", () => {
       },
     });
   
-    // Second identical update (should NOT create duplicate activity)
     await t.mutation(api.task.update, {
       taskId,
       body: {
@@ -95,17 +94,14 @@ describe("Task", () => {
       },
     });
   
-    // Fetch activities directly
     const activities = await t
       .query(api.activity.listByTask, { taskId })
       .catch(() => []);
   
-    // Filter status changes
     const statusActivities = activities.filter(
       (a: any) => a.kind === "status_changed",
     );
   
-    // Only ONE should exist
     expect(statusActivities.length).toBe(1);
   });
   // --------------------
