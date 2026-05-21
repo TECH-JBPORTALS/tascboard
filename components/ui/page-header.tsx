@@ -4,6 +4,9 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/** Fixed header height (`h-14` / 3.5rem). */
+export const PAGE_HEADER_HEIGHT_CLASS = "h-14";
+
 export type PageHeaderProps = {
   /** Shown inside the rounded muted icon container (e.g. an icon). */
   icon?: React.ReactNode;
@@ -23,27 +26,30 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "flex h-14 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4",
+        "sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80",
+        PAGE_HEADER_HEIGHT_CLASS,
         className,
       )}
     >
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
         {icon != null ? (
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-4">
             {icon}
           </div>
         ) : null}
-        <div className="min-w-0">
-          <h1 className="font-heading text-base font-semibold tracking-tight">
+        <div className="flex min-w-0 flex-col justify-center gap-0.5 overflow-hidden">
+          <div className="truncate font-heading text-sm font-semibold leading-5 tracking-tight [&_a]:truncate">
             {title}
-          </h1>
+          </div>
           {description != null ? (
-            <div className="text-xs text-muted-foreground">{description}</div>
+            <div className="truncate text-xs leading-4 text-muted-foreground">
+              {description}
+            </div>
           ) : null}
         </div>
       </div>
       {actions != null ? (
-        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
       ) : null}
     </header>
   );

@@ -125,7 +125,16 @@ describe("Sprint", () => {
     });
 
     expect(res.success).toBe(true);
-    expect(res.message).toBe("Task is valid for this sprint");
+    expect(res.message).toBe("Task added to sprint");
+
+    const backlog = await t.query(api.sprint.backlog, { trackId });
+    expect(backlog.length).toBe(0);
+
+    const sprintTasks = await t.query(api.sprint.listTasksBySprint, {
+      sprintId,
+    });
+    expect(sprintTasks.length).toBe(1);
+    expect(sprintTasks[0]?._id).toBe(taskId);
   });
 
   // --------------------
@@ -144,6 +153,8 @@ describe("Sprint", () => {
   // PROGRESS
   // --------------------
   test("progress calculates sprint stats", async () => {
+    await t.mutation(api.sprint.addTask, { taskId, sprintId });
+
     const progress = await t.query(api.sprint.progress, {
       sprintId,
     });
@@ -159,6 +170,8 @@ describe("Sprint", () => {
   // BURNDOWN
   // --------------------
   test("burndownChart returns data", async () => {
+    await t.mutation(api.sprint.addTask, { taskId, sprintId });
+
     const result = await t.query(api.sprint.burndownChart, {
       sprintId,
     });

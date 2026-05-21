@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { requireIdentity } from "./lib/auth";
+import { actorDisplayName, logTaskActivity } from "./lib/taskActivityLog";
 
 const labelReturn = v.object({
   _id: v.id("labels"),
@@ -181,7 +182,7 @@ export const attachToTask = mutation({
   },
   returns: v.union(v.id("taskLabels"), v.null()),
   handler: async (ctx, { taskId, labelId }) => {
-    await requireIdentity(ctx);
+    const identity = await requireIdentity(ctx);
 
     const label = await ctx.db.get(labelId);
 
@@ -202,10 +203,21 @@ export const attachToTask = mutation({
       return null;
     }
 
-    return await ctx.db.insert("taskLabels", {
+    const linkId = await ctx.db.insert("taskLabels", {
       taskId,
       labelId,
     });
+
+    await logTaskActivity(ctx, {
+      taskId,
+      actorUserId: identity.userId,
+      actorName: actorDisplayName(identity),
+      kind: "label_added",
+      toValue: label.name,
+      meta: label.color,
+    });
+
+    return linkId;
   },
 });
 
@@ -217,7 +229,9 @@ export const detachFromTask = mutation({
   },
   returns: v.null(),
   handler: async (ctx, { taskId, labelId }) => {
-    await requireIdentity(ctx);
+    const identity = await requireIdentity(ctx);
+
+    const label = await ctx.db.get(labelId);
 
     const links = await ctx.db
       .query("taskLabels")
@@ -235,6 +249,17 @@ export const detachFromTask = mutation({
     }
 
     await ctx.db.delete(link._id);
+
+    if (label) {
+      await logTaskActivity(ctx, {
+        taskId,
+        actorUserId: identity.userId,
+        actorName: actorDisplayName(identity),
+        kind: "label_removed",
+        fromValue: label.name,
+        meta: label.color,
+      });
+    }
 
     return null;
   },
