@@ -1,5 +1,25 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireIdentity } from "./lib/auth";
+
+function isEmptyPlateBody(body: unknown): boolean {
+  if (body === null || body === undefined) return true;
+  if (typeof body === "string") return body.trim().length === 0;
+  if (Array.isArray(body)) {
+    if (body.length === 0) return true;
+    return body.every(
+      (node) =>
+        typeof node === "object" &&
+        node !== null &&
+        "children" in node &&
+        Array.isArray((node as { children: unknown[] }).children) &&
+        (node as { children: { text?: string }[] }).children.every(
+          (child) => !child.text || child.text.trim() === "",
+        ),
+    );
+  }
+  return false;
+}
 
 export const listByTask = query({
   args: {
@@ -19,11 +39,12 @@ export const create = mutation({
     taskId: v.id("tasks"),
     parentCommentId: v.union(v.id("comments"), v.null()),
     deviceName: v.string(),
-    body: v.string(),
+    body: v.any(),
   },
   handler: async (ctx, { taskId, parentCommentId, deviceName, body }) => {
-    const trimmed = body.trim();
-    if (trimmed.length === 0) {
+    await requireIdentity(ctx);
+
+    if (isEmptyPlateBody(body)) {
       throw new Error("Comment body cannot be empty");
     }
     if (parentCommentId) {
@@ -40,7 +61,7 @@ export const create = mutation({
       taskId,
       parentCommentId,
       deviceName,
-      body: trimmed,
+      body,
     });
   },
 });
@@ -48,21 +69,22 @@ export const create = mutation({
 export const edit = mutation({
   args: {
     commentId: v.id("comments"),
-    body: v.string(),
+    body: v.any(),
     deviceName: v.string(),
   },
   handler: async (ctx, { commentId, body, deviceName }) => {
+    await requireIdentity(ctx);
+
     const comment = await ctx.db.get(commentId);
     if (!comment) throw new Error("Comment not found");
     if (comment.deviceName !== deviceName) {
       throw new Error("You can only edit your own comments");
     }
-    const trimmed = body.trim();
-    if (trimmed.length === 0) {
+    if (isEmptyPlateBody(body)) {
       throw new Error("Comment body cannot be empty");
     }
-    if (trimmed === comment.body) return;
-    await ctx.db.patch(commentId, { body: trimmed, editedAt: Date.now() });
+    if (JSON.stringify(body) === JSON.stringify(comment.body)) return;
+    await ctx.db.patch(commentId, { body, editedAt: Date.now() });
   },
 });
 
@@ -72,6 +94,8 @@ export const remove = mutation({
     deviceName: v.string(),
   },
   handler: async (ctx, { commentId, deviceName }) => {
+    await requireIdentity(ctx);
+
     const comment = await ctx.db.get(commentId);
     if (!comment) return;
     if (comment.deviceName !== deviceName) {
@@ -97,6 +121,8 @@ export const toggleResolution = mutation({
     commentId: v.id("comments"),
   },
   handler: async (ctx, { commentId }) => {
+    await requireIdentity(ctx);
+
     const comment = await ctx.db.get(commentId);
     if (!comment) throw new Error("Comment not found");
 

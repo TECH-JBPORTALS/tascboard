@@ -2,11 +2,19 @@ import { mutation, query, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { Id } from "./_generated/dataModel";
+import { requireIdentity } from "./lib/auth";
+import {
+  actorDisplayName,
+  formatTaskDate,
+  logTaskActivity,
+} from "./lib/taskActivityLog";
+import { taskStatusLabels, taskPriorityLabels } from "./lib/taskDisplay";
 
 const statusValidator = v.union(
+  v.literal("backlog"),
   v.literal("todo"),
   v.literal("in_progress"),
-  v.literal("done")
+  v.literal("done"),
 );
 
 const priorityValidator = v.union(
@@ -29,7 +37,7 @@ export const create = mutation({
     projectId: v.id("projects"),
     taskCode: v.string(),
     title: v.string(),
-    description: v.optional(v.string()),
+    description: v.optional(v.any()),
     status: statusValidator,
     assignedTo: v.string(),
     assignedBy: v.string(),
@@ -39,6 +47,8 @@ export const create = mutation({
     endDate: v.number(),
   },
   handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+
     const taskId = await ctx.db.insert("tasks", {
       trackId: args.trackId,
       projectId: args.projectId,
@@ -55,6 +65,14 @@ export const create = mutation({
       createdAt: Date.now(),
     });
 
+    await logTaskActivity(ctx, {
+      taskId,
+      actorUserId: identity.userId,
+      actorName: actorDisplayName(identity),
+      kind: "created",
+      toValue: args.title.trim(),
+    });
+
     return taskId;
   },
 });
@@ -65,6 +83,8 @@ export const get = query({
     taskId: v.id("tasks"),
   },
   handler: async (ctx, { taskId }) => {
+    await requireIdentity(ctx);
+
     const task = await ctx.db.get(taskId);
     if (!task) return null;
 
@@ -90,6 +110,20 @@ export const get = query({
     };
   },
 });
+export const listByTrack = query({
+  args: {
+    trackId: v.id("tracks"),
+  },
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx);
+
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_track", (q) => q.eq("trackId", args.trackId))
+      .collect();
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -137,42 +171,120 @@ export const update = mutation({
     taskId: v.id("tasks"),
     body: v.object({
       title: v.optional(v.string()),
-      description: v.optional(v.string()),
+      description: v.optional(v.any()),
       status: v.optional(statusValidator),
       priority: v.optional(priorityValidator),
       complexity: v.optional(complexityValidator),
       startDate: v.optional(v.number()),
       endDate: v.optional(v.number()),
+      sprintId: v.optional(v.union(v.id("sprints"), v.null())),
     }),
   },
   handler: async (ctx, { taskId, body }) => {
+    const identity = await requireIdentity(ctx);
+
     const task = await ctx.db.get(taskId);
 
     if (!task) {
       throw new Error("Task not found");
     }
 
+    const actorUserId = identity.userId;
+    const actorName = actorDisplayName(identity);
     const patch: Partial<Doc<"tasks">> = {};
 
     if (body.title !== undefined) {
       const trimmed = body.title.trim();
       if (!trimmed) throw new Error("Task title cannot be empty");
-      patch.title = trimmed;
+      if (trimmed !== task.title) {
+        patch.title = trimmed;
+        await logTaskActivity(ctx, {
+          taskId,
+          actorUserId,
+          actorName,
+          kind: "title_changed",
+          fromValue: task.title,
+          toValue: trimmed,
+        });
+      }
     }
 
     if (body.description !== undefined) {
       patch.description = body.description;
     }
 
-    if (body.status !== undefined) patch.status = body.status;
-    if (body.priority !== undefined) patch.priority = body.priority;
+    if (body.status !== undefined && body.status !== task.status) {
+      patch.status = body.status;
+      await logTaskActivity(ctx, {
+        taskId,
+        actorUserId,
+        actorName,
+        kind: "status_changed",
+        fromValue: taskStatusLabels[task.status] ?? task.status,
+        toValue: taskStatusLabels[body.status] ?? body.status,
+      });
+    }
+
+    if (body.priority !== undefined && body.priority !== task.priority) {
+      patch.priority = body.priority;
+      await logTaskActivity(ctx, {
+        taskId,
+        actorUserId,
+        actorName,
+        kind: "priority_changed",
+        fromValue: taskPriorityLabels[task.priority] ?? task.priority,
+        toValue: taskPriorityLabels[body.priority] ?? body.priority,
+      });
+    }
+
     if (body.complexity !== undefined) patch.complexity = body.complexity;
     if (body.startDate !== undefined) patch.startDate = body.startDate;
-    if (body.endDate !== undefined) patch.endDate = body.endDate;
+
+    if (body.endDate !== undefined && body.endDate !== task.endDate) {
+      patch.endDate = body.endDate;
+      await logTaskActivity(ctx, {
+        taskId,
+        actorUserId,
+        actorName,
+        kind: "due_date_changed",
+        fromValue: formatTaskDate(task.endDate),
+        toValue: formatTaskDate(body.endDate),
+      });
+    }
+
+    if (body.sprintId !== undefined) {
+      patch.sprintId = body.sprintId ?? undefined;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return null;
+    }
 
     patch.updatedAt = Date.now();
-
     await ctx.db.patch(taskId, patch);
+
+    return null;
+  },
+});
+
+export const updateDescription = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    description: v.any(),
+  },
+  returns: v.null(),
+  handler: async (ctx, { taskId, description }) => {
+    await requireIdentity(ctx);
+
+    const task = await ctx.db.get(taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    await ctx.db.patch(taskId, {
+      description,
+      updatedAt: Date.now(),
+    });
 
     return null;
   },

@@ -7,10 +7,13 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   RiAddLargeFill,
+  RiArrowDownSLine,
+  RiArrowRightSLine,
   RiCalendarCheckFill,
   RiCalendarCheckLine,
   RiInboxFill,
   RiInboxLine,
+  RiRouteLine,
   RiSettings3Line,
   RiTeamFill,
   RiTeamLine,
@@ -27,6 +30,9 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
@@ -142,6 +148,21 @@ function ProjectSidebarGroup() {
   const basePath = `/${params.orgSlug}`;
   const projects = useQuery(api.project.list);
   const [createOpen, setCreateOpen] = useState(false);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  function toggleProject(projectId: string) {
+    setExpandedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  }
 
   return (
     <SidebarGroup>
@@ -158,12 +179,18 @@ function ProjectSidebarGroup() {
         <SidebarMenu>
           {projects?.map((pro) => {
             const href = `${basePath}/pro/${pro._id}`;
-            const isActive = pathname === href || pathname.startsWith(`${href}/`);
+            const isProjectActive =
+              pathname === href || pathname.startsWith(`${href}/`);
+            const isExpanded =
+              expandedProjects.has(pro._id) || isProjectActive;
+            const tracks = pro.tracks ?? [];
+            const hasTracks = tracks.length > 0;
+            const Chevron = isExpanded ? RiArrowDownSLine : RiArrowRightSLine;
 
             return (
-              <SidebarMenuItem key={pro._id}>
+              <SidebarMenuItem key={pro._id} className="relative">
                 <SidebarMenuButton
-                  isActive={isActive}
+                  isActive={isProjectActive && !pathname.includes("/track/")}
                   tooltip={{ children: pro.name }}
                   render={<Link href={href} />}
                 >
@@ -174,6 +201,42 @@ function ProjectSidebarGroup() {
                   />
                   <span className="truncate">{pro.name}</span>
                 </SidebarMenuButton>
+                {hasTracks ? (
+                  <button
+                    type="button"
+                    className="absolute right-1 top-1.5 flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent"
+                    aria-label={
+                      isExpanded ? "Collapse tracks" : "Expand tracks"
+                    }
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      toggleProject(pro._id);
+                    }}
+                  >
+                    <Chevron className="size-3.5" />
+                  </button>
+                ) : null}
+                {hasTracks && isExpanded ? (
+                  <SidebarMenuSub>
+                    {tracks.map((track) => {
+                      const trackHref = `${href}/track/${track._id}`;
+                      const isTrackActive = pathname === trackHref;
+
+                      return (
+                        <SidebarMenuSubItem key={track._id}>
+                          <SidebarMenuSubButton
+                            isActive={isTrackActive}
+                            render={<Link href={trackHref} />}
+                          >
+                            <RiRouteLine className="size-3.5 opacity-70" />
+                            <span className="truncate">{track.name}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                ) : null}
               </SidebarMenuItem>
             );
           })}
