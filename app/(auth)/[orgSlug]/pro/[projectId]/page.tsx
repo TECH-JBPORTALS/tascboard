@@ -20,6 +20,7 @@ import type { ProjectColorId } from "@/lib/project-appearance";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { ProjectTracksSection } from "@/components/tracks/project-tracks-section";
 
 export default function ProjectPage() {
   const params = useParams<{ orgSlug: string; projectId: string }>();
@@ -90,6 +91,11 @@ export default function ProjectPage() {
             initialContent={project.description}
           />
         </section>
+
+        <ProjectTracksSection
+          projectId={project._id}
+          orgSlug={params.orgSlug}
+        />
       </div>
 
       {hydrated ? (
