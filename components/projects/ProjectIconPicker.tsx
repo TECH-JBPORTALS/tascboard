@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ProjectIcon } from "@/components/projects/project-icon";
+import { ProjectIcon } from "@/components/projects/ProjectIcon";
 
 type ProjectIconPickerProps = {
   icon: string;

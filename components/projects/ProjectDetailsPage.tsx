@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { ProjectPageHeader } from "./project-page-header";
+import { ProjectPageHeader } from "./ProjectPageHeader";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useParams } from "next/navigation";
-import { ProjectTitle } from "./project-title";
+import { ProjectTitle } from "./ProjectTitle";
 import { ProjectProperties } from "./ProjectProperties";
 
 export function ProjectDetailsPage() {

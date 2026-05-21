@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/sidebar";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
-import { ProjectIcon } from "@/components/projects/project-icon";
+import { ProjectIcon } from "@/components/projects/ProjectIcon";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { NavPermissionGate } from "./NavPermissionGate";
