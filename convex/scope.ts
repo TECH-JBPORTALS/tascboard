@@ -21,6 +21,9 @@ export const listAssignableMembers = query({
     const { orgId } = await requireOrganization(ctx);
 
     const employees = await listEmployeesByOrg(ctx, orgId);
+    const employeeById = new Map(
+      employees.map((e) => [e._id, e]),
+    );
     const projectMembers = args.projectId
     ? (
         await ctx.db
@@ -29,10 +32,11 @@ export const listAssignableMembers = query({
             q.eq("projectId", args.projectId!),
           )
           .collect()
-      ).map((m) => m.employeeId)
+      )
+        .map((m) => employeeById.get(m.employeeId)?.userId)
+        .filter(Boolean) as string[]
     : [];
-  
-  const trackMembers = args.trackId
+    const trackMembers = args.trackId
     ? (
         await ctx.db
           .query("trackMember")
@@ -40,16 +44,22 @@ export const listAssignableMembers = query({
             q.eq("trackId", args.trackId!),
           )
           .collect()
-      ).map((m) => m.employeeId)
+      )
+        .map((m) => employeeById.get(m.employeeId)?.userId)
+        .filter(Boolean) as string[]
     : [];
-  
   let taskMembers: string[] = [];
   
   if (args.taskId) {
     const task = await ctx.db.get(args.taskId);
   
     if (task?.assignedTo) {
-      taskMembers = [task.assignedTo];
+      const userId =
+        employeeById.get(task.assignedTo)?.userId;
+  
+      if (userId) {
+        taskMembers = [userId];
+      }
     }
   }
   
@@ -75,8 +85,8 @@ export const listAssignableMembers = query({
         const user = emp ? await getUserByUserId(ctx, emp.userId) : null;
       
         return {
-          _id: id,
-          employeeId: id,
+          _id: emp?._id ?? id,
+          employeeId: emp?._id ?? id,
           employee: {
             userId: emp?.userId ?? id,
             name: user?.name ?? "Unknown",
