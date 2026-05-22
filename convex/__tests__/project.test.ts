@@ -9,13 +9,12 @@ import { modules } from "./_modules.test";
 describe("Project", () => {
   let t: TestConvexForDataModel<DataModel>;
   let projectId: Id<"projects">;
-
+  
   beforeEach(async () => {
     t = convexTest(schema, modules).withIdentity({
       userId: "user-1",
       orgId: "org-1",
     });
-
     projectId = await t.mutation(api.project.create, {
       name: " Project A ",
       summary: " Test project ",
@@ -24,6 +23,21 @@ describe("Project", () => {
       startDate: 1700000000000,
       endDate: 1800000000000,
       status: "active",
+    });
+
+    await t.mutation(api.projectMember.toggleMember, {
+      projectId,
+      employeeId: "emp-1",
+    });
+    
+    await t.mutation(api.projectMember.toggleMember, {
+      projectId,
+      employeeId: "emp-2",
+    });
+    
+    await t.mutation(api.projectMember.setManager, {
+      projectId,
+      employeeId: "emp-1",
     });
   });
 
@@ -56,6 +70,30 @@ describe("Project", () => {
     expect(project?.name).toBe("Project A");
   });
 
+  test("get returns project members and manager", async () => {
+    const project = await t.query(api.project.get, {
+      projectId,
+    });
+  
+    expect(project?.members.length).toBe(2);
+  
+    expect(project?.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          employeeId: "emp-1",
+        }),
+        expect.objectContaining({
+          employeeId: "emp-2",
+        }),
+      ]),
+    );
+  
+    expect(project?.manager).toEqual(
+      expect.objectContaining({
+        employeeId: "emp-1",
+      }),
+    );
+  });
   test("update project fields", async () => {
     await t.mutation(api.project.update, {
       projectId,

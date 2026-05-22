@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { removeTaskCascade } from "./task";
 import { requireIdentity, requireOrganization } from "./lib/auth";
-
+import { getTrackMembers } from "./lib/memberHelper";
 const trackStatusValidator = v.union(
   v.literal("active"),
   v.literal("completed"),
@@ -84,14 +84,39 @@ export const get = query({
   args: {
     trackId: v.id("tracks"),
   },
-  returns: v.union(trackReturn, v.null()),
+  returns: v.union(
+    v.object({
+      ...trackReturn.fields,
+      members: v.array(
+        v.object({
+          _id: v.id("trackMember"),
+          employeeId: v.string(),
+        }),
+      ),
+      lead: v.union(
+        v.object({
+          _id: v.id("trackMember"),
+          employeeId: v.string(),
+        }),
+        v.null(),
+      ),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
 
     const track = await ctx.db.get(args.trackId);
 
     if (!track) return null;
-    return track;
+    const { members, lead } =
+    await getTrackMembers(ctx, track._id);
+  
+  return {
+    ...track,
+    members,
+    lead,
+  };
   },
 });
 
