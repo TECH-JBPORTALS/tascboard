@@ -35,6 +35,17 @@ describe("Tracks", () => {
       trackLeaderID: "emp-1",
       status: "active",
     });
+
+    await t.mutation(api.trackMember.add, {
+      trackId,
+      employeeId: "emp-1",
+      lead: true,
+    });
+    
+    await t.mutation(api.trackMember.add, {
+      trackId,
+      employeeId: "emp-2",
+    });
   });
 
   // --------------------
@@ -114,6 +125,30 @@ describe("Tracks", () => {
     expect(result).toBeNull();
   });
 
+  test("get returns track members and lead", async () => {
+    const track = await t.query(api.track.get, {
+      trackId,
+    });
+  
+    expect(track?.members.length).toBe(2);
+  
+    expect(track?.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          employeeId: "emp-1",
+        }),
+        expect.objectContaining({
+          employeeId: "emp-2",
+        }),
+      ]),
+    );
+  
+    expect(track?.lead).toEqual(
+      expect.objectContaining({
+        employeeId: "emp-1",
+      }),
+    );
+  });
   // --------------------
   // UPDATE
   // --------------------

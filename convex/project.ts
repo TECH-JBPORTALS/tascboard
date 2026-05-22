@@ -9,6 +9,7 @@ import {
   logProjectActivity,
 } from "./lib/projectActivityLog";
 import { projectColorValidator } from "./lib/projectAppearance";
+import { getProjectMembers } from "./lib/memberHelper";
 
 const projectStatusValidator = v.union(
   v.literal("active"),
@@ -114,7 +115,27 @@ export const get = query({
   args: {
     projectId: v.id("projects"),
   },
-  returns: v.union(projectReturn, v.null()),
+  returns: v.union(
+    v.object({
+      ...projectReturn.fields,
+
+      members: v.array(
+        v.object({
+          _id: v.id("projectMember"),
+          employeeId: v.string(),
+        }),
+      ),
+
+      manager: v.union(
+        v.object({
+          _id: v.id("projectMember"),
+          employeeId: v.string(),
+        }),
+        v.null(),
+      ),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
     const { orgId } = await requireOrganization(ctx);
@@ -122,7 +143,14 @@ export const get = query({
     if (!project || project.organizationId !== orgId) {
       return null;
     }
-    return project;
+
+    const { members, manager } = await getProjectMembers(ctx, project._id);
+
+    return {
+      ...project,
+      members,
+      manager,
+    };
   },
 });
 

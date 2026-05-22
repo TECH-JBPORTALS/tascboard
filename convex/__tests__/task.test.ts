@@ -62,6 +62,17 @@ describe("Task", () => {
       startDate: 1700000000000,
       endDate: 1800000000000,
     });
+
+    await t.mutation(api.trackMember.add, {
+      trackId,
+      employeeId: "emp-1",
+      lead: true,
+    });
+    
+    await t.mutation(api.trackMember.add, {
+      trackId,
+      employeeId: "emp-2",
+    });
   });
 
   // --------------------
@@ -128,6 +139,24 @@ describe("Task", () => {
     expect(result).toBeNull();
   });
 
+  test("get returns task members", async () => {
+    const task = await t.query(api.task.get, {
+      taskId,
+    });
+  
+    expect(task?.members.length).toBe(2);
+  
+    expect(task?.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          employeeId: "emp-1",
+        }),
+        expect.objectContaining({
+          employeeId: "emp-2",
+        }),
+      ]),
+    );
+  });
   test("list returns tasks", async () => {
     const tasks = await t.query(api.task.list, {});
 
