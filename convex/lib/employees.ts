@@ -31,7 +31,7 @@ export async function listEmployeesByOrg(
   ctx: GenericCtx<DataModel>,
   organizationId: string
 ): Promise<EmployeeRecord[]> {
-  const employees = await ctx.runQuery(
+  const result = await ctx.runQuery(
     components.betterAuth.adapter.findMany,
     {
       model: "employee",
@@ -45,5 +45,5 @@ export async function listEmployeesByOrg(
     }
   );
 
-  return (employees as EmployeeRecord[]) ?? [];
+  return (result.items ?? result.data ?? []) as EmployeeRecord[];
 }

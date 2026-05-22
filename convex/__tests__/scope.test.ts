@@ -25,27 +25,35 @@ describe("Scope - Assignable Members", () => {
   
       listEmployeesByOrg: async () => [
         {
+          _id: "emp-1",
+          organizationId: "org-1",
           userId: "u1",
-          name: "Walter White",
-          email: "walter@test.com",
+          role: "member",
+          createdAt: Date.now(),
           active: true,
         },
         {
+          _id: "emp-2",
+          organizationId: "org-1",
           userId: "u2",
-          name: "Jesse Pinkman",
-          email: "jesse@test.com",
+          role: "member",
+          createdAt: Date.now(),
           active: true,
         },
         {
+          _id: "emp-3",
+          organizationId: "org-1",
           userId: "u3",
-          name: "Saul Goodman",
-          email: "saul@test.com",
+          role: "member",
+          createdAt: Date.now(),
           active: true,
         },
         {
+          _id: "emp-4",
+          organizationId: "org-1",
           userId: "u4",
-          name: "Gus Fring",
-          email: "gus@test.com",
+          role: "member",
+          createdAt: Date.now(),
           active: true,
         },
       ],
@@ -85,7 +93,7 @@ describe("Scope - Assignable Members", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("projectMember", {
         projectId,
-        employeeId: "u1",
+        employeeId: "emp-1",
         manager: false,
         assignedBy: "admin-user",
         createAt: Date.now(),
@@ -137,7 +145,7 @@ describe("Scope - Assignable Members", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("projectMember", {
         projectId,
-        employeeId: "u1",
+        employeeId: "emp-1",
         manager: false,
         assignedBy: "admin-user",
         createAt: Date.now(),
@@ -145,7 +153,7 @@ describe("Scope - Assignable Members", () => {
 
       await ctx.db.insert("trackMember", {
         trackId,
-        employeeId: "u2",
+        employeeId: "emp-2",
         lead: true,
         assignedAt: Date.now(),
         createdAt: Date.now(),
@@ -204,7 +212,7 @@ describe("Scope - Assignable Members", () => {
         title: "Create API",
         description: "task",
         status: "todo",
-        assignedTo: "u3",
+        assignedTo: "emp-3",
         assignedBy: "admin-user",
         priority: "high",
         complexity: "medium",
@@ -217,7 +225,7 @@ describe("Scope - Assignable Members", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("projectMember", {
         projectId,
-        employeeId: "u1",
+        employeeId: "emp-1",
         manager: false,
         assignedBy: "admin-user",
         createAt: Date.now(),
@@ -225,7 +233,7 @@ describe("Scope - Assignable Members", () => {
 
       await ctx.db.insert("trackMember", {
         trackId,
-        employeeId: "u2",
+        employeeId: "emp-2",
         lead: true,
         assignedAt: Date.now(),
         createdAt: Date.now(),
