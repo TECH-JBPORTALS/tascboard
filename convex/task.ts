@@ -9,7 +9,7 @@ import {
   logTaskActivity,
 } from "./lib/taskActivityLog";
 import { taskStatusLabels, taskPriorityLabels } from "./lib/taskDisplay";
-
+import { getTrackMembers } from "./lib/memberHelper";
 const statusValidator = v.union(
   v.literal("backlog"),
   v.literal("todo"),
@@ -21,13 +21,13 @@ const priorityValidator = v.union(
   v.literal("low"),
   v.literal("medium"),
   v.literal("high"),
-  v.literal("critical")
+  v.literal("critical"),
 );
 
 const complexityValidator = v.union(
   v.literal("easy"),
   v.literal("medium"),
-  v.literal("hard")
+  v.literal("hard"),
 );
 
 /** CREATE TASK */
@@ -97,16 +97,15 @@ export const get = query({
       .collect();
 
     const labels = (
-      await Promise.all(
-        taskLabelLinks.map((l) => ctx.db.get(l.labelId))
-      )
+      await Promise.all(taskLabelLinks.map((l) => ctx.db.get(l.labelId)))
     ).filter((l): l is Doc<"labels"> => l !== null);
-
+    const { members } = await getTrackMembers(ctx, task.trackId);
     return {
       ...task,
       track,
       project,
       labels,
+      members,
     };
   },
 });
@@ -127,39 +126,29 @@ export const listByTrack = query({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const tasks = await ctx.db
-      .query("tasks")
-      .order("desc")
-      .collect();
+    const tasks = await ctx.db.query("tasks").order("desc").collect();
 
     return await Promise.all(
       tasks.map(async (task) => {
         const track = await ctx.db.get(task.trackId);
 
-        const project = track
-          ? await ctx.db.get(track.projectId)
-          : null;
+        const project = track ? await ctx.db.get(track.projectId) : null;
 
         const taskLabelLinks = await ctx.db
           .query("taskLabels")
-          .withIndex("by_task", (q) =>
-            q.eq("taskId", task._id)
-          )
+          .withIndex("by_task", (q) => q.eq("taskId", task._id))
           .collect();
 
         const labels = (
-          await Promise.all(
-            taskLabelLinks.map((l) =>
-              ctx.db.get(l.labelId)
-            )
-          )
+          await Promise.all(taskLabelLinks.map((l) => ctx.db.get(l.labelId)))
         ).filter((l): l is Doc<"labels"> => l !== null);
-
+        const { members } = await getTrackMembers(ctx, task.trackId);
         return {
           ...task,
           track,
           project,
           labels,
+          members,
         };
       }),
     );
@@ -291,10 +280,7 @@ export const updateDescription = mutation({
 });
 
 /** CASCADE DELETE */
-export async function removeTaskCascade(
-  ctx: MutationCtx,
-  taskId: Id<"tasks">
-) {
+export async function removeTaskCascade(ctx: MutationCtx, taskId: Id<"tasks">) {
   const subtasks = await ctx.db
     .query("subtasks")
     .withIndex("by_task_and_order", (q) => q.eq("taskId", taskId))
