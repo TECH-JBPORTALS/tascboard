@@ -11,7 +11,7 @@ import {
   RiStopCircleLine,
 } from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,6 +28,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { ProjectMangerPicker } from "./ProjectManagerPicker";
+import { ProjectMembersPicker } from "./ProjectMembersPicker";
 
 type ProjectStatus = Doc<"projects">["status"];
 
@@ -57,12 +59,10 @@ const statusOptions: {
   },
 ];
 
-type ProjectPropertiesProps = {
-  projectId: Id<"projects">;
-  startDate: number;
-  endDate: number;
-  status: ProjectStatus;
-};
+type ProjectPropertiesProps = Pick<
+  NonNullable<typeof api.project.get._returnType>,
+  "_id" | "startDate" | "endDate" | "status" | "manager" | "members"
+>;
 
 function PropertyTrigger({
   className,
@@ -85,9 +85,10 @@ function PropertyTrigger({
 }
 
 export function ProjectProperties({
-  projectId,
+  _id: projectId,
   startDate,
   endDate,
+  manager,
   status,
 }: ProjectPropertiesProps) {
   const updateProject = useMutation(api.project.update);
@@ -163,6 +164,9 @@ export function ProjectProperties({
             </Command>
           </PopoverContent>
         </Popover>
+
+        <ProjectMangerPicker projectId={projectId} manager={manager} />
+        <ProjectMembersPicker />
 
         <Popover open={dateOpen} onOpenChange={handleDateOpenChange}>
           <PropertyTrigger render={<PopoverTrigger />}>

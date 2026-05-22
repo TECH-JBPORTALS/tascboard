@@ -4,7 +4,7 @@ import type * as React from "react";
 import Link from "next/link";
 import { RiArrowRightSLine } from "@remixicon/react";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { ProjectIcon } from "@/components/projects/project-icon";
+import { ProjectIcon } from "@/components/projects/ProjectIcon";
 import { PageHeader } from "@/components/ui/page-header";
 
 type TaskPageHeaderProps = {

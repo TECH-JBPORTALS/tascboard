@@ -2,8 +2,8 @@
 
 import { RiSideBarLine } from "@remixicon/react";
 import type { Id } from "@/convex/_generated/dataModel";
-import { ProjectActivityLog } from "@/components/projects/project-activity-log";
-import { ProjectTopPerformers } from "@/components/projects/project-top-performers";
+import { ProjectActivityLog } from "@/components/projects/ProjectActivityLog";
+import { ProjectTopPerformers } from "@/components/projects/ProjectTopPerformers";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

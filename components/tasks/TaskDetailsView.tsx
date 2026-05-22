@@ -9,7 +9,7 @@ import { TaskDetailSidebar } from "@/components/tasks/TaskDetailSidebar";
 import { TaskPageHeader } from "@/components/tasks/TaskPageHeader";
 import { TaskSubtasksSection } from "@/components/tasks/TaskSubtasksSection";
 import { PlateEditor } from "../editor/plate-editor";
-import { TaskTitleInput } from "./TaskTitleInput";
+import { TitleInput } from "../TitleInput";
 
 type TaskDetail = Doc<"tasks"> & {
   track: Doc<"tracks"> | null;
@@ -68,8 +68,9 @@ export function TaskDetailView({ orgSlug, task }: TaskDetailViewProps) {
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="min-h-0 flex-1">
             <div className="mx-auto max-w-3xl px-4 py-6 md:px-8">
-              <TaskTitleInput
+              <TitleInput
                 value={title}
+                placeholder="Task title"
                 onChange={(value) => setTitle(value)}
                 onSave={saveTitle}
               />

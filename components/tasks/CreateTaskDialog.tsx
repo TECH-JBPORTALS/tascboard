@@ -32,7 +32,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { TaskTitleInput } from "./TaskTitleInput";
+import { TitleInput } from "../TitleInput";
 
 type CreateTaskDialogProps = {
   open: boolean;
@@ -234,7 +234,7 @@ export function CreateTaskDialog({
             </motion.div>
 
             <motion.div layout className="px-4 pt-4">
-              <TaskTitleInput
+              <TitleInput
                 value={title}
                 onChange={(markdown) => setTitle(markdown)}
                 placeholder="Task title"
