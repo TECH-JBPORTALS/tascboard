@@ -61,10 +61,12 @@ export function ProjectDetailsPage() {
         </div>
         <ProjectSummary projectId={projectId} summary={project.summary ?? ""} />
         <ProjectProperties
-          projectId={projectId}
-          startDate={project.startDate}
-          endDate={project.endDate}
-          status={project.status}
+          _id={projectId}
+          startDate={project.startDate ?? 0}
+          endDate={project.endDate ?? 0}
+          status={project.status ?? "active"}
+          manager={project.manager}
+          members={project.members}
         />
         <Separator />
         <ProjectDescription

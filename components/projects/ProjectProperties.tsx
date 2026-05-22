@@ -59,12 +59,10 @@ const statusOptions: {
   },
 ];
 
-type ProjectPropertiesProps = {
-  projectId: Id<"projects">;
-  startDate: number;
-  endDate: number;
-  status: ProjectStatus;
-};
+type ProjectPropertiesProps = Pick<
+  NonNullable<typeof api.project.get._returnType>,
+  "_id" | "startDate" | "endDate" | "status" | "manager" | "members"
+>;
 
 function PropertyTrigger({
   className,
@@ -87,9 +85,10 @@ function PropertyTrigger({
 }
 
 export function ProjectProperties({
-  projectId,
+  _id: projectId,
   startDate,
   endDate,
+  manager,
   status,
 }: ProjectPropertiesProps) {
   const updateProject = useMutation(api.project.update);
@@ -166,7 +165,7 @@ export function ProjectProperties({
           </PopoverContent>
         </Popover>
 
-        <ProjectMangerPicker projectId={projectId} />
+        <ProjectMangerPicker projectId={projectId} manager={manager} />
         <ProjectMembersPicker />
 
         <Popover open={dateOpen} onOpenChange={handleDateOpenChange}>
