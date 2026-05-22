@@ -13,7 +13,8 @@ type TaskTitleInputProps = {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-};
+  blurOnSave?: boolean;
+} & React.ComponentProps<typeof Editor>;
 
 export function TitleInput({
   value,
@@ -22,6 +23,8 @@ export function TitleInput({
   placeholder = "Enter title",
   className,
   disabled,
+  blurOnSave = true,
+  ...editorProps
 }: TaskTitleInputProps) {
   const latestTextRef = React.useRef(value);
   const toPlateValue = React.useCallback((text: string): Value => {
@@ -53,6 +56,7 @@ export function TitleInput({
     >
       <EditorContainer className="h-fit overflow-y-hidden">
         <Editor
+          {...editorProps}
           variant="fullWidth"
           className={cn(
             "pb-5 pt-0 text-xl h-fit leading-tight font-semibold sm:text-2xl",
@@ -60,7 +64,9 @@ export function TitleInput({
           )}
           placeholder={placeholder}
           disabled={disabled}
-          onBlur={() => onSave?.(latestTextRef.current ?? "")}
+          onBlur={() =>
+            blurOnSave ? onSave?.(latestTextRef.current ?? "") : undefined
+          }
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();

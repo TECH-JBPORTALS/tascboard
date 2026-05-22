@@ -8,7 +8,6 @@ import { useParams } from "next/navigation";
 import { ProjectProperties } from "./ProjectProperties";
 import { ProjectDescription } from "./ProjectDescription";
 import { ProjectSummary } from "./ProjectSummary";
-import { Separator } from "../ui/separator";
 import { ProjectTracksSection } from "../tracks/project-tracks-section";
 import { TitleInput } from "../TitleInput";
 import { ProjectIconPicker } from "./ProjectIconPicker";
@@ -68,7 +67,6 @@ export function ProjectDetailsPage() {
           manager={project.manager}
           members={project.members}
         />
-        <Separator />
         <ProjectDescription
           projectId={projectId}
           initialDescription={project.description}
