@@ -9,7 +9,7 @@ import { modules } from "./_modules.test";
 describe("Project", () => {
   let t: TestConvexForDataModel<DataModel>;
   let projectId: Id<"projects">;
-  
+
   beforeEach(async () => {
     t = convexTest(schema, modules).withIdentity({
       userId: "user-1",
@@ -29,12 +29,12 @@ describe("Project", () => {
       projectId,
       employeeId: "emp-1",
     });
-    
+
     await t.mutation(api.projectMember.toggleMember, {
       projectId,
       employeeId: "emp-2",
     });
-    
+
     await t.mutation(api.projectMember.setManager, {
       projectId,
       employeeId: "emp-1",
@@ -61,6 +61,37 @@ describe("Project", () => {
     expect(Array.isArray(projects[0]?.tracks)).toBe(true);
   });
 
+  test("project activity does not spam duplicate actions in same day", async () => {
+    // first update → should log activity
+    await t.mutation(api.project.update, {
+      projectId,
+      body: {
+        status: "inactive",
+      },
+    });
+
+    // second identical update → should NOT create another activity
+    await t.mutation(api.project.update, {
+      projectId,
+      body: {
+        status: "inactive",
+      },
+    });
+
+    const activities = await t.query(api.projectActivity.list, {
+      projectId,
+    });
+
+    // should only have:
+    // 1 created (from beforeEach setup)
+    // 1 status_changed (first update)
+    expect(activities.length).toBe(2);
+
+    expect(activities.filter((a) => a.kind === "status_changed").length).toBe(
+      1,
+    );
+  });
+
   test("get returns project by id", async () => {
     const project = await t.query(api.project.get, {
       projectId,
@@ -74,9 +105,9 @@ describe("Project", () => {
     const project = await t.query(api.project.get, {
       projectId,
     });
-  
+
     expect(project?.members.length).toBe(2);
-  
+
     expect(project?.members).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -87,7 +118,7 @@ describe("Project", () => {
         }),
       ]),
     );
-  
+
     expect(project?.manager).toEqual(
       expect.objectContaining({
         employeeId: "emp-1",
