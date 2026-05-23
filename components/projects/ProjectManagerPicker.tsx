@@ -17,7 +17,6 @@ import { UserAvatar } from "../employees/UserAvatar";
 import { api } from "@/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
-import { Badge } from "../ui/badge";
 
 type ProjectManager = NonNullable<
   typeof api.project.get._returnType
@@ -48,7 +47,7 @@ export function ProjectMangerPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground",
+              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full",
             )}
           />
         }
@@ -71,32 +70,37 @@ export function ProjectMangerPicker({
             <CommandEmpty>No members found</CommandEmpty>
             {currentManager && (
               <CommandGroup>
-                <CommandItem value="no manager">
-                  <RiAccountCircle2Line className="size-3.5 opacity-70" />
+                <CommandItem
+                  value="no manager"
+                  onSelect={() =>
+                    removeManager({
+                      projectId,
+                      employeeId: currentManager.employeeId,
+                    })
+                  }
+                >
+                  <RiAccountCircle2Line className="size-5 text-muted-foreground opacity-70" />
                   No manager
                 </CommandItem>
+                {membersGroup.projectMembers.map((member) => (
+                  <CommandItem
+                    key={member.employeeId}
+                    value={member.employeeId}
+                  >
+                    <UserAvatar
+                      name={member.employee.name}
+                      imageUrl={member.employee.image}
+                      className="size-5"
+                    />
+                    {member.employee.name}{" "}
+                    {member.manager && (
+                      <RiCheckFill className="ml-auto size-4 " />
+                    )}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             )}
 
-            <CommandGroup>
-              {membersGroup.projectMembers.map((member) => (
-                <CommandItem
-                  key={member.employeeId}
-                  value={member.employeeId}
-                  onSelect={() =>
-                    removeManager({ projectId, employeeId: member.employeeId })
-                  }
-                >
-                  <UserAvatar
-                    name={member.employee.name}
-                    imageUrl={member.employee.image}
-                    className="size-5"
-                  />
-                  {member.employee.name}{" "}
-                  {/* {member.manager && <RiCheckFill className="ml-auto size-4 " />} */}
-                </CommandItem>
-              ))}
-            </CommandGroup>
             {membersGroup.organizationMembers.length > 0 && (
               <CommandGroup heading="Organization members">
                 {membersGroup.organizationMembers.map((employee) => (
@@ -131,12 +135,15 @@ export function useProjectMembers(projectId: Id<"projects">) {
 
   const employees = useQuery(api.employees.auth.list);
 
-  const remainingEmployees = employees?.filter(
-    (employee) => !members?.some((member) => member.employeeId === employee.id),
-  );
+  const remainingEmployees = employees?.filter((employee) => {
+    const existingMember = members?.find(
+      (member) => member.employeeId === employee.id,
+    );
+    return !existingMember || !existingMember.manager;
+  });
 
   return {
-    projectMembers: members ?? [],
+    projectMembers: members?.filter((member) => member.manager) ?? [],
     organizationMembers: remainingEmployees ?? [],
   };
 }

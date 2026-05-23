@@ -17,6 +17,7 @@ import { UserAvatar } from "../employees/UserAvatar";
 import { api } from "@/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
+import { Badge } from "../ui/badge";
 
 interface ProjectMembersPickerProps {
   projectId: Id<"projects">;
@@ -35,7 +36,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground",
+              "h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground",
             )}
           />
         }
@@ -52,7 +53,10 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
             ))}
           </span>
         ) : (
-          <RiAccountCircle2Line className="size-3.5 opacity-70" />
+          <>
+            <RiAccountCircle2Line className="size-3.5 opacity-70" />
+            Assign
+          </>
         )}
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0 max-w-[240px]">
@@ -83,7 +87,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
                   <span className="flex items-center gap-1">
                     {member.employee.name}
                   </span>
-                  {/* {member.manager && <Badge variant={"outline"}>Manager</Badge>} */}
+                  {member.manager && <Badge variant={"outline"}>Manager</Badge>}
                 </CommandItem>
               ))}
             </CommandGroup>
