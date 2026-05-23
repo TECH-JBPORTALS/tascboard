@@ -3,7 +3,7 @@
 import type * as React from "react";
 import Link from "next/link";
 import { RiArrowRightSLine } from "@remixicon/react";
-import { ProjectIcon } from "@/components/projects/project-icon";
+import { ProjectIcon } from "@/components/projects/ProjectIcon";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "../ui/page-header";
 
