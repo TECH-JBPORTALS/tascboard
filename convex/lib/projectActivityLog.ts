@@ -23,11 +23,36 @@ type LogProjectActivityArgs = {
   fromValue?: string;
   toValue?: string;
 };
-
+function getStartOfToday() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now.getTime();
+}
 export async function logProjectActivity(
   ctx: MutationCtx,
   args: LogProjectActivityArgs,
 ) {
+  const startOfToday = getStartOfToday();
+
+  const existingActivities = await ctx.db
+    .query("projectActivities")
+    .withIndex("by_project_actor", (q) =>
+      q.eq("projectId", args.projectId).eq("actorUserId", args.actorUserId),
+    )
+    .collect();
+
+  const duplicateActivity = existingActivities.find(
+    (activity) =>
+      activity.actorUserId === args.actorUserId &&
+      activity.kind === args.kind &&
+      activity.fromValue === args.fromValue &&
+      activity.toValue === args.toValue &&
+      (activity.createdAt ?? 0) >= startOfToday,
+  );
+
+  if (duplicateActivity) {
+    return;
+  }
   await ctx.db.insert("projectActivities", {
     projectId: args.projectId,
     organizationId: args.organizationId,

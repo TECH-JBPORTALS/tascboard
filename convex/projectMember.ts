@@ -71,7 +71,10 @@ export const setManager = mutation({
       .unique();
 
     if (existingManager && existingManager.employeeId !== args.employeeId) {
-      throw new Error("Project already has a manager");
+      await ctx.db.patch(existingManager._id, {
+        manager: false,
+        updatedAt: Date.now(),
+      });
     }
 
     if (existingMember) {
