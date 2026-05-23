@@ -101,7 +101,9 @@ export default defineSchema({
     fromValue: v.optional(v.string()),
     toValue: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_project", ["projectId"]),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_project_actor", ["projectId", "actorUserId"]),
 
   tracks: defineTable({
     name: v.string(),
@@ -272,23 +274,17 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   }).index("by_track", { fields: ["trackId"] }),
 
-
-  employeeTodos:defineTable({
-    employeeId:v.string(),
-    title:v.string(),
-    description:v.optional(v.string()),
-    priority:v.union(
-      v.literal("low"),
-      v.literal("medium"),
-      v.literal("high")
-    ),
-    isCompleted:v.boolean(),
-    createdAt:v.number(),
-    updatedAt:v.optional(v.number()),
-
+  employeeTodos: defineTable({
+    employeeId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+    isCompleted: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
-  .index("by_employee",["employeeId"])
-  .index("by_employee_and_status", ["employeeId", "isCompleted"]),
+    .index("by_employee", ["employeeId"])
+    .index("by_employee_and_status", ["employeeId", "isCompleted"]),
 
   meeting: defineTable({
     organizationId: v.string(),
@@ -300,15 +296,17 @@ export default defineSchema({
       v.literal("daily"),
       v.literal("weekly"),
     ),
-    recurrenceDays: v.array(v.union(
-      v.literal("monday"),
-      v.literal("tuesday"),
-      v.literal("wednesday"),
-      v.literal("thursday"),
-      v.literal("friday"),
-      v.literal("saturday"),
-      v.literal("sunday"),
-    )),
+    recurrenceDays: v.array(
+      v.union(
+        v.literal("monday"),
+        v.literal("tuesday"),
+        v.literal("wednesday"),
+        v.literal("thursday"),
+        v.literal("friday"),
+        v.literal("saturday"),
+        v.literal("sunday"),
+      ),
+    ),
     startTime: v.number(),
     endTime: v.number(),
     meetingLink: v.string(),
@@ -329,7 +327,7 @@ export default defineSchema({
     endTime: v.number(),
     finalNotes: v.optional(v.string()),
     createdAt: v.number(),
-    updatedAt: v.optional(v.number())
+    updatedAt: v.optional(v.number()),
   }),
 
   meetingAttendee: defineTable({
@@ -350,7 +348,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }),
-  
+
   dailyReport: defineTable({
     employeeId: v.string(),
     reportDate: v.number(),
@@ -367,9 +365,10 @@ export default defineSchema({
     reportId: v.id("dailyReport"),
     taskId: v.id("tasks"),
     createdAt: v.number(),
-    updatedAt: v.optional(v.number())
-  }).index("by_reportId",["reportId"])
-  .index("by_reportId_taskId",["reportId","taskId"]),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_reportId", ["reportId"])
+    .index("by_reportId_taskId", ["reportId", "taskId"]),
 
   projectMember: defineTable({
     projectId: v.id("projects"),
@@ -378,21 +377,21 @@ export default defineSchema({
     assignedBy: v.string(),
     createAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_project",["projectId"])
-  .index("by_project_employee",["projectId","employeeId"])
-  .index("by_project_manager",["projectId","manager"])
-  .index("by_employee",["employeeId"]),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_project_employee", ["projectId", "employeeId"])
+    .index("by_project_manager", ["projectId", "manager"])
+    .index("by_employee", ["employeeId"]),
 
-  trackMember:defineTable({
+  trackMember: defineTable({
     trackId: v.id("tracks"),
     employeeId: v.string(),
     lead: v.boolean(),
     assignedAt: v.number(),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_track_employee",["trackId","employeeId"])
-  .index("by_track",["trackId"])
-  .index("by_employee",["employeeId"]),
-   
+  })
+    .index("by_track_employee", ["trackId", "employeeId"])
+    .index("by_track", ["trackId"])
+    .index("by_employee", ["employeeId"]),
 });
-
