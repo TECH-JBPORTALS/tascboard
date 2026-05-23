@@ -4,21 +4,15 @@ import * as React from "react";
 
 import type { PlateEditor, PlateElementProps } from "platejs/react";
 
-import { AIChatPlugin } from "@platejs/ai/react";
 import {
-  RiCalendar2Line,
-  RiCornerDownRightLine,
-  RiCodeBlock,
-  RiLightbulbLine,
   RiCodeLine,
-  RiParagraph,
   RiH1,
   RiH2,
   RiH3,
-  RiListUnordered,
-  RiListOrdered,
   RiListCheck,
-  RiQuoteText,
+  RiListOrdered,
+  RiListUnordered,
+  RiParagraph,
 } from "@remixicon/react";
 import { type TComboboxInputElement, KEYS } from "platejs";
 import { PlateElement } from "platejs/react";
@@ -95,22 +89,10 @@ const groups: Group[] = [
         value: KEYS.listTodo,
       },
       {
-        icon: <RiCornerDownRightLine />,
-        keywords: ["collapsible", "expandable"],
-        label: "Toggle",
-        value: KEYS.toggle,
-      },
-      {
         icon: <RiCodeLine />,
         keywords: ["```"],
         label: "Code Block",
         value: KEYS.codeBlock,
-      },
-      {
-        icon: <RiQuoteText />,
-        keywords: ["citation", "blockquote", "quote", ">"],
-        label: "Blockquote",
-        value: KEYS.blockquote,
       },
     ].map((item) => ({
       ...item,

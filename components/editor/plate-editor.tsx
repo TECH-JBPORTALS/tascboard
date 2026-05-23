@@ -5,12 +5,12 @@ import { normalizeStaticValue, type Value } from "platejs";
 import { Plate, usePlateEditor } from "platejs/react";
 import { MarkdownPlugin, deserializeMd, serializeMd } from "@platejs/markdown";
 
-import { BasicNodesKit } from "@/components/editor/plugins/basic-nodes-kit";
 import { Editor, EditorContainer } from "@/components/ui/editor";
 import { SlashKit } from "./plugins/slash-kit";
 import { ListKit } from "./plugins/list-kit";
 import { ToggleKit } from "./plugins/toggle-kit";
 import { CodeBlockKit } from "./plugins/code-block-kit";
+import { BasicBlocksKit } from "./plugins/basic-blocks-kit";
 
 const EMPTY_VALUE: Value = [{ type: "p", children: [{ text: "" }] }];
 
@@ -35,12 +35,12 @@ export function PlateEditor({
   const latestMarkdownRef = React.useRef(markdownValue);
   const editor = usePlateEditor({
     plugins: [
-      ...BasicNodesKit,
-      MarkdownPlugin,
+      ...BasicBlocksKit,
       ...SlashKit,
       ...ListKit,
       ...ToggleKit,
       ...CodeBlockKit,
+      MarkdownPlugin,
     ],
     value: normalizeStaticValue(EMPTY_VALUE),
   });
@@ -48,13 +48,17 @@ export function PlateEditor({
   React.useEffect(() => {
     if (latestMarkdownRef.current === markdownValue) return;
     latestMarkdownRef.current = markdownValue;
-    const nextValue = normalizeStaticValue(deserializeMd(editor, markdownValue));
+    const nextValue = normalizeStaticValue(
+      deserializeMd(editor, markdownValue),
+    );
     editor.tf.setValue(nextValue);
   }, [editor, markdownValue]);
 
   React.useEffect(() => {
     if (!markdownValue) return;
-    const nextValue = normalizeStaticValue(deserializeMd(editor, markdownValue));
+    const nextValue = normalizeStaticValue(
+      deserializeMd(editor, markdownValue),
+    );
     editor.tf.setValue(nextValue);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);

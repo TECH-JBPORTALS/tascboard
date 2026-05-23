@@ -94,6 +94,19 @@ type InsertBlockOptions = {
   upsert?: boolean;
 };
 
+// Just safe checking the `withoutSuggestions` API is working in initial render
+const runWithoutSuggestions = (editor: PlateEditor, fn: () => void) => {
+  const suggestionApi = editor.getApi(SuggestionPlugin);
+  const withoutSuggestions = suggestionApi?.suggestion?.withoutSuggestions;
+
+  if (typeof withoutSuggestions === "function") {
+    withoutSuggestions(fn);
+    return;
+  }
+
+  fn();
+};
+
 export const insertBlock = (
   editor: PlateEditor,
   type: string,
@@ -122,7 +135,7 @@ export const insertBlock = (
       editor.tf.insertNodes(createBlockquote(editor), { at: insertPath });
 
       if (!isSameBlockType && isCurrentBlockEmpty) {
-        editor.getApi(SuggestionPlugin).suggestion.withoutSuggestions(() => {
+        runWithoutSuggestions(editor, () => {
           editor.tf.removeNodes({ at: path });
         });
       }
@@ -144,7 +157,7 @@ export const insertBlock = (
     }
 
     if (!isSameBlockType) {
-      editor.getApi(SuggestionPlugin).suggestion.withoutSuggestions(() => {
+      runWithoutSuggestions(editor, () => {
         editor.tf.removeNodes({ previousEmptyBlock: true });
       });
     }
