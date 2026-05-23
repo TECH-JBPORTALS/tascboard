@@ -61,20 +61,32 @@ function formatActivityDetail(activity: Activity) {
 type ProjectActivityLogProps = {
   projectId: Id<"projects">;
   className?: string;
+  hideTitle?: boolean;
+  scrollable?: boolean;
 };
 
 export function ProjectActivityLog({
   projectId,
   className,
+  hideTitle = false,
+  scrollable = true,
 }: ProjectActivityLogProps) {
   const activities = useQuery(api.projectActivity.list, { projectId, limit: 50 });
 
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-      <h3 className="shrink-0 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Activity
-      </h3>
-      <div className="min-h-0 flex-1 overflow-y-auto px-2">
+    <div
+      className={cn(
+        "flex flex-col",
+        scrollable && "min-h-0 flex-1",
+        className,
+      )}
+    >
+      {!hideTitle ? (
+        <h3 className="shrink-0 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Activity
+        </h3>
+      ) : null}
+      <div className={cn("px-2", scrollable && "min-h-0 flex-1 overflow-y-auto")}>
         {activities === undefined ? (
           <p className="px-2 py-4 text-sm text-muted-foreground">Loading…</p>
         ) : activities.length === 0 ? (

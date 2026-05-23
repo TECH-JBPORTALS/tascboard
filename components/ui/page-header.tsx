@@ -4,9 +4,6 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-/** Fixed header height (`h-14` / 3.5rem). */
-export const PAGE_HEADER_HEIGHT_CLASS = "h-14";
-
 export type PageHeaderProps = {
   /** Shown inside the rounded muted icon container (e.g. an icon). */
   icon?: React.ReactNode;
@@ -26,8 +23,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80",
-        PAGE_HEADER_HEIGHT_CLASS,
+        "sticky top-0 z-10 h-(--header-height) flex shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80",
         className,
       )}
     >
