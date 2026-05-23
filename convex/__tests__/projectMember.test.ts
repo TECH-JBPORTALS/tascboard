@@ -7,7 +7,6 @@ import { DataModel, Id } from "../_generated/dataModel";
 
 import { modules } from "./_modules.test";
 
-
 import { vi } from "bun:test";
 
 vi.mock("../lib/getUser", () => ({
@@ -25,7 +24,7 @@ describe("ProjectMember", () => {
       userId: "user-1",
       orgId: "org-1",
     });
-  
+
     projectId = await t.mutation(api.project.create, {
       name: "Test Project",
       summary: "Test project",
@@ -146,6 +145,15 @@ describe("ProjectMember", () => {
   // LIST
   // --------------------
   test("list returns enriched employee data structure", async () => {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("employeeProfiles", {
+        employeeId: "user-2",
+        onboardingStatus: "completed",
+        onboardingStep: 1,
+        firstName: "Walter",
+        lastName: "White",
+      });
+    });
     await t.mutation(api.projectMember.toggleMember, {
       employeeId: "user-2",
       projectId,
@@ -158,7 +166,6 @@ describe("ProjectMember", () => {
     expect(members.length).toBe(1);
 
     const member = members[0];
-
     expect(member).toBeDefined();
     expect(member?.employee).toBeDefined();
     expect(member?.employee.email).toBeDefined();

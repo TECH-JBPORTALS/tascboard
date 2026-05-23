@@ -132,14 +132,27 @@ export const removeManager = mutation({
 export const list = query({
   args: {
     projectId: v.id("projects"),
+    manager: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx);
 
-    const members = await ctx.db
-      .query("projectMember")
-      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
-      .collect();
+    let members: Doc<"projectMember">[] = [];
+
+    if (args.manager !== undefined) {
+      const manager = args.manager;
+      members = await ctx.db
+        .query("projectMember")
+        .withIndex("by_project_manager", (q) =>
+          q.eq("projectId", args.projectId).eq("manager", manager),
+        )
+        .collect();
+    } else {
+      members = await ctx.db
+        .query("projectMember")
+        .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+        .collect();
+    }
 
     const results = await Promise.all(
       members.map(async (member) => {
@@ -159,6 +172,7 @@ export const list = query({
         return {
           _id: member._id,
           employeeId: member.employeeId,
+          manager: member.manager,
           employee: {
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
