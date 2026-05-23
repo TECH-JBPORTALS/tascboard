@@ -140,8 +140,6 @@ describe("Scope - Assignable Members", () => {
       projectId,
     });
 
-    console.log(JSON.stringify(result, null, 2));
-
     expect(result.length).toBe(2);
   });
 
