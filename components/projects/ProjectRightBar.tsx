@@ -1,6 +1,6 @@
 "use client";
 
-import { RiCloseLine, RiSideBarLine } from "@remixicon/react";
+import { RiSideBarFill, RiSideBarLine } from "@remixicon/react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ProjectActivityLog } from "@/components/projects/ProjectActivityLog";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,10 @@ export function ProjectRightBarToggle({
       size="icon-sm"
       className={cn("text-muted-foreground", className)}
       onClick={onToggle}
-      aria-expanded={open}
+      aria-expanded={!open}
       aria-label={open ? "Hide project sidebar" : "Show project sidebar"}
     >
-      <RiSideBarLine className={cn("size-4", open && "text-foreground")} />
+      {open ? <RiSideBarLine /> : <RiSideBarFill />}
     </Button>
   );
 }
@@ -44,27 +44,25 @@ export function ProjectRightBarToggle({
 export function ProjectRightBar({
   projectId,
   open,
-  onClose,
   className,
 }: ProjectRightBarProps) {
-  if (!open) {
-    return null;
-  }
-
   return (
     <aside
       className={cn(
-        "flex h-full min-h-0 w-96 shrink-0 flex-col overflow-hidden bg-transparent",
+        "flex h-full min-h-0 w-96 shrink-0 flex-col overflow-hidden bg-transparent transition-transform translate-x-0 duration-300",
         className,
+        open && "translate-x-100 w-0",
       )}
     >
       <div className="flex h-full min-h-0 flex-1 py-5 flex-col bg-transparent">
         <ScrollArea className="min-h-0 flex-1 px-3 pb-3">
-          <Card className="bg-card/80">
+          <Card className="bg-card/80 border shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Project activity</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">
+                Activity
+              </CardTitle>
             </CardHeader>
-            <CardContent className="px-0 pb-4">
+            <CardContent className="px-0">
               <ProjectActivityLog
                 projectId={projectId}
                 hideTitle

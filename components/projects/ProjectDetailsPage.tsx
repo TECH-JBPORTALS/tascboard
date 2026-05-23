@@ -47,10 +47,10 @@ export function ProjectDetailsPage() {
       />
       <div className="flex h-full max-h-[calc(100vh-var(--header-height))] min-h-0 flex-1 overflow-hidden">
         <div className="flex h-full min-h-0 flex-1 flex-col  @container/main  overflow-hidden">
-          <ScrollArea className="min-h-0 flex-1">
+          <ScrollArea className="min-h-0 flex-1 px-72 @max-6xl/main:px-20">
             <div
               className={cn(
-                "mx-auto w-full px-72 py-6 space-y-4 transition-[padding] duration-200",
+                "mx-auto w-full py-6 space-y-4 transition-[padding] duration-200",
               )}
             >
               <div className="flex items-center gap-2.5">
