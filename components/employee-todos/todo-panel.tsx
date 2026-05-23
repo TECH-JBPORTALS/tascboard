@@ -10,13 +10,13 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  CheckSquare,
-  X,
-  Plus,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+  RiTaskLine,
+  RiCloseLine,
+  RiAddLine,
+  RiDeleteBinLine,
+  RiArrowDownSLine,
+  RiArrowUpSLine,
+} from "@remixicon/react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -172,7 +172,7 @@ function TodoRow({
           "text-white/30 hover:bg-red-500/20 hover:text-red-400",
         )}
       >
-        <Trash2 className="size-3.5" />
+        <RiDeleteBinLine className="size-3.5" />
       </button>
     </motion.div>
   );
@@ -265,7 +265,7 @@ function AddTodoForm({
               : "bg-white/[0.04] text-white/20 cursor-not-allowed",
           )}
         >
-          <Plus className="size-4" />
+          <RiAddLine className="size-4" />
         </motion.button>
       </div>
     </div>
@@ -316,7 +316,7 @@ export function TodoPanel() {
             {/* ── Header ── */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] shrink-0">
               <div className="flex items-center gap-2">
-                <CheckSquare className="size-4 text-emerald-400" />
+                <RiTaskLine className="size-4 text-emerald-400" />
                 <span className="text-sm font-semibold text-white/90 tracking-tight">
                   My Tasks
                 </span>
@@ -341,7 +341,7 @@ export function TodoPanel() {
                 title="Minimize"
                 className="rounded-md p-1.5 text-white/40 hover:bg-white/[0.07] hover:text-white/80 transition-colors"
               >
-                <ChevronUp className="size-4" />
+                <RiArrowUpSLine className="size-4" />
               </button>
             </div>
 
@@ -359,7 +359,7 @@ export function TodoPanel() {
                 </div>
               ) : pending.length === 0 && completed.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center pb-8">
-                  <CheckSquare className="size-9 text-white/10 mb-2" />
+                  <RiTaskLine className="size-9 text-white/10 mb-2" />
                   <p className="text-sm text-white/30 font-medium">No tasks yet</p>
                   <p className="text-xs text-white/20 mt-0.5">
                     Type below and press Enter to add one
@@ -395,9 +395,9 @@ export function TodoPanel() {
                         className="flex w-full items-center gap-1.5 px-3 py-1.5 text-[11px] text-white/30 hover:text-white/50 transition-colors rounded-md hover:bg-white/[0.03]"
                       >
                         {showCompleted ? (
-                          <ChevronDown className="size-3" />
+                          <RiArrowDownSLine className="size-3" />
                         ) : (
-                          <ChevronDown className="size-3 -rotate-90" />
+                          <RiArrowDownSLine className="size-3 -rotate-90" />
                         )}
                         {completed.length} completed
                       </button>
@@ -472,7 +472,7 @@ export function TodoPanel() {
               exit={{ rotate: 45, opacity: 0 }}
               transition={{ duration: 0.14 }}
             >
-              <X className="size-5" />
+              <RiCloseLine className="size-5" />
             </motion.span>
           ) : (
             <motion.span
@@ -482,7 +482,7 @@ export function TodoPanel() {
               exit={{ rotate: -45, opacity: 0 }}
               transition={{ duration: 0.14 }}
             >
-              <CheckSquare className="size-5" />
+              <RiTaskLine className="size-5" />
             </motion.span>
           )}
         </AnimatePresence>
