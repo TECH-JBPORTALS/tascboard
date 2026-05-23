@@ -7,9 +7,10 @@ import {
   RiArchiveLine,
   RiCheckboxCircleLine,
   RiRouteLine,
-  RiTimeLine,
   RiTriangleFill,
   RiMoreFill,
+  RiPlayCircleLine,
+  RemixiconComponentType,
 } from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
@@ -75,54 +76,29 @@ type TrackStatusSelectProps = {
   triggerClassName?: string;
 };
 
-const TRACK_STATUS_META: Record<
-  TrackStatus,
-  {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    iconClassName: string;
-  }
-> = {
-  active: {
-    icon: RiTimeLine,
-    label: "Active",
-    iconClassName: "text-sky-600 dark:text-sky-400",
-  },
-  completed: {
-    icon: RiCheckboxCircleLine,
-    label: "Completed",
-    iconClassName: "text-emerald-600 dark:text-emerald-400",
-  },
-  archived: {
-    icon: RiArchiveLine,
-    label: "Archived",
-    iconClassName: "text-amber-600 dark:text-amber-400",
-  },
-};
-
 const TRACK_STATUS_OPTIONS: Array<{
   value: TrackStatus;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: RemixiconComponentType;
   label: string;
-  iconClassName: string;
+  iconColor: string;
 }> = [
   {
     value: "active",
-    icon: RiTimeLine,
+    icon: RiPlayCircleLine,
     label: "Active",
-    iconClassName: TRACK_STATUS_META.active.iconClassName,
+    iconColor: "var(--color-primary)",
   },
   {
     value: "completed",
     icon: RiCheckboxCircleLine,
     label: "Completed",
-    iconClassName: TRACK_STATUS_META.completed.iconClassName,
+    iconColor: "var(--color-green-600)",
   },
   {
     value: "archived",
     icon: RiArchiveLine,
     label: "Archived",
-    iconClassName: TRACK_STATUS_META.archived.iconClassName,
+    iconColor: "var(--color-amber-600)",
   },
 ];
 
@@ -133,8 +109,12 @@ function TrackStatusSelect({
   align = "end",
   triggerClassName,
 }: TrackStatusSelectProps) {
-  const statusMeta = TRACK_STATUS_META[value];
+  const statusMeta = TRACK_STATUS_OPTIONS.find(
+    (option) => option.value === value,
+  );
+  if (!statusMeta) return null;
   const StatusIcon = statusMeta.icon;
+  const StatusIconColor = statusMeta.iconColor;
 
   return (
     <Select
@@ -149,7 +129,7 @@ function TrackStatusSelect({
         className={`h-7 w-fit border-none text-xs! ml-auto ${triggerClassName ?? ""}`}
       >
         <span className="inline-flex items-center gap-1.5">
-          <StatusIcon className={`size-3.5 ${statusMeta.iconClassName}`} />
+          <StatusIcon color={StatusIconColor} className="size-3.5" />
           <span>{statusMeta.label}</span>
         </span>
       </SelectTrigger>
@@ -158,7 +138,7 @@ function TrackStatusSelect({
           {TRACK_STATUS_OPTIONS.map((status) => (
             <SelectItem key={status.value} value={status.value}>
               <span className="inline-flex items-center gap-2">
-                <status.icon className={`size-3.5 ${status.iconClassName}`} />
+                <status.icon color={status.iconColor} className="size-3.5" />
                 {status.label}
               </span>
             </SelectItem>

@@ -43,19 +43,19 @@ const statusOptions: {
     value: "inactive",
     label: "Inactive",
     icon: RiPauseCircleLine,
-    iconColor: "text-muted-foreground",
+    iconColor: "var(--color-muted-foreground)",
   },
   {
     value: "active",
     label: "Active",
     icon: RiPlayCircleLine,
-    iconColor: "text-green-500",
+    iconColor: "var(--color-primary)",
   },
   {
     value: "terminated",
     label: "Terminated",
     icon: RiStopCircleLine,
-    iconColor: "text-red-500",
+    iconColor: "var(--color-destructive)",
   },
 ];
 
@@ -128,7 +128,10 @@ export function ProjectProperties({
       <div className="flex flex-wrap items-center gap-0.5">
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PropertyTrigger render={<PopoverTrigger />}>
-            <StatusIcon className="size-3.5 opacity-70" />
+            <StatusIcon
+              className="size-3.5 opacity-70"
+              color={currentStatus.iconColor}
+            />
             <span>{currentStatus.label}</span>
           </PropertyTrigger>
           <PopoverContent className="w-52 p-0" align="start">
@@ -150,11 +153,11 @@ export function ProjectProperties({
                           });
                           setStatusOpen(false);
                         }}
-                        className={cn(
-                          `data-selected:*:[svg]:${item.iconColor}!`,
-                        )}
                       >
-                        <Icon className="size-3.5 opacity-70" />
+                        <Icon
+                          color={item.iconColor}
+                          className="size-3.5 opacity-70"
+                        />
                         {item.label}
                       </CommandItem>
                     );
