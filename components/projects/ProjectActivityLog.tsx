@@ -82,7 +82,9 @@ export function ProjectActivityLog({
       {activities === undefined ? (
         <p className="px-2 py-4 text-sm text-muted-foreground">Loading…</p>
       ) : activities.length === 0 ? (
-        <p className="px-2 py-4 text-sm text-muted-foreground">No activity yet.</p>
+        <p className="px-2 py-4 text-sm text-muted-foreground">
+          No activity yet.
+        </p>
       ) : (
         <ul className="space-y-3 px-2 pb-4">
           {activities.map((activity) => {
@@ -121,9 +123,7 @@ export function ProjectActivityLog({
         </h3>
       ) : null}
       {scrollable ? (
-        <ScrollArea className="min-h-56 max-h-96 flex-1">
-          {content}
-        </ScrollArea>
+        <ScrollArea className="min-h-56 max-h-96 flex-1">{content}</ScrollArea>
       ) : (
         content
       )}

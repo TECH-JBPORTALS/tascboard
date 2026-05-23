@@ -14,11 +14,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { authClient } from "@/lib/auth-client";
-import {
-  nextTrackCode,
-  trackStatusLabels,
-  type TrackStatus,
-} from "@/lib/track-utils";
+import { nextTrackCode, type TrackStatus } from "@/lib/track-utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +26,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -38,7 +33,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -240,7 +234,7 @@ function TrackCreateComposer({
 
   return (
     <div
-      className={`grid transition-all origin-top duration-200 ease-out ${
+      className={`grid transition-all origin-top px-1.5 duration-200 ease-out ${
         open ? "grid-rows-[1fr] opacity-100 " : "grid-rows-[0fr]  opacity-0"
       }`}
       aria-hidden={!open}
