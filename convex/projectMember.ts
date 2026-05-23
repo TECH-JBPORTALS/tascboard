@@ -71,7 +71,10 @@ export const setManager = mutation({
       .unique();
 
     if (existingManager && existingManager.employeeId !== args.employeeId) {
-      throw new Error("Project already has a manager");
+      await ctx.db.patch(existingManager._id, {
+        manager: false,
+        updatedAt: Date.now(),
+      });
     }
 
     if (existingMember) {
@@ -135,9 +138,7 @@ export const list = query({
 
     const members = await ctx.db
       .query("projectMember")
-      .withIndex("by_project", (q) =>
-        q.eq("projectId", args.projectId),
-      )
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
 
     const results = await Promise.all(
