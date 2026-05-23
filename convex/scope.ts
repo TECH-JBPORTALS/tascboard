@@ -7,18 +7,14 @@ import { getUserByUserId } from "./lib/getUser";
 export const listAssignableMembers = query({
   args: {
     scope: v.union(v.literal("project"), v.literal("track"), v.literal("task")),
-
     projectId: v.optional(v.id("projects")),
     trackId: v.optional(v.id("tracks")),
     taskId: v.optional(v.id("tasks")),
   },
-
   handler: async (ctx, args) => {
     const { orgId } = await requireOrganization(ctx);
-
     const employees = await listEmployeesByOrg(ctx, orgId);
     const employeeById = new Map(employees.map((e) => [e._id, e]));
-
     const projectMembers = args.projectId
       ? ((
           await ctx.db
@@ -29,7 +25,6 @@ export const listAssignableMembers = query({
           .map((m) => employeeById.get(m.employeeId)?.userId)
           .filter(Boolean) as string[])
       : [];
-
     const trackMembers = args.trackId
       ? ((
           await ctx.db
@@ -41,13 +36,10 @@ export const listAssignableMembers = query({
           .filter(Boolean) as string[])
       : [];
     let taskMembers: string[] = [];
-
     if (args.taskId) {
       const task = await ctx.db.get(args.taskId);
-
       if (task?.assignedTo) {
         const userId = employeeById.get(task.assignedTo)?.userId;
-
         if (userId) {
           taskMembers = [userId];
         }
@@ -69,7 +61,6 @@ export const listAssignableMembers = query({
     const toMember = async (userId: string) => {
       const emp = employeeMap.get(userId);
 
-      // employee missing safety
       if (!emp) {
         return {
           _id: userId,
@@ -83,32 +74,18 @@ export const listAssignableMembers = query({
           },
         };
       }
-
-      // employeeProfiles → NAME + IMAGE
       const profile = await ctx.db
         .query("employeeProfiles")
         .withIndex("by_employee", (q) => q.eq("employeeId", emp._id))
         .unique();
 
-      // betterAuth user → EMAIL (via helper ONLY)
       const user = await getUserByUserId(ctx, emp.userId);
       if (!profile) {
         throw new Error(`Missing employee profile for ${emp._id}`);
       }
-
-      if (!user?.name) {
-        throw new Error(`Missing user for ${emp.userId}`);
-      }
-
       const fullName =
         `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
 
-      // 🔴 NEW VALIDATION RULE
-      if (user.name.trim() !== fullName) {
-        throw new Error(
-          `Name mismatch for userId=${userId}: user="${user.name}" profile="${fullName}"`,
-        );
-      }
       let image = null;
 
       if (profile?.profilePhotoStorageId) {
@@ -123,7 +100,6 @@ export const listAssignableMembers = query({
           name: profile
             ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim()
             : "Unknown",
-
           email: user?.email ?? "",
           image,
           active: emp.active,
@@ -136,6 +112,7 @@ export const listAssignableMembers = query({
       track: await Promise.all(grouped.track.map(toMember)),
       task: await Promise.all(grouped.task.map(toMember)),
     };
+
     if (args.scope === "project") {
       return [
         { group: "project", members: result.project },

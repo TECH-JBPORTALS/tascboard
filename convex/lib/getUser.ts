@@ -16,7 +16,7 @@ export async function getUserByUserId(
     model: "user",
     where: [
       {
-        field: "userId", // IMPORTANT: matches your schema index
+        field: "_id",
         operator: "eq",
         value: userId,
       },

@@ -29,21 +29,16 @@ export async function getEmployeeForUser(
 
 export async function listEmployeesByOrg(
   ctx: GenericCtx<DataModel>,
-  organizationId: string
+  organizationId: string,
 ): Promise<EmployeeRecord[]> {
-  const result = await ctx.runQuery(
-    components.betterAuth.adapter.findMany,
-    {
-      model: "employee",
-      where: [
-        { field: "organizationId", operator: "eq", value: organizationId },
-      ],
-      paginationOpts: {
-        numItems: 1000,
-        cursor: null,
-      },
-    }
-  );
+  const result = await ctx.runQuery(components.betterAuth.adapter.findMany, {
+    model: "employee",
+    where: [{ field: "organizationId", operator: "eq", value: organizationId }],
+    paginationOpts: {
+      numItems: 1000,
+      cursor: null,
+    },
+  });
 
-  return (result.items ?? result.data ?? []) as EmployeeRecord[];
+  return (result.page ?? []) as EmployeeRecord[];
 }
