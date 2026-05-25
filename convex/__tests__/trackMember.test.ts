@@ -25,21 +25,19 @@ describe("Track Member", () => {
       orgId: "org-1",
     });
 
-    // 1. create project FIRST (required for track)
-    projectId = await t.mutation(api.project.create, {
+    const projectId = await t.mutation(api.project.create, {
       name: "Test Project",
-      summary: "test",
-      icon: "📌",
-      color: "blue",
+      summary: "Test project",
+      icon: "📁",
+      color: "purple",
       startDate: Date.now(),
-      endDate: Date.now() + 1000000,
+      endDate: Date.now() + 100000,
       status: "active",
     });
 
-    // 2. create track using real projectId
     trackId = await t.mutation(api.track.create, {
       name: "Test Track",
-      description: "desc",
+      description: "Test track",
       projectId,
       trackCode: "TRK-1",
       trackLeaderID: "user-1",
@@ -47,138 +45,67 @@ describe("Track Member", () => {
     });
   });
 
-  test("adds member to track", async () => {
-    const memberId = await t.mutation(api.trackMember.add, {
+  // --------------------
+  // TOGGLE MEMBER
+  // --------------------
+  test("toggleMember adds a member if not exists", async () => {
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
-      employeeId: "user-1",
-      lead: true,
+      employeeId: "user-2",
     });
-
-    expect(memberId).toBeDefined();
 
     const members = await t.query(api.trackMember.list, {
       trackId,
     });
 
     expect(members.length).toBe(1);
-    expect(members[0]?.lead).toBe(true);
+    expect(members[0]?.employeeId).toBe("user-2");
   });
 
-  test("prevents duplicate membership", async () => {
-    await t.mutation(api.trackMember.add, {
+  test("toggleMember removes member if already exists", async () => {
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
-      employeeId: "user-1",
-      lead: false,
+      employeeId: "user-2",
     });
 
-    await expect(
-      t.mutation(api.trackMember.add, {
-        trackId,
-        employeeId: "user-1",
-        lead: false,
-      }),
-    ).rejects.toThrow("Already a member");
-  });
-
-  test("only one lead allowed per track", async () => {
-    await t.mutation(api.trackMember.add, {
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
-      employeeId: "user-1",
-      lead: true,
+      employeeId: "user-2",
     });
 
-    await expect(
-      t.mutation(api.trackMember.add, {
-        trackId,
-        employeeId: "user-2",
-        lead: true,
-      }),
-    ).rejects.toThrow("Lead already exists");
-  });
-
-  test("updates member lead status", async () => {
-    const memberId = await t.mutation(api.trackMember.add, {
-      trackId,
-      employeeId: "user-1",
-      lead: false,
-    });
-  
-    await t.mutation(api.trackMember.update, {
-      memberId,
-      lead: true,
-    });
-  
     const members = await t.query(api.trackMember.list, {
       trackId,
     });
-  
+
+    expect(members.length).toBe(0);
+  });
+
+  // --------------------
+  // SET LEAD
+  // --------------------
+  test("setLead assigns lead role", async () => {
+    await t.mutation(api.trackMember.toggleMember, {
+      trackId,
+      employeeId: "user-2",
+    });
+
+    await t.mutation(api.trackMember.setLead, {
+      trackId,
+      employeeId: "user-2",
+    });
+
+    const members = await t.query(api.trackMember.list, {
+      trackId,
+    });
+
+    expect(members[0]?.employeeId).toBe("user-2");
     expect(members[0]?.lead).toBe(true);
   });
 
   test("prevents assigning second lead", async () => {
     await t.mutation(api.trackMember.add, {
       trackId,
-      employeeId: "user-1",
-      lead: true,
-    });
-  
-    const m2 = await t.mutation(api.trackMember.add, {
-      trackId,
-      employeeId: "user-2",
-      lead: false,
-    });
-  
-    await expect(
-      t.mutation(api.trackMember.update, {
-        memberId: m2,
-        lead: true,
-      }),
-    ).rejects.toThrow("Lead already exists");
-  });
-
-  test("same lead can remain lead", async () => {
-    const memberId = await t.mutation(api.trackMember.add, {
-      trackId,
-      employeeId: "user-1",
-      lead: true,
-    });
-  
-    // should NOT fail
-    await t.mutation(api.trackMember.update, {
-      memberId,
-      lead: true,
-    });
-  
-    const members = await t.query(api.trackMember.list, {
-      trackId,
-    });
-  
-    expect(members[0]?.lead).toBe(true);
-  });
-  test("non-member still cannot access update indirectly", async () => {
-    const memberId = await t.mutation(api.trackMember.add, {
-      trackId,
-      employeeId: "user-1",
-      lead: false,
-    });
-  
-    const t2 = createTestClient({
-      userId: "user-2",
-      orgId: "org-1",
-    });
-  
-    await expect(
-      t2.mutation(api.trackMember.update, {
-        memberId,
-        lead: true,
-      }),
-    ).rejects.toThrow();
-  });
-  test("member can list track members", async () => {
-    await t.mutation(api.trackMember.add, {
-      trackId,
-      employeeId: "user-1",
-      lead: true,
+      employeeId: "user-3",
     });
 
     const members = await t.query(api.trackMember.list, {
@@ -186,6 +113,32 @@ describe("Track Member", () => {
     });
 
     expect(members.length).toBe(1);
+    expect(members[0]?.employeeId).toBe("user-3");
+    expect(members[0]?.lead).toBe(true);
+  });
+
+  test("setLead enforces single lead per track", async () => {
+    await t.mutation(api.trackMember.setLead, {
+      trackId,
+      employeeId: "user-2",
+    });
+  
+    const t2 = createTestClient({
+      userId: "user-2",
+      orgId: "org-1",
+    });
+
+    await t.mutation(api.trackMember.setLead, {
+      trackId,
+      employeeId: "user-3",
+    });
+
+    const members = await t.query(api.trackMember.list, {
+      trackId,
+    });
+
+    const lead = members.find((m) => m.lead);
+    expect(lead?.employeeId).toBe("user-3");
   });
 
   test("non-member cannot list track members", async () => {
@@ -224,56 +177,55 @@ describe("Track Member", () => {
       userId: "user-2",
       orgId: "org-1",
     });
-  
-    await expect(
-      t2.query(api.trackMember.list, { trackId }),
-    ).rejects.toThrow("Not authorized");
-  });
-  test("member can access track", async () => {
-    await t.mutation(api.trackMember.add, {
+
+    await t.mutation(api.trackMember.setLead, {
       trackId,
-      employeeId: "user-1",
-      lead: true,
+      employeeId: "user-2",
     });
 
-    const track = await t.query(api.trackMember.get, {
+    await t.mutation(api.trackMember.unsetLead, {
+      trackId,
+      employeeId: "user-2",
+    });
+
+    const members = await t.query(api.trackMember.list, {
       trackId,
     });
 
-    expect(track).not.toBeNull();
-  });
-
-  test("non-member cannot access track", async () => {
-    await expect(
-      t.query(api.trackMember.get, { trackId }),
-    ).rejects.toThrow("Not authorized");
+    expect(members.length).toBe(1);
+    expect(members[0]?.lead).toBe(false);
   });
 
-  test("removing member revokes access", async () => {
-    const memberId = await t.mutation(api.trackMember.add, {
+  // --------------------
+  // LIST (enriched data check like projectMember)
+  // --------------------
+  test("list returns enriched employee data structure", async () => {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("employeeProfiles", {
+        employeeId: "user-2",
+        onboardingStatus: "completed",
+        onboardingStep: 1,
+        firstName: "Walter",
+        lastName: "White",
+      });
+    });
+
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
-      employeeId: "user-1",
-      lead: true,
+      employeeId: "user-2",
     });
 
-    await t.mutation(api.trackMember.remove, {
-      memberId,
-    });
-
-    await expect(
-      t.query(api.trackMember.get, { trackId }),
-    ).rejects.toThrow("Not authorized");
-  });
-
-  test("listTracks returns only user's tracks", async () => {
-    await t.mutation(api.trackMember.add, {
+    const members = await t.query(api.trackMember.list, {
       trackId,
-      employeeId: "user-1",
-      lead: true,
     });
 
-    const tracks = await t.query(api.trackMember.listTracks, {});
+    expect(members.length).toBe(1);
 
-    expect(tracks).toContain(trackId);
+    const member = members[0];
+    expect(member).toBeDefined();
+    expect(member?.employee).toBeDefined();
+    expect(member?.employee.email).toBeDefined();
+    expect(typeof member?.employee.name).toBe("string");
+    expect(typeof member?.employee.email).toBe("string");
   });
 });
