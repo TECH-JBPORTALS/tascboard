@@ -5,6 +5,13 @@ import { api } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
+import { registerProsemirrorSyncComponent } from "./registerComponents.test";
+
+function createTestClient(identity: { userId: string; orgId: string }) {
+  const base = convexTest(schema, modules);
+  registerProsemirrorSyncComponent(base);
+  return base.withIdentity(identity);
+}
 
 describe("Sprint", () => {
   let t: TestConvexForDataModel<DataModel>;
@@ -13,7 +20,7 @@ describe("Sprint", () => {
   let taskId: Id<"tasks">;
 
   beforeEach(async () => {
-    t = convexTest(schema, modules).withIdentity({
+    t = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });

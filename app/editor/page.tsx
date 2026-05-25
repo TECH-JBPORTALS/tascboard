@@ -1,9 +1,9 @@
-import { PlateEditor } from '@/components/editor/plate-editor';
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 
 export default function Page() {
   return (
     <div className="h-screen w-full">
-      <PlateEditor />
+      <RichTextEditor />
     </div>
   );
 }

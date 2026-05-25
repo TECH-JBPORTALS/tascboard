@@ -47,7 +47,7 @@ import {
 } from "../ui/collapsible";
 import { TitleInput } from "../TitleInput";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { PlateEditor } from "../editor/plate-editor";
+import { RichTextEditor } from "../editor/RichTextEditor";
 
 type ProjectTracksSectionProps = {
   projectId: Id<"projects">;
@@ -232,7 +232,7 @@ function TrackCreateComposer({
           />
         </CardHeader>
         <CardContent>
-          <PlateEditor
+          <RichTextEditor
             value={newDescription}
             onChange={(value) => setNewDescription(value)}
             placeholder="Add a description..."

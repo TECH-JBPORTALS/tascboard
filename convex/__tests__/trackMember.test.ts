@@ -3,17 +3,24 @@ import { convexTest, TestConvexForDataModel } from "convex-test";
 
 import { api } from "../_generated/api";
 import schema from "../schema";
-import { DataModel } from "../_generated/dataModel";
+import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
+import { registerProsemirrorSyncComponent } from "./registerComponents.test";
+
+function createTestClient(identity: { userId: string; orgId: string }) {
+  const base = convexTest(schema, modules);
+  registerProsemirrorSyncComponent(base);
+  return base.withIdentity(identity);
+}
 
 describe("Track Member", () => {
   let t: TestConvexForDataModel<DataModel>;
 
-  let projectId: any;
-  let trackId: any;
+  let projectId: Id<"projects">;
+  let trackId: Id<"tracks">;
 
   beforeEach(async () => {
-    t = convexTest(schema, modules).withIdentity({
+    t = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });
@@ -109,7 +116,7 @@ describe("Track Member", () => {
   });
 
   test("prevents assigning second lead", async () => {
-    const m1 = await t.mutation(api.trackMember.add, {
+    await t.mutation(api.trackMember.add, {
       trackId,
       employeeId: "user-1",
       lead: true,
@@ -155,7 +162,7 @@ describe("Track Member", () => {
       lead: false,
     });
   
-    const t2 = convexTest(schema, modules).withIdentity({
+    const t2 = createTestClient({
       userId: "user-2",
       orgId: "org-1",
     });
@@ -183,7 +190,7 @@ describe("Track Member", () => {
 
   test("non-member cannot list track members", async () => {
  
-    const t1 = convexTest(schema, modules).withIdentity({
+    const t1 = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });
@@ -213,7 +220,7 @@ describe("Track Member", () => {
       lead: true,
     });
   
-    const t2 = convexTest(schema, modules).withIdentity({
+    const t2 = createTestClient({
       userId: "user-2",
       orgId: "org-1",
     });

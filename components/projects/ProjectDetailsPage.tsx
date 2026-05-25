@@ -88,7 +88,6 @@ export function ProjectDetailsPage() {
               />
               <ProjectDescription
                 projectId={projectId}
-                initialDescription={project.description}
               />
               <ProjectTracksSection projectId={projectId} orgSlug={orgSlug} />
             </div>

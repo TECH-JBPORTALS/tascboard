@@ -2,23 +2,27 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireIdentity } from "./lib/auth";
 
-function isEmptyPlateBody(body: unknown): boolean {
+function collectText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(collectText).join("\n");
+  if (!value || typeof value !== "object") return "";
+
+  const node = value as {
+    text?: unknown;
+    children?: unknown;
+    content?: unknown;
+  };
+
+  const ownText = typeof node.text === "string" ? node.text : "";
+  const fromChildren = collectText(node.children);
+  const fromContent = collectText(node.content);
+  return [ownText, fromChildren, fromContent].filter(Boolean).join("\n");
+}
+
+function isEmptyEditorBody(body: unknown): boolean {
   if (body === null || body === undefined) return true;
   if (typeof body === "string") return body.trim().length === 0;
-  if (Array.isArray(body)) {
-    if (body.length === 0) return true;
-    return body.every(
-      (node) =>
-        typeof node === "object" &&
-        node !== null &&
-        "children" in node &&
-        Array.isArray((node as { children: unknown[] }).children) &&
-        (node as { children: { text?: string }[] }).children.every(
-          (child) => !child.text || child.text.trim() === "",
-        ),
-    );
-  }
-  return false;
+  return collectText(body).trim().length === 0;
 }
 
 export const listByTask = query({
@@ -44,7 +48,7 @@ export const create = mutation({
   handler: async (ctx, { taskId, parentCommentId, deviceName, body }) => {
     await requireIdentity(ctx);
 
-    if (isEmptyPlateBody(body)) {
+    if (isEmptyEditorBody(body)) {
       throw new Error("Comment body cannot be empty");
     }
     if (parentCommentId) {
@@ -80,7 +84,7 @@ export const edit = mutation({
     if (comment.deviceName !== deviceName) {
       throw new Error("You can only edit your own comments");
     }
-    if (isEmptyPlateBody(body)) {
+    if (isEmptyEditorBody(body)) {
       throw new Error("Comment body cannot be empty");
     }
     if (JSON.stringify(body) === JSON.stringify(comment.body)) return;

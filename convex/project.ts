@@ -10,6 +10,8 @@ import {
 } from "./lib/projectActivityLog";
 import { projectColorValidator } from "./lib/projectAppearance";
 import { getProjectMembers } from "./lib/memberHelper";
+import { components, internal } from "./_generated/api";
+import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from "./syncEditor";
 
 const projectStatusValidator = v.union(
   v.literal("active"),
@@ -32,8 +34,6 @@ const projectReturn = v.object({
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
 });
-
-type ProjectDoc = Doc<"projects"> & { docContent?: unknown };
 
 export const create = mutation({
   args: {
@@ -67,6 +67,11 @@ export const create = mutation({
       status: args.status,
       createdAt: now,
       updatedAt: undefined,
+    });
+
+    await ctx.runMutation(internal.syncEditor.createEditor, {
+      id: getProjectEditorId(insertedProjectId),
+      content: EMPTY_PROSEMIRROR_DOC,
     });
 
     await logProjectActivity(ctx, {
@@ -144,10 +149,15 @@ export const get = query({
       return null;
     }
 
+    const content = await ctx.runQuery(
+      components.prosemirrorSync.lib.getSnapshot,
+      { id: getProjectEditorId(args.projectId) },
+    );
+
     const { members, manager } = await getProjectMembers(ctx, project._id);
 
     return {
-      ...project,
+      ...{ ...project, description: content },
       members,
       manager,
     };
@@ -371,6 +381,20 @@ export const remove = mutation({
 
     await Promise.all(labels.map((label) => ctx.db.delete(label._id)));
 
+    const editorId = getProjectEditorId(args.projectId);
+    const latestVersion = await ctx.runQuery(
+      components.prosemirrorSync.lib.latestVersion,
+      {
+        id: editorId,
+      },
+    );
+
+    if (latestVersion !== null) {
+      await ctx.runMutation(components.prosemirrorSync.lib.deleteDocument, {
+        id: editorId,
+      });
+    }
+
     await ctx.db.delete(args.projectId);
 
     return {
@@ -426,7 +450,11 @@ export const seedStarterProjects = internalMutation({
     ];
 
     for (const row of samples) {
-      await ctx.db.insert("projects", row);
+      const insertedProjectId = await ctx.db.insert("projects", row);
+      await ctx.runMutation(internal.syncEditor.createEditor, {
+        id: getProjectEditorId(insertedProjectId),
+        content: EMPTY_PROSEMIRROR_DOC,
+      });
     }
 
     return null;

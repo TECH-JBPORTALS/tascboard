@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { convexTest, TestConvexForDataModel } from "convex-test";
 
-import { api, components } from "../_generated/api";
+import { api } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 
 import { modules } from "./_modules.test";
+import { registerProsemirrorSyncComponent } from "./registerComponents.test";
 
 import { vi } from "bun:test";
 
@@ -15,12 +16,18 @@ vi.mock("../lib/getUser", () => ({
   }),
 }));
 
+function createTestClient(identity: { userId: string; orgId: string }) {
+  const base = convexTest(schema, modules);
+  registerProsemirrorSyncComponent(base);
+  return base.withIdentity(identity);
+}
+
 describe("ProjectMember", () => {
   let t: TestConvexForDataModel<DataModel>;
   let projectId: Id<"projects">;
 
   beforeEach(async () => {
-    t = convexTest(schema, modules).withIdentity({
+    t = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });

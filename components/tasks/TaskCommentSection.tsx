@@ -13,7 +13,11 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useActor } from "@/hooks/use-actor";
-import { isPlateContentEmpty, PLATE_DEFAULT_VALUE } from "@/lib/plate-content";
+import {
+  EDITOR_DEFAULT_VALUE,
+  isEditorContentEmpty,
+  resolveEditorString,
+} from "@/lib/editor-content";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { PlateEditor } from "../editor/plate-editor";
+import { RichTextEditor } from "../editor/RichTextEditor";
 
 type TaskCommentsSectionProps = {
   taskId: Id<"tasks">;
@@ -119,14 +123,14 @@ function CommentItem({
 }) {
   const editComment = useMutation(api.comment.edit);
   const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState(comment.body);
+  const [draft, setDraft] = React.useState(() => resolveEditorString(comment.body));
 
   const authorLabel =
     comment.deviceName === deviceName ? displayName : comment.deviceName;
 
-  async function handleSave(value: unknown) {
+  async function handleSave(value: string) {
     setDraft(value);
-    if (isPlateContentEmpty(value)) return;
+    if (isEditorContentEmpty(value)) return;
     await editComment({
       commentId: comment._id,
       body: value,
@@ -164,10 +168,11 @@ function CommentItem({
 
       {editing ? (
         <div className="space-y-2">
-          <PlateEditor
-            value={typeof draft === "string" ? draft : ""}
+          <RichTextEditor
+            value={draft}
             onSave={setDraft}
             onChange={setDraft}
+            className="pb-0"
           />
           <div className="flex gap-2">
             <Button
@@ -188,7 +193,16 @@ function CommentItem({
           </div>
         </div>
       ) : (
-        <div></div>
+        <RichTextEditor
+          value={
+            typeof comment.body === "string"
+              ? comment.body
+              : resolveEditorString(comment.body)
+          }
+          disabled
+          className="pointer-events-none border-transparent bg-transparent px-0 py-0 pb-0"
+          editorClassName="text-sm"
+        />
       )}
     </div>
   );
@@ -205,13 +219,13 @@ function ReplyComposer({
 }) {
   const createComment = useMutation(api.comment.create);
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState<unknown>(PLATE_DEFAULT_VALUE);
+  const [value, setValue] = React.useState(EDITOR_DEFAULT_VALUE);
   const [submitting, setSubmitting] = React.useState(false);
 
-  async function handleSubmit(nextValue: unknown = value) {
+  async function handleSubmit(nextValue: string = value) {
     if (submitting) return;
     setValue(nextValue);
-    if (isPlateContentEmpty(nextValue)) return;
+    if (isEditorContentEmpty(nextValue)) return;
     setSubmitting(true);
     try {
       await createComment({
@@ -220,7 +234,7 @@ function ReplyComposer({
         deviceName,
         body: nextValue,
       });
-      setValue(PLATE_DEFAULT_VALUE);
+      setValue(EDITOR_DEFAULT_VALUE);
       setOpen(false);
     } finally {
       setSubmitting(false);
@@ -241,8 +255,8 @@ function ReplyComposer({
 
   return (
     <div className="ml-8 space-y-2 border-l-2 border-border/60 pl-4">
-      <PlateEditor
-        value={typeof value === "string" ? value : ""}
+      <RichTextEditor
+        value={value}
         onChange={setValue}
         placeholder="Leave a reply…"
         onSave={(markdown) => void handleSubmit(markdown)}
@@ -273,15 +287,15 @@ export function TaskCommentsSection({ taskId }: TaskCommentsSectionProps) {
   const comments = useQuery(api.comment.listByTask, { taskId });
   const createComment = useMutation(api.comment.create);
   const { deviceName, displayName } = useActor();
-  const [draft, setDraft] = React.useState<unknown>(PLATE_DEFAULT_VALUE);
+  const [draft, setDraft] = React.useState(EDITOR_DEFAULT_VALUE);
   const [submitting, setSubmitting] = React.useState(false);
 
   const threads = comments ? buildThreads(comments) : [];
 
-  async function handleSubmit(nextDraft: unknown = draft) {
+  async function handleSubmit(nextDraft: string = draft) {
     if (submitting) return;
     setDraft(nextDraft);
-    if (isPlateContentEmpty(nextDraft)) return;
+    if (isEditorContentEmpty(nextDraft)) return;
     setSubmitting(true);
     try {
       await createComment({
@@ -290,7 +304,7 @@ export function TaskCommentsSection({ taskId }: TaskCommentsSectionProps) {
         deviceName,
         body: nextDraft,
       });
-      setDraft(PLATE_DEFAULT_VALUE);
+      setDraft(EDITOR_DEFAULT_VALUE);
     } finally {
       setSubmitting(false);
     }
@@ -324,8 +338,8 @@ export function TaskCommentsSection({ taskId }: TaskCommentsSectionProps) {
       ))}
 
       <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-        <PlateEditor
-          value={typeof draft === "string" ? draft : ""}
+        <RichTextEditor
+          value={draft}
           onChange={setDraft}
           placeholder="Leave a comment…"
           onSave={(markdown) => void handleSubmit(markdown)}

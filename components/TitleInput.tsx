@@ -1,10 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { normalizeStaticValue, type Value } from "platejs";
-import { Plate, usePlateEditor } from "platejs/react";
-import { Editor, EditorContainer } from "@/components/ui/editor";
 import * as React from "react";
+import { GlobalTiptapEditor } from "./editor/GlobalTiptapEditor";
 
 type TaskTitleInputProps = {
   onChange?: (value: string) => void;
@@ -14,7 +12,8 @@ type TaskTitleInputProps = {
   className?: string;
   disabled?: boolean;
   blurOnSave?: boolean;
-} & React.ComponentProps<typeof Editor>;
+  "aria-label"?: string;
+};
 
 export function TitleInput({
   value,
@@ -24,58 +23,50 @@ export function TitleInput({
   className,
   disabled,
   blurOnSave = true,
-  ...editorProps
+  "aria-label": ariaLabel,
 }: TaskTitleInputProps) {
-  const latestTextRef = React.useRef(value);
-  const toPlateValue = React.useCallback((text: string): Value => {
-    return [
-      {
-        type: "p",
-        children: [{ text }],
-      },
-    ];
-  }, []);
-
-  const editor = usePlateEditor({
-    value: normalizeStaticValue(toPlateValue(value ?? "")),
-  });
+  const latestTextRef = React.useRef(value ?? "");
+  const skipNextBlurSaveRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (latestTextRef.current === value) return;
-    latestTextRef.current = value;
-    editor.tf.setValue(normalizeStaticValue(toPlateValue(value ?? "")));
-  }, [editor, toPlateValue, value]);
+    latestTextRef.current = value ?? "";
+  }, [value]);
 
   return (
-    <Plate
-      editor={editor}
-      onTextChange={({ text }) => {
+    <GlobalTiptapEditor
+      mode="title"
+      value={value ?? ""}
+      placeholder={placeholder}
+      disabled={disabled}
+      singleLine
+      blurOnEnter
+      editorAriaLabel={ariaLabel ?? placeholder}
+      className="h-fit overflow-y-hidden"
+      editorClassName={cn(
+        "h-fit pb-5 pt-0 text-xl leading-tight sm:text-2xl",
+        className,
+      )}
+      onChange={(nextValue) => {
+        const text = typeof nextValue === "string" ? nextValue : "";
         latestTextRef.current = text;
         onChange?.(text);
       }}
-    >
-      <EditorContainer className="h-fit overflow-y-hidden">
-        <Editor
-          {...editorProps}
-          variant="fullWidth"
-          className={cn(
-            "pb-5 pt-0 text-xl h-fit leading-tight font-semibold sm:text-2xl",
-            className,
-          )}
-          placeholder={placeholder}
-          disabled={disabled}
-          onBlur={() =>
-            blurOnSave ? onSave?.(latestTextRef.current ?? "") : undefined
-          }
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onSave?.(latestTextRef.current ?? "");
-              event.currentTarget.blur();
-            }
-          }}
-        />
-      </EditorContainer>
-    </Plate>
+      onSave={(nextValue) => {
+        if (!blurOnSave) return;
+        if (skipNextBlurSaveRef.current) {
+          skipNextBlurSaveRef.current = false;
+          return;
+        }
+        const text = typeof nextValue === "string" ? nextValue : "";
+        latestTextRef.current = text;
+        onSave?.(text);
+      }}
+      onEnter={(nextValue) => {
+        skipNextBlurSaveRef.current = true;
+        const text = typeof nextValue === "string" ? nextValue : "";
+        latestTextRef.current = text;
+        onSave?.(text);
+      }}
+    />
   );
 }

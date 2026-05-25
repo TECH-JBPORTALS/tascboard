@@ -42,6 +42,7 @@ import type * as projectMember from "../projectMember.js";
 import type * as scope from "../scope.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
+import type * as syncEditor from "../syncEditor.js";
 import type * as task from "../task.js";
 import type * as track from "../track.js";
 import type * as trackMember from "../trackMember.js";
@@ -87,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   scope: typeof scope;
   sprint: typeof sprint;
   subtask: typeof subtask;
+  syncEditor: typeof syncEditor;
   task: typeof task;
   track: typeof track;
   trackMember: typeof trackMember;
@@ -121,4 +123,5 @@ export declare const internal: FilterApi<
 export declare const components: {
   betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
   resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;
+  prosemirrorSync: import("@convex-dev/prosemirror-sync/_generated/component.js").ComponentApi<"prosemirrorSync">;
 };
