@@ -94,7 +94,10 @@ export const topPerformers = query({
 
       for (const row of rows) {
         const key = row.employeeId as string;
-        pointsByEmployee.set(key, (pointsByEmployee.get(key) ?? 0) + row.points);
+        pointsByEmployee.set(
+          key,
+          (pointsByEmployee.get(key) ?? 0) + row.points,
+        );
       }
     }
 
@@ -104,10 +107,10 @@ export const topPerformers = query({
         if (task.status !== "done") {
           continue;
         }
-        completedByAssignee.set(
-          task.assignedTo,
-          (completedByAssignee.get(task.assignedTo) ?? 0) + 1,
-        );
+        // completedByAssignee.set(
+        //   task.assignedTo,
+        //   (completedByAssignee.get(task.assignedTo) ?? 0) + 1,
+        // );
       }
 
       return [...completedByAssignee.entries()]
@@ -131,10 +134,13 @@ export const topPerformers = query({
     for (const [employeeId, points] of ranked.slice(0, limit)) {
       let displayName = employeeId;
 
-      const employee = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-        model: "employee",
-        where: [{ field: "_id", operator: "eq", value: employeeId }],
-      });
+      const employee = await ctx.runQuery(
+        components.betterAuth.adapter.findOne,
+        {
+          model: "employee",
+          where: [{ field: "_id", operator: "eq", value: employeeId }],
+        },
+      );
 
       if (employee && typeof employee === "object" && "userId" in employee) {
         const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {

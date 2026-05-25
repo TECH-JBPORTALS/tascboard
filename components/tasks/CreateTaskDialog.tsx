@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { format, startOfDay } from "date-fns";
 import { motion } from "motion/react";
 import {
@@ -12,8 +12,6 @@ import {
 } from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { authClient } from "@/lib/auth-client";
-import { nextTaskCode } from "@/lib/track-utils";
 import {
   taskPriorityConfig,
   taskStatusConfig,
@@ -77,8 +75,6 @@ export function CreateTaskDialog({
 }: CreateTaskDialogProps) {
   const createTask = useMutation(api.task.create);
   const addToSprint = useMutation(api.sprint.addTask);
-  const existingTasks = useQuery(api.task.listByTrack, { trackId: track._id });
-  const { data: session } = authClient.useSession();
 
   const [expanded, setExpanded] = React.useState(false);
   const [title, setTitle] = React.useState("");
@@ -91,7 +87,6 @@ export function CreateTaskDialog({
   const [error, setError] = React.useState<string | null>(null);
 
   const titleRef = React.useRef<HTMLTextAreaElement>(null);
-  const userId = session?.user?.id ?? "unassigned";
   const startDate = startOfDay(new Date()).getTime();
 
   function resetForm() {
@@ -129,22 +124,17 @@ export function CreateTaskDialog({
     setError(null);
 
     try {
-      const codes = existingTasks?.map((t) => t.taskCode) ?? [];
       const end = dueDateSet ? startOfDay(dueDate).getTime() : startDate;
 
       const taskId = await createTask({
         trackId: track._id,
         projectId,
-        taskCode: nextTaskCode(track.trackCode, codes),
         title: trimmed,
         description: description.trim() || undefined,
         status,
-        assignedTo: userId,
-        assignedBy: userId,
         priority,
         complexity: "medium",
-        startDate,
-        endDate: end,
+        dueDate: end,
       });
 
       if (sprintId) {
@@ -161,7 +151,6 @@ export function CreateTaskDialog({
 
   const statusLabel = taskStatusConfig[status].label;
   const priorityLabel = taskPriorityConfig[priority].label;
-  const endDate = dueDateSet ? startOfDay(dueDate).getTime() : startDate;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -290,8 +279,7 @@ export function CreateTaskDialog({
               />
 
               <TaskDueDatePicker
-                endDate={endDate}
-                startDate={startDate}
+                dueDate={dueDateSet ? startOfDay(dueDate).getTime() : null}
                 hasDueDate={dueDateSet}
                 align="start"
                 onSelect={(date) => {

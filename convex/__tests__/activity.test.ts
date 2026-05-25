@@ -52,15 +52,11 @@ describe("Task activity", () => {
     taskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "TASK-001",
       title: "Initial Task",
       status: "todo",
-      assignedTo: "emp-1",
-      assignedBy: "manager-1",
       priority: "medium",
       complexity: "easy",
-      startDate: 1,
-      endDate: 2,
+      dueDate: 1,
     });
   });
 

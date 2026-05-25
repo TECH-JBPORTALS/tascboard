@@ -58,16 +58,12 @@ describe("Task", () => {
     taskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "TASK-001",
       title: "Initial Task",
       description: "Task description",
       status: "todo",
-      assignedTo: "emp-1",
-      assignedBy: "manager-1",
       priority: "medium",
       complexity: "easy",
-      startDate: 1700000000000,
-      endDate: 1800000000000,
+      dueDate: 1700000000000,
     });
 
     await t.mutation(api.trackMember.toggleMember, {
@@ -281,16 +277,12 @@ describe("Task", () => {
     const newTaskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "TASK-002",
       title: "   Trimmed Task   ",
       description: "Test",
       status: "todo",
-      assignedTo: "emp-2",
-      assignedBy: "manager-1",
       priority: "low",
       complexity: "easy",
-      startDate: 1,
-      endDate: 2,
+      dueDate: 1,
     });
 
     const task = await t.query(api.task.get, {

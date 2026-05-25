@@ -44,16 +44,12 @@ describe("TaskMember", () => {
     taskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "TASK-1",
       title: "Test Task",
       description: "Test task description",
       status: "todo",
-      assignedTo: "user-2",
-      assignedBy: "user-1",
       priority: "medium",
       complexity: "easy",
-      startDate: Date.now(),
-      endDate: Date.now() + 100000,
+      dueDate: Date.now(),
     });
   });
 
