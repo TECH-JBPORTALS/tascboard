@@ -44,6 +44,7 @@ import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as syncEditor from "../syncEditor.js";
 import type * as task from "../task.js";
+import type * as taskMember from "../taskMember.js";
 import type * as track from "../track.js";
 import type * as trackMember from "../trackMember.js";
 
@@ -90,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   subtask: typeof subtask;
   syncEditor: typeof syncEditor;
   task: typeof task;
+  taskMember: typeof taskMember;
   track: typeof track;
   trackMember: typeof trackMember;
 }>;
