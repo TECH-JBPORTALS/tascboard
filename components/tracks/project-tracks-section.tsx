@@ -184,8 +184,8 @@ function TrackCreateComposer({
     resetForm();
   }
 
-  async function handleCreateTrack(title: string) {
-    const trimmedName = title.trim();
+  async function handleCreateTrack() {
+    const trimmedName = newName.trim();
     if (!trimmedName) {
       setCreateError("Track title is required");
       return;
@@ -228,7 +228,7 @@ function TrackCreateComposer({
             onChange={(value) => setNewName(value as string)}
             placeholder="Track title"
             className="text-base! pb-0!"
-            onSave={(title) => void handleCreateTrack(title)}
+            onSave={() => void handleCreateTrack()}
           />
         </CardHeader>
         <CardContent>
@@ -261,7 +261,12 @@ function TrackCreateComposer({
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={isCreating}>
+            <Button
+              type="submit"
+              size="sm"
+              onClick={() => handleCreateTrack()}
+              disabled={isCreating}
+            >
               {isCreating ? "Creating…" : "Create track"}
             </Button>
           </div>
@@ -371,7 +376,7 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
         </div>
       </div>
       <CollapsibleContent className={"px-6 py-2.5"}>
-        <TitleInput
+        <RichTextEditor
           value={descriptionDraft}
           onSave={(save) => void saveTextFields(titleDraft, save)}
           className="text-base! pb-0! pt-0! font-normal!"
