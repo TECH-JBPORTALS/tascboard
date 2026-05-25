@@ -148,7 +148,11 @@ export function GlobalTiptapEditor({
         code: isTitle ? false : undefined,
         codeBlock: isTitle ? false : undefined,
         hardBreak: isTitle ? false : undefined,
-        heading: isTitle ? false : { levels: [1, 2, 3] },
+        heading: isTitle
+          ? false
+          : {
+              levels: [1, 2, 3],
+            },
         horizontalRule: isTitle ? false : undefined,
         italic: isTitle ? false : undefined,
         orderedList: isTitle ? false : undefined,
@@ -196,7 +200,17 @@ export function GlobalTiptapEditor({
           "focus-visible:outline-none min-h-0",
           mode === "title" &&
             "font-semibold text-xl sm:text-2xl leading-tight tracking-tight",
-          mode !== "title" && "text-sm leading-relaxed",
+          mode !== "title" &&
+            [
+              "text-sm leading-relaxed",
+              "[&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:leading-tight [&_h1]:my-3",
+              "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:my-2.5",
+              "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:leading-tight [&_h3]:my-2",
+              "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2",
+              "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2",
+              "[&_li]:my-1",
+              "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-2",
+            ].join(" "),
           editorClassName,
         ),
         "aria-label": editorAriaLabel ?? placeholder,
@@ -246,7 +260,7 @@ export function GlobalTiptapEditor({
       {canShowBubble ? (
         <BubbleMenu
           editor={editor}
-          options={{ placement: "top", strategy: "absolute" }}
+          options={{ placement: "top", strategy: "absolute", inline: true }}
           shouldShow={({ editor: bubbleEditor }) =>
             bubbleEditor.isFocused && !bubbleEditor.state.selection.empty
           }
@@ -255,7 +269,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("bold") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleBold().run()}
             aria-label="Bold"
@@ -265,7 +279,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("italic") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleItalic().run()}
             aria-label="Italic"
@@ -275,7 +289,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("underline") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             aria-label="Underline"
@@ -285,7 +299,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("strike") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleStrike().run()}
             aria-label="Strikethrough"
@@ -295,7 +309,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("code") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleCode().run()}
             aria-label="Inline code"
@@ -306,7 +320,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("paragraph") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().setParagraph().run()}
             aria-label="Paragraph"
@@ -318,9 +332,11 @@ export function GlobalTiptapEditor({
             variant={
               editor.isActive("heading", { level: 1 }) ? "secondary" : "ghost"
             }
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 1 }).run()
+            }
             aria-label="Heading 1"
           >
             <RiH1 />
@@ -330,9 +346,11 @@ export function GlobalTiptapEditor({
             variant={
               editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"
             }
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            }
             aria-label="Heading 2"
           >
             <RiH2 />
@@ -342,9 +360,11 @@ export function GlobalTiptapEditor({
             variant={
               editor.isActive("heading", { level: 3 }) ? "secondary" : "ghost"
             }
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 3 }).run()
+            }
             aria-label="Heading 3"
           >
             <RiH3 />
@@ -352,7 +372,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("bulletList") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             aria-label="Bullet list"
@@ -362,7 +382,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("orderedList") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             aria-label="Ordered list"
@@ -372,7 +392,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("blockquote") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             aria-label="Blockquote"
@@ -382,7 +402,7 @@ export function GlobalTiptapEditor({
           <Button
             type="button"
             variant={editor.isActive("codeBlock") ? "secondary" : "ghost"}
-            size="icon-xs"
+            size="icon-sm"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             aria-label="Code block"
