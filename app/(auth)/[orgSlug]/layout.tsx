@@ -6,7 +6,9 @@ import { TodoPanel } from "@/components/employee-todos/todo-panel";
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
   return (
     <OrgSlugGuard>
-      <SidebarProvider>
+      <SidebarProvider
+        style={{ "--header-height": "56px" } as React.CSSProperties}
+      >
         <AppSidebar />
         <SidebarInset>
           <main className="flex flex-1 flex-col">{children}</main>

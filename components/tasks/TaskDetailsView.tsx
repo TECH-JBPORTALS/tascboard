@@ -8,7 +8,7 @@ import { TaskActivityFeed } from "@/components/tasks/TaskActivityFeed";
 import { TaskDetailSidebar } from "@/components/tasks/TaskDetailSidebar";
 import { TaskPageHeader } from "@/components/tasks/TaskPageHeader";
 import { TaskSubtasksSection } from "@/components/tasks/TaskSubtasksSection";
-import { PlateEditor } from "../editor/plate-editor";
+import { RichTextEditor } from "../editor/RichTextEditor";
 import { TitleInput } from "../TitleInput";
 
 type TaskDetail = Doc<"tasks"> & {
@@ -79,7 +79,7 @@ export function TaskDetailView({ orgSlug, task }: TaskDetailViewProps) {
                 <p className="text-xs font-mono font-semibold text-muted-foreground">
                   Description
                 </p>
-                <PlateEditor
+                <RichTextEditor
                   value={description}
                   onChange={setDescription}
                   onSave={(markdown) => void saveDescription(markdown)}

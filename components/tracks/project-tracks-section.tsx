@@ -7,18 +7,15 @@ import {
   RiArchiveLine,
   RiCheckboxCircleLine,
   RiRouteLine,
-  RiTimeLine,
   RiTriangleFill,
   RiMoreFill,
+  RiPlayCircleLine,
+  RemixiconComponentType,
 } from "@remixicon/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { authClient } from "@/lib/auth-client";
-import {
-  nextTrackCode,
-  trackStatusLabels,
-  type TrackStatus,
-} from "@/lib/track-utils";
+import { nextTrackCode, type TrackStatus } from "@/lib/track-utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +27,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -38,7 +34,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +47,7 @@ import {
 } from "../ui/collapsible";
 import { TitleInput } from "../TitleInput";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { PlateEditor } from "../editor/plate-editor";
+import { RichTextEditor } from "../editor/RichTextEditor";
 
 type ProjectTracksSectionProps = {
   projectId: Id<"projects">;
@@ -81,54 +76,29 @@ type TrackStatusSelectProps = {
   triggerClassName?: string;
 };
 
-const TRACK_STATUS_META: Record<
-  TrackStatus,
-  {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    iconClassName: string;
-  }
-> = {
-  active: {
-    icon: RiTimeLine,
-    label: "Active",
-    iconClassName: "text-sky-600 dark:text-sky-400",
-  },
-  completed: {
-    icon: RiCheckboxCircleLine,
-    label: "Completed",
-    iconClassName: "text-emerald-600 dark:text-emerald-400",
-  },
-  archived: {
-    icon: RiArchiveLine,
-    label: "Archived",
-    iconClassName: "text-amber-600 dark:text-amber-400",
-  },
-};
-
 const TRACK_STATUS_OPTIONS: Array<{
   value: TrackStatus;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: RemixiconComponentType;
   label: string;
-  iconClassName: string;
+  iconColor: string;
 }> = [
   {
     value: "active",
-    icon: RiTimeLine,
+    icon: RiPlayCircleLine,
     label: "Active",
-    iconClassName: TRACK_STATUS_META.active.iconClassName,
+    iconColor: "var(--color-primary)",
   },
   {
     value: "completed",
     icon: RiCheckboxCircleLine,
     label: "Completed",
-    iconClassName: TRACK_STATUS_META.completed.iconClassName,
+    iconColor: "var(--color-green-600)",
   },
   {
     value: "archived",
     icon: RiArchiveLine,
     label: "Archived",
-    iconClassName: TRACK_STATUS_META.archived.iconClassName,
+    iconColor: "var(--color-amber-600)",
   },
 ];
 
@@ -139,8 +109,12 @@ function TrackStatusSelect({
   align = "end",
   triggerClassName,
 }: TrackStatusSelectProps) {
-  const statusMeta = TRACK_STATUS_META[value];
+  const statusMeta = TRACK_STATUS_OPTIONS.find(
+    (option) => option.value === value,
+  );
+  if (!statusMeta) return null;
   const StatusIcon = statusMeta.icon;
+  const StatusIconColor = statusMeta.iconColor;
 
   return (
     <Select
@@ -155,7 +129,7 @@ function TrackStatusSelect({
         className={`h-7 w-fit border-none text-xs! ml-auto ${triggerClassName ?? ""}`}
       >
         <span className="inline-flex items-center gap-1.5">
-          <StatusIcon className={`size-3.5 ${statusMeta.iconClassName}`} />
+          <StatusIcon color={StatusIconColor} className="size-3.5" />
           <span>{statusMeta.label}</span>
         </span>
       </SelectTrigger>
@@ -164,7 +138,7 @@ function TrackStatusSelect({
           {TRACK_STATUS_OPTIONS.map((status) => (
             <SelectItem key={status.value} value={status.value}>
               <span className="inline-flex items-center gap-2">
-                <status.icon className={`size-3.5 ${status.iconClassName}`} />
+                <status.icon color={status.iconColor} className="size-3.5" />
                 {status.label}
               </span>
             </SelectItem>
@@ -210,8 +184,8 @@ function TrackCreateComposer({
     resetForm();
   }
 
-  async function handleCreateTrack(title: string) {
-    const trimmedName = title.trim();
+  async function handleCreateTrack() {
+    const trimmedName = newName.trim();
     if (!trimmedName) {
       setCreateError("Track title is required");
       return;
@@ -240,7 +214,7 @@ function TrackCreateComposer({
 
   return (
     <div
-      className={`grid transition-all origin-top duration-200 ease-out ${
+      className={`grid transition-all origin-top px-1.5 duration-200 ease-out ${
         open ? "grid-rows-[1fr] opacity-100 " : "grid-rows-[0fr]  opacity-0"
       }`}
       aria-hidden={!open}
@@ -254,11 +228,11 @@ function TrackCreateComposer({
             onChange={(value) => setNewName(value as string)}
             placeholder="Track title"
             className="text-base! pb-0!"
-            onSave={(title) => void handleCreateTrack(title)}
+            onSave={() => void handleCreateTrack()}
           />
         </CardHeader>
         <CardContent>
-          <PlateEditor
+          <RichTextEditor
             value={newDescription}
             onChange={(value) => setNewDescription(value)}
             placeholder="Add a description..."
@@ -287,7 +261,12 @@ function TrackCreateComposer({
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={isCreating}>
+            <Button
+              type="submit"
+              size="sm"
+              onClick={() => handleCreateTrack()}
+              disabled={isCreating}
+            >
               {isCreating ? "Creating…" : "Create track"}
             </Button>
           </div>
@@ -397,7 +376,7 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
         </div>
       </div>
       <CollapsibleContent className={"px-6 py-2.5"}>
-        <TitleInput
+        <RichTextEditor
           value={descriptionDraft}
           onSave={(save) => void saveTextFields(titleDraft, save)}
           className="text-base! pb-0! pt-0! font-normal!"

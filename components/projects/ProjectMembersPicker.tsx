@@ -1,120 +1,136 @@
 "use client";
 
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
+import * as React from "react";
 import { RiAccountCircle2Line } from "@remixicon/react";
+import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 import {
   Command,
+  CommandEmpty,
   CommandGroup,
-  CommandList,
-  CommandItem,
   CommandInput,
+  CommandItem,
+  CommandList,
 } from "../ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { UserAvatar } from "../employees/UserAvatar";
+import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
+import { Id } from "@/convex/_generated/dataModel";
+import { Badge } from "../ui/badge";
 
-const organizationMembers = [
-  {
-    id: "1",
-    employeeId: 1,
-    name: "John Doe",
-    image: "https://github.com/shadcn.png",
-    email: "john.doe@example.com",
-    manager: true,
-  },
-  {
-    id: "2",
-    name: "Jane Doe",
-    image: "https://github.com/shadcn.png",
-    email: "jane.doe@example.com",
-    manager: false,
-  },
-];
+interface ProjectMembersPickerProps {
+  projectId: Id<"projects">;
+}
 
-const projectMembers = [
-  {
-    id: "3",
-    employeeId: 1,
-    name: "Jhon Doe",
-    image: "https://github.com/shadcn.png",
-    email: "jhon.doe@example.com",
-    manager: true,
-  },
-  {
-    id: "4",
-    employeeId: 1,
-    name: "Manu",
-    image: "https://github.com/x-sss-x.png",
-    email: "jhon.doe@example.com",
-    manager: true,
-  },
-  {
-    id: "5",
-    employeeId: 1,
-    name: "Theo",
-    image: "https://github.com/t3dotgg.png",
-    email: "jhon.doe@example.com",
-    manager: true,
-  },
-];
+export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
+  const [open, setOpen] = React.useState(false);
+  const membersGroup = useProjectMembers(projectId);
+  const toggleMember = useMutation(api.projectMember.toggleMember);
 
-export function ProjectMembersPicker() {
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
-            variant={"ghost"}
-            size={"sm"}
-            className={"px-1 -space-x-2.5"}
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground",
+            )}
           />
         }
       >
-        {projectMembers.map((member) => (
-          <UserAvatar
-            className="size-4"
-            key={member.id}
-            name={member.name}
-            imageUrl={member.image}
-          />
-        ))}
+        {membersGroup?.projectMembers.length > 0 ? (
+          <span className="flex -space-x-1.5">
+            {membersGroup?.projectMembers?.map((member) => (
+              <UserAvatar
+                key={member.employeeId}
+                className="size-4"
+                name={member.employee.name}
+                imageUrl={member.employee.image}
+              />
+            ))}
+          </span>
+        ) : (
+          <>
+            <RiAccountCircle2Line className="size-3.5 opacity-70" />
+            Assign
+          </>
+        )}
       </PopoverTrigger>
-      <PopoverContent align="start" className={"p-0 "}>
-        <Command>
+      <PopoverContent align="start" className="p-0 max-w-[240px]">
+        <Command
+          value={membersGroup?.projectMembers
+            ?.map((member) => member.employeeId)
+            .join(",")}
+        >
           <CommandList>
-            <CommandInput placeholder="Set manager..." />
+            <CommandInput placeholder="Set member..." />
+            <CommandEmpty>No members found</CommandEmpty>
+
             <CommandGroup>
-              <CommandItem>
-                <RiAccountCircle2Line />
-                No manager
-              </CommandItem>
-            </CommandGroup>
-            <CommandGroup>
-              {projectMembers.map((member) => (
-                <CommandItem key={member.id}>
+              {membersGroup.projectMembers.map((member) => (
+                <CommandItem
+                  key={member.employeeId}
+                  value={member.employeeId}
+                  onSelect={() =>
+                    toggleMember({ projectId, employeeId: member.employeeId })
+                  }
+                  className="w-full"
+                >
                   <UserAvatar
+                    name={member.employee.name}
+                    imageUrl={member.employee.image}
                     className="size-5"
-                    name={member.name}
-                    imageUrl={member.image}
                   />
-                  {member.name}
+                  <span className="flex items-center gap-1">
+                    {member.employee.name}
+                  </span>
+                  {member.manager && <Badge variant={"outline"}>Manager</Badge>}
                 </CommandItem>
               ))}
             </CommandGroup>
-            <CommandGroup heading={"Organization Members"}>
-              {organizationMembers.map((member) => (
-                <CommandItem key={member.id}>
-                  <UserAvatar
-                    className="size-5"
-                    name={member.name}
-                    imageUrl={member.image}
-                  />
-                  {member.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {membersGroup.organizationMembers.length > 0 && (
+              <CommandGroup heading="Organization members">
+                {membersGroup.organizationMembers.map((employee) => (
+                  <CommandItem
+                    key={employee.id}
+                    value={employee.id}
+                    onSelect={() =>
+                      toggleMember({ projectId, employeeId: employee.id })
+                    }
+                  >
+                    <UserAvatar
+                      className="size-5"
+                      name={employee.name}
+                      imageUrl={employee.image}
+                    />
+                    {employee.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   );
+}
+
+export function useProjectMembers(projectId: Id<"projects">) {
+  const members = useQuery(api.projectMember.list, {
+    projectId,
+  });
+
+  const employees = useQuery(api.employees.auth.list);
+
+  const remainingEmployees = employees?.filter(
+    (employee) => !members?.some((member) => member.employeeId === employee.id),
+  );
+
+  return {
+    projectMembers: members ?? [],
+    organizationMembers: remainingEmployees ?? [],
+  };
 }

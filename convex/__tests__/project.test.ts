@@ -5,13 +5,20 @@ import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
+import { registerProsemirrorSyncComponent } from "./registerComponents.test";
+
+function createTestClient(identity: { userId: string; orgId: string }) {
+  const base = convexTest(schema, modules);
+  registerProsemirrorSyncComponent(base);
+  return base.withIdentity(identity);
+}
 
 describe("Project", () => {
   let t: TestConvexForDataModel<DataModel>;
   let projectId: Id<"projects">;
 
   beforeEach(async () => {
-    t = convexTest(schema, modules).withIdentity({
+    t = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });
@@ -208,7 +215,7 @@ describe("Project", () => {
     ).rejects.toThrow("End date cannot be before start date");
   });
 
-  test("create logs activity and updateDescription does not", async () => {
+  test("create logs activity without duplicate entries", async () => {
     const afterCreate = await t.query(api.projectActivity.list, {
       projectId,
     });
@@ -221,11 +228,6 @@ describe("Project", () => {
       body: { status: "inactive" },
     });
 
-    await t.mutation(api.project.updateDescription, {
-      projectId,
-      description: [{ type: "p", children: [{ text: "Docs" }] }],
-    });
-
     const activities = await t.query(api.projectActivity.list, {
       projectId,
     });
@@ -235,23 +237,56 @@ describe("Project", () => {
     expect(activities.length).toBe(2);
   });
 
-  test("updateDescription saves plate content", async () => {
-    const plateValue = [
-      { type: "p", children: [{ text: "Rich project description" }] },
-    ];
+  test("project description sync is created and accepts snapshot writes", async () => {
+    const id = `project-${projectId}`;
+    const initialVersion = await t.query(api.syncEditor.latestVersion, {
+      id,
+    });
+    expect(initialVersion).toBe(1);
 
-    await t.mutation(api.project.updateDescription, {
-      projectId,
-      description: plateValue,
+    const initialSnapshot = await t.query(api.syncEditor.getSnapshot, { id });
+    if (initialSnapshot.content === null) {
+      throw new Error("Expected synced snapshot content");
+    }
+
+    await t.mutation(api.syncEditor.submitSnapshot, {
+      id,
+      version: initialVersion ?? 1,
+      content: initialSnapshot.content,
     });
 
-    const updated = await t.query(api.project.get, { projectId });
+    const updatedSnapshot = await t.query(api.syncEditor.getSnapshot, { id });
+    if (updatedSnapshot.content === null) {
+      throw new Error("Expected synced snapshot content");
+    }
+    expect(updatedSnapshot.content).toBe(initialSnapshot.content);
+    expect(updatedSnapshot.version).toBeGreaterThanOrEqual(initialVersion ?? 1);
+  });
 
-    expect(updated?.description).toEqual(plateValue);
+  test("project description sync rejects cross-org access", async () => {
+    const attacker = createTestClient({
+      userId: "user-2",
+      orgId: "org-2",
+    });
+    const id = `project-${projectId}`;
+
+    await expect(
+      attacker.query(api.syncEditor.latestVersion, {
+        id,
+      }),
+    ).rejects.toThrow("Not found");
+
+    await expect(
+      attacker.mutation(api.syncEditor.submitSnapshot, {
+        id,
+        version: 1,
+        content: JSON.stringify({ type: "doc", content: [] }),
+      }),
+    ).rejects.toThrow("Not found");
   });
 
   test("seedStarterProjects creates default projects", async () => {
-    const isolated = convexTest(schema, modules).withIdentity({
+    const isolated = createTestClient({
       userId: "user-2",
       orgId: "org-2",
     });
@@ -268,7 +303,7 @@ describe("Project", () => {
   });
 
   test("seedStarterProjects is idempotent", async () => {
-    const isolated = convexTest(schema, modules).withIdentity({
+    const isolated = createTestClient({
       userId: "user-3",
       orgId: "org-3",
     });
@@ -299,7 +334,7 @@ describe("Project", () => {
   });
 
   test("users cannot access another organization's project", async () => {
-    const isolated = convexTest(schema, modules).withIdentity({
+    const isolated = createTestClient({
       userId: "user-2",
       orgId: "org-2",
     });
@@ -312,7 +347,7 @@ describe("Project", () => {
   });
 
   test("users cannot access another org project", async () => {
-    const owner = convexTest(schema, modules).withIdentity({
+    const owner = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });
@@ -326,7 +361,7 @@ describe("Project", () => {
       status: "active",
     });
 
-    const attacker = convexTest(schema, modules).withIdentity({
+    const attacker = createTestClient({
       userId: "user-2",
       orgId: "org-2",
     });

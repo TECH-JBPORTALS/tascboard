@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RiAccountCircle2Line } from "@remixicon/react";
+import { RiAccountCircle2Line, RiCheckFill } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import {
@@ -15,7 +15,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { UserAvatar } from "../employees/UserAvatar";
 import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
 
 type ProjectManager = NonNullable<
@@ -31,14 +31,13 @@ export function ProjectMangerPicker({
   manager,
 }: ProjectManagerPickerProps) {
   const [open, setOpen] = React.useState(false);
-  const membersGroup = useQuery(api.scope.listAssignableMembers, {
-    scope: "project",
-    projectId,
-  });
+  const membersGroup = useProjectMembers(projectId);
+  const setManager = useMutation(api.projectMember.setManager);
+  const removeManager = useMutation(api.projectMember.removeManager);
 
-  const currentManager = membersGroup
-    ?.flatMap((group) => group.members)
-    .find((member) => member.employeeId === manager?.employeeId);
+  const currentManager = membersGroup.projectMembers.find(
+    (member) => member.employeeId === manager?.employeeId,
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,7 +47,7 @@ export function ProjectMangerPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground",
+              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full",
             )}
           />
         }
@@ -64,39 +63,87 @@ export function ProjectMangerPicker({
         )}
         <span>{currentManager?.employee.name ?? "Manager"}</span>
       </PopoverTrigger>
-      <PopoverContent align="start" className="p-0">
+      <PopoverContent align="start" className="p-0 max-w-[240px]">
         <Command>
           <CommandList>
             <CommandInput placeholder="Set manager…" />
             <CommandEmpty>No members found</CommandEmpty>
             {currentManager && (
               <CommandGroup>
-                <CommandItem value="no manager">
-                  <RiAccountCircle2Line className="size-3.5 opacity-70" />
+                <CommandItem
+                  value="no manager"
+                  onSelect={() =>
+                    removeManager({
+                      projectId,
+                      employeeId: currentManager.employeeId,
+                    })
+                  }
+                >
+                  <RiAccountCircle2Line className="size-5 text-muted-foreground opacity-70" />
                   No manager
                 </CommandItem>
+                {membersGroup.projectMembers.map((member) => (
+                  <CommandItem
+                    key={member.employeeId}
+                    value={member.employeeId}
+                  >
+                    <UserAvatar
+                      name={member.employee.name}
+                      imageUrl={member.employee.image}
+                      className="size-5"
+                    />
+                    {member.employee.name}{" "}
+                    {member.manager && (
+                      <RiCheckFill className="ml-auto size-4 " />
+                    )}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             )}
 
-            {membersGroup?.map((group) =>
-              group.members.length > 0 ? (
-                <CommandGroup
-                  key={group.group}
-                  heading={
-                    group.group.charAt(0).toUpperCase() + group.group.slice(1)
-                  }
-                >
-                  {group.members.map((member) => (
-                    <CommandItem key={member._id}>
-                      {member.employee.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ) : null,
+            {membersGroup.organizationMembers.length > 0 && (
+              <CommandGroup heading="Organization members">
+                {membersGroup.organizationMembers.map((employee) => (
+                  <CommandItem
+                    key={employee.id}
+                    value={employee.id}
+                    onSelect={() =>
+                      setManager({ projectId, employeeId: employee.id })
+                    }
+                  >
+                    <UserAvatar
+                      className="size-5"
+                      name={employee.name}
+                      imageUrl={employee.image}
+                    />
+                    {employee.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             )}
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   );
+}
+
+export function useProjectMembers(projectId: Id<"projects">) {
+  const members = useQuery(api.projectMember.list, {
+    projectId,
+  });
+
+  const employees = useQuery(api.employees.auth.list);
+
+  const remainingEmployees = employees?.filter((employee) => {
+    const existingMember = members?.find(
+      (member) => member.employeeId === employee.id,
+    );
+    return !existingMember || !existingMember.manager;
+  });
+
+  return {
+    projectMembers: members?.filter((member) => member.manager) ?? [],
+    organizationMembers: remainingEmployees ?? [],
+  };
 }

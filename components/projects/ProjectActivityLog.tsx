@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "../ui/scroll-area";
 
 type Activity = Doc<"projectActivities">;
 
@@ -61,52 +62,71 @@ function formatActivityDetail(activity: Activity) {
 type ProjectActivityLogProps = {
   projectId: Id<"projects">;
   className?: string;
+  hideTitle?: boolean;
+  scrollable?: boolean;
 };
 
 export function ProjectActivityLog({
   projectId,
   className,
+  hideTitle = false,
+  scrollable = true,
 }: ProjectActivityLogProps) {
-  const activities = useQuery(api.projectActivity.list, { projectId, limit: 50 });
+  const activities = useQuery(api.projectActivity.list, {
+    projectId,
+    limit: 50,
+  });
+
+  const content = (
+    <div className="px-2">
+      {activities === undefined ? (
+        <p className="px-2 py-4 text-sm text-muted-foreground">Loading…</p>
+      ) : activities.length === 0 ? (
+        <p className="px-2 py-4 text-sm text-muted-foreground">
+          No activity yet.
+        </p>
+      ) : (
+        <ul className="space-y-3 px-2 pb-4">
+          {activities.map((activity) => {
+            const detail = formatActivityDetail(activity);
+            return (
+              <li key={activity._id} className="text-sm">
+                <p className="leading-snug">
+                  <span className="font-medium">{activity.actorName}</span>{" "}
+                  <span className="text-muted-foreground">
+                    {kindLabels[activity.kind]}
+                  </span>
+                </p>
+                {detail ? (
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {detail}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-xs text-muted-foreground/80">
+                  {formatDistanceToNow(activity.createdAt, {
+                    addSuffix: true,
+                  })}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-      <h3 className="shrink-0 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Activity
-      </h3>
-      <div className="min-h-0 flex-1 overflow-y-auto px-2">
-        {activities === undefined ? (
-          <p className="px-2 py-4 text-sm text-muted-foreground">Loading…</p>
-        ) : activities.length === 0 ? (
-          <p className="px-2 py-4 text-sm text-muted-foreground">
-            No activity yet.
-          </p>
-        ) : (
-          <ul className="space-y-3 px-2 pb-4">
-            {activities.map((activity) => {
-              const detail = formatActivityDetail(activity);
-              return (
-                <li key={activity._id} className="text-sm">
-                  <p className="leading-snug">
-                    <span className="font-medium">{activity.actorName}</span>{" "}
-                    <span className="text-muted-foreground">
-                      {kindLabels[activity.kind]}
-                    </span>
-                  </p>
-                  {detail ? (
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {detail}
-                    </p>
-                  ) : null}
-                  <p className="mt-1 text-xs text-muted-foreground/80">
-                    {formatDistanceToNow(activity.createdAt, { addSuffix: true })}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+    <div className={cn("flex min-h-0 flex-col overflow-hidden", className)}>
+      {!hideTitle ? (
+        <h3 className="shrink-0 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Activity
+        </h3>
+      ) : null}
+      {scrollable ? (
+        <ScrollArea className="min-h-56 max-h-96 flex-1">{content}</ScrollArea>
+      ) : (
+        content
+      )}
     </div>
   );
 }

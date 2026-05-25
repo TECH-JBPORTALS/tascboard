@@ -5,19 +5,22 @@ import { api } from "../_generated/api";
 import schema from "../schema";
 import { DataModel, Id } from "../_generated/dataModel";
 import { modules } from "./_modules.test";
-import { vi } from "bun:test";
+import { registerProsemirrorSyncComponent } from "./registerComponents.test";
 
-vi.mock("../lib/getUser", () => ({
-  getUserByUserId: async () => ({
-    email: "test@email.com",
-  }),
-}));
-describe("TrackMember", () => {
+function createTestClient(identity: { userId: string; orgId: string }) {
+  const base = convexTest(schema, modules);
+  registerProsemirrorSyncComponent(base);
+  return base.withIdentity(identity);
+}
+
+describe("Track Member", () => {
   let t: TestConvexForDataModel<DataModel>;
+
+  let projectId: Id<"projects">;
   let trackId: Id<"tracks">;
 
   beforeEach(async () => {
-    t = convexTest(schema, modules).withIdentity({
+    t = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });
@@ -99,8 +102,8 @@ describe("TrackMember", () => {
     expect(members[0]?.lead).toBe(true);
   });
 
-  test("setLead creates member if not exists", async () => {
-    await t.mutation(api.trackMember.setLead, {
+  test("prevents assigning second lead", async () => {
+    await t.mutation(api.trackMember.add, {
       trackId,
       employeeId: "user-3",
     });
@@ -119,10 +122,10 @@ describe("TrackMember", () => {
       trackId,
       employeeId: "user-2",
     });
-
-    await t.mutation(api.trackMember.toggleMember, {
-      trackId,
-      employeeId: "user-3",
+  
+    const t2 = createTestClient({
+      userId: "user-2",
+      orgId: "org-1",
     });
 
     await t.mutation(api.trackMember.setLead, {
@@ -138,13 +141,41 @@ describe("TrackMember", () => {
     expect(lead?.employeeId).toBe("user-3");
   });
 
-  // --------------------
-  // UNSET LEAD
-  // --------------------
-  test("unsetLead removes lead role but keeps member", async () => {
-    await t.mutation(api.trackMember.toggleMember, {
+  test("non-member cannot list track members", async () => {
+ 
+    const t1 = createTestClient({
+      userId: "user-1",
+      orgId: "org-1",
+    });
+  
+    const projectId = await t1.mutation(api.project.create, {
+      name: "Test Project",
+      summary: "test",
+      icon: "📌",
+      color: "blue",
+      startDate: Date.now(),
+      endDate: Date.now() + 100000,
+      status: "active",
+    });
+  
+    const trackId = await t1.mutation(api.track.create, {
+      name: "Test Track",
+      description: "desc",
+      projectId,
+      trackCode: "T-1",
+      trackLeaderID: "user-1",
+      status: "active",
+    });
+  
+    await t1.mutation(api.trackMember.add, {
       trackId,
-      employeeId: "user-2",
+      employeeId: "user-1",
+      lead: true,
+    });
+  
+    const t2 = createTestClient({
+      userId: "user-2",
+      orgId: "org-1",
     });
 
     await t.mutation(api.trackMember.setLead, {
