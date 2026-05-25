@@ -48,6 +48,8 @@ import {
 import { TitleInput } from "../TitleInput";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { RichTextEditor } from "../editor/RichTextEditor";
+import { TrackLeadPicker, TrackLeadDraftPicker } from "./TrackLeadPicker";
+import { TrackMembersPicker } from "./TrackMembersPicker";
 
 type ProjectTracksSectionProps = {
   projectId: Id<"projects">;
@@ -126,7 +128,7 @@ function TrackStatusSelect({
     >
       <SelectTrigger
         size="sm"
-        className={`h-7 w-fit border-none text-xs! ml-auto ${triggerClassName ?? ""}`}
+        className={`h-7 w-fit border-none text-xs! ${triggerClassName ?? ""}`}
       >
         <span className="inline-flex items-center gap-1.5">
           <StatusIcon color={StatusIconColor} className="size-3.5" />
@@ -162,6 +164,7 @@ function TrackCreateComposer({
   const [newName, setNewName] = React.useState("");
   const [newDescription, setNewDescription] = React.useState("");
   const [newStatus, setNewStatus] = React.useState<TrackStatus>("active");
+  const [selectedLeadId, setSelectedLeadId] = React.useState(defaultLeaderId);
   const [createError, setCreateError] = React.useState<string | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
 
@@ -176,6 +179,7 @@ function TrackCreateComposer({
     setNewName("");
     setNewDescription("");
     setNewStatus("active");
+    setSelectedLeadId(defaultLeaderId);
     setCreateError(null);
   }
 
@@ -198,7 +202,7 @@ function TrackCreateComposer({
         description: newDescription.trim() || undefined,
         projectId,
         trackCode: nextTrackCode(existingTrackCodes),
-        trackLeaderID: defaultLeaderId,
+        trackLeaderID: selectedLeadId,
         status: newStatus,
       });
       closeForm();
@@ -243,13 +247,20 @@ function TrackCreateComposer({
           {createError ? (
             <p className="text-xs text-destructive">{createError}</p>
           ) : (
-            <TrackStatusSelect
-              value={newStatus}
-              onValueChange={(value) => {
-                if (value) setNewStatus(value);
-              }}
-              triggerClassName="h-8 w-fit bg-transparent shadow-none hover:bg-muted"
-            />
+            <div className="flex items-center gap-1">
+              <TrackLeadDraftPicker
+                projectId={projectId}
+                leadEmployeeId={selectedLeadId}
+                onLeadChange={setSelectedLeadId}
+              />
+              <TrackStatusSelect
+                value={newStatus}
+                onValueChange={(value) => {
+                  if (value) setNewStatus(value);
+                }}
+                triggerClassName="h-8 w-fit bg-transparent shadow-none hover:bg-muted"
+              />
+            </div>
           )}
           <div className="flex items-center flex-1 justify-end gap-2 ml-auto">
             <Button
@@ -347,14 +358,21 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
             <RiTriangleFill className="size-1.5 text-muted-foreground group-aria-expanded/button:rotate-180! rotate-90 transition-transform duration-150" />
           </CollapsibleTrigger>
         </div>
-        <TrackStatusSelect
-          value={track.status}
-          onValueChange={(value) => {
-            void handleStatusChange(value);
-          }}
-          disabled={isUpdatingStatus}
-          triggerClassName="ml-auto"
-        />
+        <div className="ml-auto flex items-center gap-0.5">
+          <TrackLeadPicker
+            trackId={track._id}
+            projectId={track.projectId}
+            trackLeaderId={track.trackLeaderID}
+          />
+          <TrackMembersPicker trackId={track._id} projectId={track.projectId} />
+          <TrackStatusSelect
+            value={track.status}
+            onValueChange={(value) => {
+              void handleStatusChange(value);
+            }}
+            disabled={isUpdatingStatus}
+          />
+        </div>
 
         <div className="flex items-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
           <DropdownMenu>
