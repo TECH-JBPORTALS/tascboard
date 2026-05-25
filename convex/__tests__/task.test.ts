@@ -63,13 +63,12 @@ describe("Task", () => {
       endDate: 1800000000000,
     });
 
-    await t.mutation(api.trackMember.add, {
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
       employeeId: "emp-1",
-      lead: true,
     });
-    
-    await t.mutation(api.trackMember.add, {
+
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
       employeeId: "emp-2",
     });
@@ -90,6 +89,12 @@ describe("Task", () => {
     expect(task?.priority).toBe("medium");
   });
   test("prevents duplicate task activity spam for same user same day", async () => {
+    await t.mutation(api.task.update, {
+      taskId,
+      body: {
+        status: "in_progress",
+      },
+    });
 
     await t.mutation(api.task.update, {
       taskId,
@@ -97,22 +102,15 @@ describe("Task", () => {
         status: "in_progress",
       },
     });
-  
-    await t.mutation(api.task.update, {
-      taskId,
-      body: {
-        status: "in_progress",
-      },
-    });
-  
+
     const activities = await t
       .query(api.activity.listByTask, { taskId })
       .catch(() => []);
-  
+
     const statusActivities = activities.filter(
       (a: any) => a.kind === "status_changed",
     );
-  
+
     expect(statusActivities.length).toBe(1);
   });
   // --------------------
@@ -143,9 +141,9 @@ describe("Task", () => {
     const task = await t.query(api.task.get, {
       taskId,
     });
-  
+
     expect(task?.members.length).toBe(2);
-  
+
     expect(task?.members).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

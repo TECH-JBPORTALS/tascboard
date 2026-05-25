@@ -43,6 +43,7 @@ import type * as scope from "../scope.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as task from "../task.js";
+import type * as taskMember from "../taskMember.js";
 import type * as track from "../track.js";
 import type * as trackMember from "../trackMember.js";
 
@@ -88,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   sprint: typeof sprint;
   subtask: typeof subtask;
   task: typeof task;
+  taskMember: typeof taskMember;
   track: typeof track;
   trackMember: typeof trackMember;
 }>;

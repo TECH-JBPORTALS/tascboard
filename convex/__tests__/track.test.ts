@@ -36,13 +36,12 @@ describe("Tracks", () => {
       status: "active",
     });
 
-    await t.mutation(api.trackMember.add, {
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
       employeeId: "emp-1",
-      lead: true,
     });
-    
-    await t.mutation(api.trackMember.add, {
+
+    await t.mutation(api.trackMember.toggleMember, {
       trackId,
       employeeId: "emp-2",
     });
@@ -129,9 +128,9 @@ describe("Tracks", () => {
     const track = await t.query(api.track.get, {
       trackId,
     });
-  
+
     expect(track?.members.length).toBe(2);
-  
+
     expect(track?.members).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -142,7 +141,7 @@ describe("Tracks", () => {
         }),
       ]),
     );
-  
+
     expect(track?.lead).toEqual(
       expect.objectContaining({
         employeeId: "emp-1",
