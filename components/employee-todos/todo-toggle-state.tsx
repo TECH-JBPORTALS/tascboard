@@ -1,3 +1,10 @@
+/**
+ * TodoButton - Floating Action Button (FAB) for the To-Do feature.
+ * * Features:
+ * - Micro-interactions via Framer Motion (hover, tap, and exit states).
+ * - Morphing icon animations transitioning between open (close icon) and closed (task icon) states.
+ * - Dynamic, auto-collapsing notification badge that caps at "9+".
+ */
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
