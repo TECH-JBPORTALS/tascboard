@@ -10,58 +10,35 @@ import {
 } from "./lib/taskActivityLog";
 import { taskStatusLabels, taskPriorityLabels } from "./lib/taskDisplay";
 import { getTrackMembers } from "./lib/memberHelper";
-const statusValidator = v.union(
-  v.literal("backlog"),
-  v.literal("todo"),
-  v.literal("in_progress"),
-  v.literal("done"),
-);
+import { TaskValidator } from "./schema";
 
-const priorityValidator = v.union(
-  v.literal("low"),
-  v.literal("medium"),
-  v.literal("high"),
-  v.literal("critical"),
-);
-
-const complexityValidator = v.union(
-  v.literal("easy"),
-  v.literal("medium"),
-  v.literal("hard"),
-);
-
-/** CREATE TASK */
+/**
+ * Create Task
+ */
 export const create = mutation({
-  args: {
-    trackId: v.id("tracks"),
-    projectId: v.id("projects"),
-    taskCode: v.string(),
-    title: v.string(),
-    description: v.optional(v.any()),
-    status: statusValidator,
-    assignedTo: v.string(),
-    assignedBy: v.string(),
-    priority: priorityValidator,
-    complexity: complexityValidator,
-    startDate: v.number(),
-    endDate: v.number(),
-  },
+  args: TaskValidator.omit("taskCode", "createdAt", "updatedAt", "createdBy"),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
+    const lastTask = await ctx.db
+      .query("tasks")
+      .withIndex("by_track", (q) => q.eq("trackId", args.trackId))
+      .order("desc")
+      .first();
 
     const taskId = await ctx.db.insert("tasks", {
       trackId: args.trackId,
       projectId: args.projectId,
-      taskCode: args.taskCode,
+      // Find the next task number based on the previous task count in the track.
+      taskCode: (lastTask ? parseInt(lastTask.taskCode) + 1 : 1).toString(),
       title: args.title.trim(),
       description: args.description,
       status: args.status,
-      assignedTo: args.assignedTo,
-      assignedBy: args.assignedBy,
+      createdBy: identity.userId,
       priority: args.priority,
       complexity: args.complexity,
-      startDate: args.startDate,
-      endDate: args.endDate,
+      dueDate: args.dueDate,
+      startedAt: args.status === "in_progress" ? Date.now() : undefined,
+      completedAt: args.status === "done" ? Date.now() : undefined,
       createdAt: Date.now(),
     });
 
@@ -77,7 +54,9 @@ export const create = mutation({
   },
 });
 
-/** GET TASK */
+/**
+ * Get Task by ID
+ */
 export const get = query({
   args: {
     taskId: v.id("tasks"),
@@ -109,6 +88,10 @@ export const get = query({
     };
   },
 });
+
+/**
+ * List Tasks by Track
+ */
 export const listByTrack = query({
   args: {
     trackId: v.id("tracks"),
@@ -154,20 +137,18 @@ export const list = query({
     );
   },
 });
-/** UPDATE TASK */
+
+/** Update Task */
 export const update = mutation({
   args: {
     taskId: v.id("tasks"),
-    body: v.object({
-      title: v.optional(v.string()),
-      description: v.optional(v.any()),
-      status: v.optional(statusValidator),
-      priority: v.optional(priorityValidator),
-      complexity: v.optional(complexityValidator),
-      startDate: v.optional(v.number()),
-      endDate: v.optional(v.number()),
-      sprintId: v.optional(v.union(v.id("sprints"), v.null())),
-    }),
+    body: TaskValidator.omit(
+      "trackId",
+      "projectId",
+      "taskCode",
+      "createdAt",
+      "updatedAt",
+    ).partial(),
   },
   handler: async (ctx, { taskId, body }) => {
     const identity = await requireIdentity(ctx);
@@ -227,17 +208,16 @@ export const update = mutation({
     }
 
     if (body.complexity !== undefined) patch.complexity = body.complexity;
-    if (body.startDate !== undefined) patch.startDate = body.startDate;
 
-    if (body.endDate !== undefined && body.endDate !== task.endDate) {
-      patch.endDate = body.endDate;
+    if (body.dueDate !== task.dueDate) {
+      patch.dueDate = body.dueDate;
       await logTaskActivity(ctx, {
         taskId,
         actorUserId,
         actorName,
         kind: "due_date_changed",
-        fromValue: formatTaskDate(task.endDate),
-        toValue: formatTaskDate(body.endDate),
+        fromValue: task.dueDate ? formatTaskDate(task.dueDate) : "",
+        toValue: body.dueDate ? formatTaskDate(body.dueDate) : "Unset",
       });
     }
 
@@ -296,7 +276,7 @@ export async function removeTaskCascade(ctx: MutationCtx, taskId: Id<"tasks">) {
   await Promise.all(labelLinks.map((l) => ctx.db.delete(l._id)));
 
   const activities = await ctx.db
-    .query("activities")
+    .query("taskActivities")
     .withIndex("by_task", (q) => q.eq("taskId", taskId))
     .collect();
 

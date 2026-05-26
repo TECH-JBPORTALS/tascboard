@@ -1,7 +1,17 @@
+/**
+ * NOTE:
+ * In this file define first validators seperately for each type of data.
+ * Then use them in the schema definitions.
+ *
+ * So later we can reuse them in other files for validation and mutations.
+ */
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { projectColorValidator } from "./lib/projectAppearance";
 
+/*********************************************
+ * EMPLOYEE PROFILE VALIDATORS
+ ********************************************/
 export const onboardingStatusValidator = v.union(
   v.literal("pending"),
   v.literal("completed"),
@@ -23,6 +33,81 @@ export const employeeProfileSchema = v.object({
   branchName: v.optional(v.string()),
   profilePhotoStorageId: v.optional(v.id("_storage")),
 });
+
+/*********************************************
+ * TASK VALIDATORS
+ ********************************************/
+export const TaskStatusValidator = v.union(
+  v.literal("backlog"),
+  v.literal("todo"),
+  v.literal("in_progress"),
+  v.literal("done"),
+);
+
+export const TaskPriorityValidator = v.union(
+  v.literal("low"),
+  v.literal("medium"),
+  v.literal("high"),
+  v.literal("critical"),
+);
+
+export const TaskComplexityValidator = v.union(
+  v.literal("easy"),
+  v.literal("medium"),
+  v.literal("hard"),
+);
+
+export const TaskValidator = v.object({
+  trackId: v.id("tracks"),
+  projectId: v.id("projects"),
+  sprintId: v.optional(v.id("sprints")),
+  taskCode: v.string(),
+  title: v.string(),
+  description: v.optional(v.any()),
+  status: TaskStatusValidator,
+  createdBy: v.string(),
+  priority: TaskPriorityValidator,
+  complexity: TaskComplexityValidator,
+  dueDate: v.optional(v.union(v.number(), v.null())),
+  createdAt: v.number(),
+  startedAt: v.optional(v.number()),
+  completedAt: v.optional(v.number()),
+  updatedAt: v.optional(v.number()),
+});
+
+export const TaskActivityValidator = v.object({
+  taskId: v.id("tasks"),
+  actorName: v.string(),
+  actorUserId: v.optional(v.string()),
+  kind: v.union(
+    v.literal("created"),
+    v.literal("title_changed"),
+    v.literal("status_changed"),
+    v.literal("priority_changed"),
+    v.literal("due_date_changed"),
+    v.literal("label_added"),
+    v.literal("label_removed"),
+  ),
+  fromValue: v.optional(v.string()),
+  toValue: v.optional(v.string()),
+  meta: v.optional(v.string()),
+  createdAt: v.optional(v.number()),
+});
+
+/*
+===========================================
+              MAIN SCHEMA
+===========================================
+
+Use the validators defined above to define the schema.
+
+@example:
+
+tasks: defineTable(TaskValidator)
+  .index("by_track", ["trackId"])
+  .index("by_project", ["projectId"])
+  .index("by_sprint", ["sprintId"]),
+*/
 
 export default defineSchema({
   inboxItems: defineTable({
@@ -173,37 +258,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_approved_by", ["approvedBy"]),
 
-  tasks: defineTable({
-    trackId: v.id("tracks"),
-    projectId: v.id("projects"),
-    sprintId: v.optional(v.id("sprints")),
-    taskCode: v.string(),
-    title: v.string(),
-    description: v.optional(v.any()),
-    status: v.union(
-      v.literal("backlog"),
-      v.literal("todo"),
-      v.literal("in_progress"),
-      v.literal("done"),
-    ),
-    assignedTo: v.string(),
-    assignedBy: v.string(),
-    priority: v.union(
-      v.literal("low"),
-      v.literal("medium"),
-      v.literal("high"),
-      v.literal("critical"),
-    ),
-    complexity: v.union(
-      v.literal("easy"),
-      v.literal("medium"),
-      v.literal("hard"),
-    ),
-    startDate: v.number(),
-    endDate: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  tasks: defineTable(TaskValidator)
     .index("by_track", ["trackId"])
     .index("by_project", ["projectId"])
     .index("by_sprint", ["sprintId"]),
@@ -228,24 +283,9 @@ export default defineSchema({
     order: v.number(),
   }).index("by_task_and_order", { fields: ["taskId", "order"] }),
 
-  activities: defineTable({
-    taskId: v.id("tasks"),
-    deviceName: v.string(),
-    actorUserId: v.optional(v.string()),
-    kind: v.union(
-      v.literal("created"),
-      v.literal("title_changed"),
-      v.literal("status_changed"),
-      v.literal("priority_changed"),
-      v.literal("due_date_changed"),
-      v.literal("label_added"),
-      v.literal("label_removed"),
-    ),
-    fromValue: v.optional(v.string()),
-    toValue: v.optional(v.string()),
-    meta: v.optional(v.string()),
-    createdAt: v.optional(v.number()),
-  }).index("by_task", { fields: ["taskId"] }),
+  taskActivities: defineTable(TaskActivityValidator).index("by_task", {
+    fields: ["taskId"],
+  }),
 
   comments: defineTable({
     taskId: v.id("tasks"),

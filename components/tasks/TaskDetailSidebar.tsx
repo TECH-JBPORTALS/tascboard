@@ -1,8 +1,13 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, isAfter } from "date-fns";
 import Link from "next/link";
-import { RiCalendarLine, RiStackLine, RiUserLine } from "@remixicon/react";
+import {
+  RiAddFill,
+  RiCalendarLine,
+  RiCalendarTodoFill,
+  RiStackLine,
+} from "@remixicon/react";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
 import { TaskLabelPicker } from "@/components/tasks/TaskLabelPicker";
@@ -15,8 +20,8 @@ import {
   TaskStatusPicker,
 } from "@/components/tasks/TaskStatusPicker";
 import { taskPriorityConfig, taskStatusConfig } from "@/lib/task-utils";
-import { initialsFromId } from "@/lib/track-utils";
 import { Button } from "@/components/ui/button";
+import { TaskMembersPicker } from "@/components/tasks/TaskMembersPicker";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 
@@ -50,12 +55,9 @@ function PropertyChip({
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
       size="sm"
-      className={cn(
-        "h-7 w-full justify-start gap-1.5 rounded-md border-border/80 bg-muted/30 px-2.5 font-normal shadow-none",
-        className,
-      )}
+      className={cn(className)}
       {...props}
     >
       {children}
@@ -104,23 +106,29 @@ export function TaskDetailSidebar({
           />
         </SidebarRow>
 
-        <SidebarRow label="Assignee">
-          <PropertyChip className="text-muted-foreground" disabled>
-            <RiUserLine className="size-3.5" />
-            <span className="truncate">{initialsFromId(task.assignedTo)}</span>
-          </PropertyChip>
+        <SidebarRow label="Members">
+          <TaskMembersPicker taskId={task._id} trackId={task.trackId} />
         </SidebarRow>
 
         <SidebarRow label="Due date">
           <TaskDueDatePicker
             taskId={task._id}
-            endDate={task.endDate}
-            startDate={task.startDate}
+            dueDate={task.dueDate}
             align="end"
             trigger={
               <PropertyChip>
-                <RiCalendarLine className="size-3.5" />
-                <span>{format(task.endDate, "dd/MM/yyyy")}</span>
+                {task.dueDate ? (
+                  <RiCalendarTodoFill
+                    className={cn(
+                      isAfter(task.dueDate, new Date())
+                        ? "text-muted-foreground"
+                        : "text-destructive",
+                    )}
+                  />
+                ) : (
+                  <RiAddFill />
+                )}
+                {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "Set due"}
               </PropertyChip>
             }
           />

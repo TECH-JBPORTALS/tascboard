@@ -57,8 +57,7 @@ function buildPresets(): DueDatePreset[] {
 }
 
 type TaskDueDatePickerBaseProps = {
-  endDate: number;
-  startDate: number;
+  dueDate?: number | null;
   trigger: React.ReactElement;
   className?: string;
   align?: "start" | "center" | "end";
@@ -81,8 +80,7 @@ type TaskDueDatePickerProps = TaskDueDatePickerBaseProps &
   );
 
 export function TaskDueDatePicker({
-  endDate,
-  startDate,
+  dueDate,
   trigger,
   className,
   align = "end",
@@ -91,16 +89,13 @@ export function TaskDueDatePicker({
 }: TaskDueDatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [showCalendar, setShowCalendar] = React.useState(false);
-  const [calendarDate, setCalendarDate] = React.useState<Date>(
-    () => new Date(endDate),
+  const [calendarDate, setCalendarDate] = React.useState<Date>(() =>
+    dueDate != null ? new Date(dueDate) : new Date(),
   );
   const updateTaskMutation = useMutation(api.task.update);
 
   const presets = buildPresets();
-  const due = new Date(endDate);
-  const hasDistinctDue =
-    hasDueDateProp ??
-    startOfDay(due).getTime() !== startOfDay(new Date(startDate)).getTime();
+  const hasDueDate = hasDueDateProp ?? dueDate != null;
 
   const applyDate = async (date: Date) => {
     if (mode.onSelect) {
@@ -108,7 +103,7 @@ export function TaskDueDatePicker({
     } else if (mode.taskId) {
       await updateTaskMutation({
         taskId: mode.taskId,
-        body: { endDate: startOfDay(date).getTime() },
+        body: { dueDate: startOfDay(date).getTime() },
       });
     }
     setOpen(false);
@@ -121,7 +116,7 @@ export function TaskDueDatePicker({
     } else if (mode.taskId) {
       await updateTaskMutation({
         taskId: mode.taskId,
-        body: { endDate: startOfDay(new Date(startDate)).getTime() },
+        body: { dueDate: null },
       });
     }
     setOpen(false);
@@ -130,7 +125,7 @@ export function TaskDueDatePicker({
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (next) {
-      setCalendarDate(new Date(endDate));
+      setCalendarDate(dueDate != null ? new Date(dueDate) : new Date());
       setShowCalendar(false);
     }
   };
@@ -163,18 +158,15 @@ export function TaskDueDatePicker({
             <CommandList>
               <CommandEmpty>No matching date</CommandEmpty>
               <CommandGroup>
-                {hasDistinctDue ? (
+                {hasDueDate && (
                   <CommandItem
                     value="remove due date"
                     onSelect={() => void clearDueDate()}
                   >
                     <RiCalendarCloseLine className="size-3.5 text-muted-foreground" />
                     <span className="flex-1">Remove due date</span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(due, "EEE, d MMM")}
-                    </span>
                   </CommandItem>
-                ) : null}
+                )}
                 <CommandItem
                   value="custom date picker"
                   onSelect={() => setShowCalendar(true)}

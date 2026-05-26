@@ -50,16 +50,12 @@ describe("Sprint", () => {
     taskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "T-001",
       title: "Task 1",
       description: "Test task",
       status: "todo",
-      assignedTo: "emp-1",
-      assignedBy: "emp-1",
       priority: "medium",
       complexity: "easy",
-      startDate: Date.now(),
-      endDate: Date.now() + 100000,
+      dueDate: Date.now(),
     });
 
     // create sprint

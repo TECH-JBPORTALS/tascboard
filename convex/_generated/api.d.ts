@@ -39,7 +39,6 @@ import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
 import type * as projectActivity from "../projectActivity.js";
 import type * as projectMember from "../projectMember.js";
-import type * as scope from "../scope.js";
 import type * as sprint from "../sprint.js";
 import type * as subtask from "../subtask.js";
 import type * as syncEditor from "../syncEditor.js";
@@ -86,7 +85,6 @@ declare const fullApi: ApiFromModules<{
   project: typeof project;
   projectActivity: typeof projectActivity;
   projectMember: typeof projectMember;
-  scope: typeof scope;
   sprint: typeof sprint;
   subtask: typeof subtask;
   syncEditor: typeof syncEditor;

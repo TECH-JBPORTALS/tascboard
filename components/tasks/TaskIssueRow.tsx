@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { initialsFromId } from "@/lib/track-utils";
 import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
+import { TaskMembersPicker } from "@/components/tasks/TaskMembersPicker";
 import {
   TaskPriorityIcon,
   TaskPriorityPicker,
@@ -15,6 +15,9 @@ import {
   TaskStatusPicker,
 } from "@/components/tasks/TaskStatusPicker";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
+import { RiAddFill, RiCalendarTodoFill } from "@remixicon/react";
+import { isAfter } from "date-fns";
 
 type TaskIssueRowProps = {
   task: Doc<"tasks">;
@@ -27,16 +30,15 @@ function RowTrigger({
   ...props
 }: React.ComponentProps<"button">) {
   return (
-    <button
+    <Button
       type="button"
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-sm outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring",
-        className,
-      )}
+      variant="ghost"
+      size="sm"
+      className={cn(className)}
       {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -91,24 +93,29 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
 
       <TaskDueDatePicker
         taskId={task._id}
-        endDate={task.endDate}
-        startDate={task.startDate}
+        dueDate={task.dueDate}
         trigger={
           <RowTrigger
             className="hidden h-6 gap-1 px-1.5 text-xs text-muted-foreground sm:inline-flex"
             aria-label="Change due date"
           >
-            {format(task.endDate, "MMM d")}
+            {task.dueDate ? (
+              <RiCalendarTodoFill
+                className={cn(
+                  isAfter(task.dueDate, new Date())
+                    ? "text-muted-foreground"
+                    : "text-destructive",
+                )}
+              />
+            ) : (
+              <RiAddFill />
+            )}
+            {task.dueDate ? format(task.dueDate, "MMM d") : "Set due"}
           </RowTrigger>
         }
       />
 
-      <span
-        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground"
-        title={task.assignedTo}
-      >
-        {initialsFromId(task.assignedTo)}
-      </span>
+      <TaskMembersPicker taskId={task._id} trackId={task.trackId} compact />
 
       <span className="hidden w-14 shrink-0 text-right text-xs text-muted-foreground md:inline">
         {format(task.createdAt, "MMM d")}

@@ -4,7 +4,7 @@ import { AnimatePresence } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RiTaskLine } from "@remixicon/react";
 import { TodoRow } from "./todo-row";
-import { TodoCompleted } from "./todo-completed";
+import { TodoCompleted } from "./todo-completed-section";
 import type { Todo } from "./types";
 
 interface Props {

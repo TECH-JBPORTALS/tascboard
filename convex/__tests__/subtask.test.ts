@@ -49,16 +49,12 @@ describe("Subtask", () => {
     taskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "TASK-001",
       title: "Task A",
       description: "Task Desc",
       status: "todo",
-      assignedTo: "emp-1",
-      assignedBy: "manager-1",
       priority: "high",
       complexity: "medium",
-      startDate: 1,
-      endDate: 2,
+      dueDate: 1,
     });
 
     subtaskId = await t.mutation(api.subtask.create, {
@@ -122,16 +118,12 @@ describe("Subtask", () => {
     const emptyTaskId = await t.mutation(api.task.create, {
       trackId,
       projectId,
-      taskCode: "TASK-002",
       title: "Empty Task",
       description: "No subtasks",
       status: "todo",
-      assignedTo: "emp-1",
-      assignedBy: "manager-1",
       priority: "medium",
       complexity: "easy",
-      startDate: 1,
-      endDate: 2,
+      dueDate: 1,
     });
 
     const subtasks = await t.query(api.subtask.listByTask, {

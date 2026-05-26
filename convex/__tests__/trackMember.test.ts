@@ -103,7 +103,7 @@ describe("Track Member", () => {
   });
 
   test("prevents assigning second lead", async () => {
-    await t.mutation(api.trackMember.add, {
+    await t.mutation(api.trackMember.setLead, {
       trackId,
       employeeId: "user-3",
     });
@@ -122,7 +122,7 @@ describe("Track Member", () => {
       trackId,
       employeeId: "user-2",
     });
-  
+
     const t2 = createTestClient({
       userId: "user-2",
       orgId: "org-1",
@@ -142,12 +142,11 @@ describe("Track Member", () => {
   });
 
   test("non-member cannot list track members", async () => {
- 
     const t1 = createTestClient({
       userId: "user-1",
       orgId: "org-1",
     });
-  
+
     const projectId = await t1.mutation(api.project.create, {
       name: "Test Project",
       summary: "test",
@@ -157,7 +156,7 @@ describe("Track Member", () => {
       endDate: Date.now() + 100000,
       status: "active",
     });
-  
+
     const trackId = await t1.mutation(api.track.create, {
       name: "Test Track",
       description: "desc",
@@ -166,16 +165,10 @@ describe("Track Member", () => {
       trackLeaderID: "user-1",
       status: "active",
     });
-  
-    await t1.mutation(api.trackMember.add, {
+
+    await t1.mutation(api.trackMember.setLead, {
       trackId,
       employeeId: "user-1",
-      lead: true,
-    });
-  
-    const t2 = createTestClient({
-      userId: "user-2",
-      orgId: "org-1",
     });
 
     await t.mutation(api.trackMember.setLead, {
