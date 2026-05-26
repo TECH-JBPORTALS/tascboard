@@ -1,27 +1,27 @@
-import { GenericCtx } from "@convex-dev/better-auth";
-import { components } from "../_generated/api";
-import { DataModel } from "../_generated/dataModel";
+import { GenericCtx } from '@convex-dev/better-auth'
+import { components } from '../_generated/api'
+import { DataModel } from '../_generated/dataModel'
 
 type UserRecord = {
-  email: string;
-  name: string;
-  image?: string | null;
-};
+  email: string
+  name: string
+  image?: string | null
+}
 
 export async function getUserByUserId(
   ctx: GenericCtx<DataModel>,
   userId: string,
 ): Promise<UserRecord | null> {
   const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-    model: "user",
+    model: 'user',
     where: [
       {
-        field: "_id",
-        operator: "eq",
+        field: '_id',
+        operator: 'eq',
         value: userId,
       },
     ],
-  });
+  })
 
-  return (user as UserRecord | null) ?? null;
+  return (user as UserRecord | null) ?? null
 }

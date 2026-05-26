@@ -1,11 +1,11 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { addDays, endOfWeek, format, startOfDay } from "date-fns";
-import { RiCalendarLine, RiCalendarCloseLine } from "@remixicon/react";
-import type { Id } from "@/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { RiCalendarCloseLine, RiCalendarLine } from '@remixicon/react'
+import { useMutation } from 'convex/react'
+import { addDays, endOfWeek, format, startOfDay } from 'date-fns'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Command,
   CommandEmpty,
@@ -14,127 +14,127 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "@/components/ui/command";
+} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/popover'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
 
 type DueDatePreset = {
-  id: string;
-  label: string;
-  getDate: () => Date;
-  shortcut?: string;
-};
+  id: string
+  label: string
+  getDate: () => Date
+  shortcut?: string
+}
 
 function buildPresets(): DueDatePreset[] {
-  const today = startOfDay(new Date());
+  const today = startOfDay(new Date())
 
   return [
     {
-      id: "tomorrow",
-      label: "Tomorrow",
-      shortcut: "1",
+      id: 'tomorrow',
+      label: 'Tomorrow',
+      shortcut: '1',
       getDate: () => addDays(today, 1),
     },
     {
-      id: "end-of-week",
-      label: "End of this week",
-      shortcut: "2",
+      id: 'end-of-week',
+      label: 'End of this week',
+      shortcut: '2',
       getDate: () => endOfWeek(today, { weekStartsOn: 1 }),
     },
     {
-      id: "one-week",
-      label: "In one week",
-      shortcut: "3",
+      id: 'one-week',
+      label: 'In one week',
+      shortcut: '3',
       getDate: () => addDays(today, 7),
     },
-  ];
+  ]
 }
 
 type TaskDueDatePickerBaseProps = {
-  dueDate?: number | null;
-  trigger: React.ReactElement;
-  className?: string;
-  align?: "start" | "center" | "end";
+  dueDate?: number | null
+  trigger: React.ReactElement
+  className?: string
+  align?: 'start' | 'center' | 'end'
   /** When set, overrides the distinct-due check (e.g. create-task form). */
-  hasDueDate?: boolean;
-};
+  hasDueDate?: boolean
+}
 
 type TaskDueDatePickerProps = TaskDueDatePickerBaseProps &
   (
     | {
-        taskId: Id<"tasks">;
-        onSelect?: (date: Date) => void;
-        onClear?: () => void;
+        taskId: Id<'tasks'>
+        onSelect?: (date: Date) => void
+        onClear?: () => void
       }
     | {
-        taskId?: undefined;
-        onSelect: (date: Date) => void;
-        onClear?: () => void;
+        taskId?: undefined
+        onSelect: (date: Date) => void
+        onClear?: () => void
       }
-  );
+  )
 
 export function TaskDueDatePicker({
   dueDate,
   trigger,
   className,
-  align = "end",
+  align = 'end',
   hasDueDate: hasDueDateProp,
   ...mode
 }: TaskDueDatePickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const [showCalendar, setShowCalendar] = React.useState(false);
+  const [open, setOpen] = React.useState(false)
+  const [showCalendar, setShowCalendar] = React.useState(false)
   const [calendarDate, setCalendarDate] = React.useState<Date>(() =>
     dueDate != null ? new Date(dueDate) : new Date(),
-  );
-  const updateTaskMutation = useMutation(api.task.update);
+  )
+  const updateTaskMutation = useMutation(api.task.update)
 
-  const presets = buildPresets();
-  const hasDueDate = hasDueDateProp ?? dueDate != null;
+  const presets = buildPresets()
+  const hasDueDate = hasDueDateProp ?? dueDate != null
 
   const applyDate = async (date: Date) => {
     if (mode.onSelect) {
-      mode.onSelect(date);
+      mode.onSelect(date)
     } else if (mode.taskId) {
       await updateTaskMutation({
         taskId: mode.taskId,
         body: { dueDate: startOfDay(date).getTime() },
-      });
+      })
     }
-    setOpen(false);
-    setShowCalendar(false);
-  };
+    setOpen(false)
+    setShowCalendar(false)
+  }
 
   const clearDueDate = async () => {
     if (mode.onClear) {
-      mode.onClear();
+      mode.onClear()
     } else if (mode.taskId) {
       await updateTaskMutation({
         taskId: mode.taskId,
         body: { dueDate: null },
-      });
+      })
     }
-    setOpen(false);
-  };
+    setOpen(false)
+  }
 
   const handleOpenChange = (next: boolean) => {
-    setOpen(next);
+    setOpen(next)
     if (next) {
-      setCalendarDate(dueDate != null ? new Date(dueDate) : new Date());
-      setShowCalendar(false);
+      setCalendarDate(dueDate != null ? new Date(dueDate) : new Date())
+      setShowCalendar(false)
     }
-  };
+  }
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger render={trigger} />
       <PopoverContent
-        className={cn("w-64 p-0", className)}
+        className={cn('w-64 p-0', className)}
         align={align}
         sideOffset={4}
       >
@@ -144,9 +144,9 @@ export function TaskDueDatePicker({
             mode="single"
             selected={calendarDate}
             onSelect={(date) => {
-              if (!date) return;
-              setCalendarDate(date);
-              void applyDate(date);
+              if (!date) return
+              setCalendarDate(date)
+              void applyDate(date)
             }}
           />
         ) : (
@@ -175,20 +175,20 @@ export function TaskDueDatePicker({
                   <span className="flex-1">Custom…</span>
                 </CommandItem>
                 {presets.map((preset) => {
-                  const date = preset.getDate();
+                  const date = preset.getDate()
                   return (
                     <CommandItem
                       key={preset.id}
-                      value={`${preset.label} ${format(date, "MMM d")}`}
+                      value={`${preset.label} ${format(date, 'MMM d')}`}
                       onSelect={() => void applyDate(date)}
                     >
                       <RiCalendarLine className="size-3.5 text-muted-foreground" />
                       <span className="flex-1">{preset.label}</span>
                       <CommandShortcut>
-                        {format(date, "EEE, d MMM")}
+                        {format(date, 'EEE, d MMM')}
                       </CommandShortcut>
                     </CommandItem>
-                  );
+                  )
                 })}
               </CommandGroup>
             </CommandList>
@@ -209,5 +209,5 @@ export function TaskDueDatePicker({
         ) : null}
       </PopoverContent>
     </Popover>
-  );
+  )
 }

@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { RiAccountCircle2Line, RiCheckFill } from "@remixicon/react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
-import { UserAvatar } from "../employees/UserAvatar";
-import { Button } from "../ui/button";
+import { RiAccountCircle2Line, RiCheckFill } from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { UserAvatar } from '../employees/UserAvatar'
+import { Button } from '../ui/button'
 import {
   Command,
   CommandEmpty,
@@ -15,25 +15,19 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-
-type TrackMember = NonNullable<typeof api.trackMember.list._returnType>[number];
-type PersonIdentity = {
-  name: string;
-  image: string | null;
-};
+} from '../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 interface TrackLeadPickerProps {
-  trackId: Id<"tracks">;
-  projectId: Id<"projects">;
-  trackLeaderId?: string;
+  trackId: Id<'tracks'>
+  projectId: Id<'projects'>
+  trackLeaderId?: string
 }
 
 interface TrackLeadDraftPickerProps {
-  projectId: Id<"projects">;
-  leadEmployeeId: string;
-  onLeadChange: (employeeId: string) => void;
+  projectId: Id<'projects'>
+  leadEmployeeId: string
+  onLeadChange: (employeeId: string) => void
 }
 
 export function TrackLeadPicker({
@@ -41,43 +35,16 @@ export function TrackLeadPicker({
   projectId,
   trackLeaderId,
 }: TrackLeadPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const membersGroup = useTrackMemberGroups(trackId, projectId);
-  const setLead = useMutation(api.trackMember.setLead);
-  const unsetLead = useMutation(api.trackMember.unsetLead);
+  const [open, setOpen] = React.useState(false)
+  const membersGroup = useTrackMemberGroups(trackId, projectId)
+  const setLead = useMutation(api.trackMember.setLead)
+  const unsetLead = useMutation(api.trackMember.unsetLead)
 
   const currentLead =
-    membersGroup.trackMembers.find((member) => member.lead) ?? null;
+    membersGroup.trackMembers.find((member) => member.lead) ?? null
 
-  const peopleById = React.useMemo(() => {
-    const map = new Map<string, PersonIdentity>();
-    for (const member of membersGroup.trackMembers) {
-      map.set(member.employeeId, {
-        name: member.employee.name,
-        image: member.employee.image ?? null,
-      });
-    }
-    for (const member of membersGroup.projectGroup) {
-      map.set(member.employeeId, {
-        name: member.employee.name,
-        image: member.employee.image ?? null,
-      });
-    }
-    for (const employee of membersGroup.organizationMembers) {
-      map.set(employee.id, {
-        name: employee.name,
-        image: employee.image ?? null,
-      });
-    }
-    return map;
-  }, [
-    membersGroup.organizationMembers,
-    membersGroup.projectGroup,
-    membersGroup.trackMembers,
-  ]);
-
-  const displayName = currentLead?.employee.name ?? "Lead";
-  const displayImage = currentLead?.employee.image ?? "";
+  const displayName = currentLead?.employee.name ?? 'Lead'
+  const displayImage = currentLead?.employee.image ?? ''
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -87,7 +54,7 @@ export function TrackLeadPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full",
+              'h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full',
             )}
           />
         }
@@ -187,7 +154,7 @@ export function TrackLeadPicker({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
 export function TrackLeadDraftPicker({
@@ -195,8 +162,8 @@ export function TrackLeadDraftPicker({
   leadEmployeeId,
   onLeadChange,
 }: TrackLeadDraftPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const membersGroup = useTrackLeadDraftCandidates(projectId);
+  const [open, setOpen] = React.useState(false)
+  const membersGroup = useTrackLeadDraftCandidates(projectId)
 
   const currentLead =
     membersGroup.projectGroup.find(
@@ -205,7 +172,7 @@ export function TrackLeadDraftPicker({
     membersGroup.organizationMembers.find(
       (member) => member.id === leadEmployeeId,
     ) ??
-    null;
+    null
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -215,7 +182,7 @@ export function TrackLeadDraftPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full",
+              'h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full',
             )}
           />
         }
@@ -224,12 +191,12 @@ export function TrackLeadDraftPicker({
           <UserAvatar
             className="size-4"
             name={
-              "employee" in currentLead
+              'employee' in currentLead
                 ? currentLead.employee.name
                 : currentLead.name
             }
             imageUrl={
-              "employee" in currentLead
+              'employee' in currentLead
                 ? currentLead.employee.image
                 : currentLead.image
             }
@@ -239,10 +206,10 @@ export function TrackLeadDraftPicker({
         )}
         <span>
           {currentLead
-            ? "employee" in currentLead
+            ? 'employee' in currentLead
               ? currentLead.employee.name
               : currentLead.name
-            : "Lead"}
+            : 'Lead'}
         </span>
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0 max-w-[240px]">
@@ -297,55 +264,55 @@ export function TrackLeadDraftPicker({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
 export function useTrackMemberGroups(
-  trackId: Id<"tracks">,
-  projectId: Id<"projects">,
+  trackId: Id<'tracks'>,
+  projectId: Id<'projects'>,
 ) {
-  const trackMembers = useQuery(api.trackMember.list, { trackId });
-  const projectMembers = useQuery(api.projectMember.list, { projectId });
-  const employees = useQuery(api.employees.auth.list);
+  const trackMembers = useQuery(api.trackMember.list, { trackId })
+  const projectMembers = useQuery(api.projectMember.list, { projectId })
+  const employees = useQuery(api.employees.auth.list)
 
   const trackMemberIds = new Set(
     (trackMembers ?? []).map((member) => member.employeeId),
-  );
+  )
 
   const projectGroup = (projectMembers ?? []).filter(
     (member) => !trackMemberIds.has(member.employeeId),
-  );
+  )
 
   const projectGroupIds = new Set(
     projectGroup.map((member) => member.employeeId),
-  );
+  )
 
   const organizationMembers = (employees ?? []).filter(
     (employee) =>
       !trackMemberIds.has(employee.id) && !projectGroupIds.has(employee.id),
-  );
+  )
 
   return {
     trackMembers: trackMembers ?? [],
     projectGroup,
     organizationMembers,
-  };
+  }
 }
 
-function useTrackLeadDraftCandidates(projectId: Id<"projects">) {
-  const projectMembers = useQuery(api.projectMember.list, { projectId });
-  const employees = useQuery(api.employees.auth.list);
+function useTrackLeadDraftCandidates(projectId: Id<'projects'>) {
+  const projectMembers = useQuery(api.projectMember.list, { projectId })
+  const employees = useQuery(api.employees.auth.list)
 
   const projectMemberIds = new Set(
     (projectMembers ?? []).map((member) => member.employeeId),
-  );
+  )
 
   const organizationMembers = (employees ?? []).filter(
     (employee) => !projectMemberIds.has(employee.id),
-  );
+  )
 
   return {
     projectGroup: projectMembers ?? [],
     organizationMembers,
-  };
+  }
 }

@@ -1,21 +1,16 @@
-"use client";
+'use client'
 
-import { useMutation } from "convex/react";
-import { useParams, useRouter } from "next/navigation";
-import * as React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
-import { api } from "@/convex/_generated/api";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from 'convex/react'
+import { useParams, useRouter } from 'next/navigation'
+import * as React from 'react'
+import { useForm } from 'react-hook-form'
+import z from 'zod'
 import {
   ProjectIconPicker,
   useProjectIconPickerState,
-} from "@/components/projects/ProjectIconPicker";
-import {
-  DEFAULT_PROJECT_COLOR,
-  DEFAULT_PROJECT_ICON,
-} from "@/lib/project-appearance";
-import { Button } from "@/components/ui/button";
+} from '@/components/projects/ProjectIconPicker'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -23,51 +18,56 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Field, FieldError } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dialog'
+import { Field, FieldError } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { api } from '@/convex/_generated/api'
+import {
+  DEFAULT_PROJECT_COLOR,
+  DEFAULT_PROJECT_ICON,
+} from '@/lib/project-appearance'
 
 const createProjectSchema = z.object({
-  name: z.string().trim().min(1, "Project name is required"),
-});
+  name: z.string().trim().min(1, 'Project name is required'),
+})
 
-type CreateProjectValues = z.infer<typeof createProjectSchema>;
+type CreateProjectValues = z.infer<typeof createProjectSchema>
 
 type CreateProjectDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
 
 export function CreateProjectDialog({
   open,
   onOpenChange,
 }: CreateProjectDialogProps) {
-  const router = useRouter();
-  const params = useParams<{ orgSlug: string }>();
-  const createProject = useMutation(api.project.create);
-  const { icon, color, setIcon, setColor } = useProjectIconPickerState();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const router = useRouter()
+  const params = useParams<{ orgSlug: string }>()
+  const createProject = useMutation(api.project.create)
+  const { icon, color, setIcon, setColor } = useProjectIconPickerState()
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const form = useForm<CreateProjectValues>({
     resolver: zodResolver(createProjectSchema),
-    defaultValues: { name: "" },
-  });
+    defaultValues: { name: '' },
+  })
 
   React.useEffect(() => {
     if (open) {
-      setIcon(DEFAULT_PROJECT_ICON);
-      setColor(DEFAULT_PROJECT_COLOR);
+      setIcon(DEFAULT_PROJECT_ICON)
+      setColor(DEFAULT_PROJECT_COLOR)
     } else {
-      form.reset();
+      form.reset()
     }
-  }, [form, open, setColor, setIcon]);
+  }, [form, open, setColor, setIcon])
 
   const onSubmit = React.useCallback(
     async (values: CreateProjectValues) => {
-      setIsSubmitting(true);
+      setIsSubmitting(true)
 
       try {
-        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000
 
         const projectId = await createProject({
           name: values.name,
@@ -75,22 +75,22 @@ export function CreateProjectDialog({
           color,
           startDate: Date.now(),
           endDate: Date.now() + thirtyDaysMs,
-          status: "inactive",
-        });
+          status: 'inactive',
+        })
 
-        onOpenChange(false);
-        router.push(`/${params.orgSlug}/pro/${projectId}`);
+        onOpenChange(false)
+        router.push(`/${params.orgSlug}/pro/${projectId}`)
       } catch (error) {
-        form.setError("root", {
+        form.setError('root', {
           message:
-            error instanceof Error ? error.message : "Failed to create project",
-        });
+            error instanceof Error ? error.message : 'Failed to create project',
+        })
       } finally {
-        setIsSubmitting(false);
+        setIsSubmitting(false)
       }
     },
     [color, createProject, form, icon, onOpenChange, params.orgSlug, router],
-  );
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,7 +120,7 @@ export function CreateProjectDialog({
                 placeholder="Project name"
                 autoFocus
                 className="h-10"
-                {...form.register("name")}
+                {...form.register('name')}
               />
               <FieldError errors={[form.formState.errors.name]} />
             </Field>
@@ -142,11 +142,11 @@ export function CreateProjectDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating…" : "Create project"}
+              {isSubmitting ? 'Creating…' : 'Create project'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

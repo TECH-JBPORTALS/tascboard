@@ -1,26 +1,26 @@
-import { internalMutation, mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
-import { removeTrackCascade } from "./track";
-import { requireIdentity, requireOrganization } from "./lib/auth";
+import { v } from 'convex/values'
+import { components, internal } from './_generated/api'
+import type { Doc } from './_generated/dataModel'
+import { internalMutation, mutation, query } from './_generated/server'
+import { requireIdentity, requireOrganization } from './lib/auth'
+import { getProjectMembers } from './lib/memberHelper'
 import {
   actorDisplayName,
   formatProjectDate,
   logProjectActivity,
-} from "./lib/projectActivityLog";
-import { projectColorValidator } from "./lib/projectAppearance";
-import { getProjectMembers } from "./lib/memberHelper";
-import { components, internal } from "./_generated/api";
-import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from "./syncEditor";
+} from './lib/projectActivityLog'
+import { projectColorValidator } from './lib/projectAppearance'
+import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from './syncEditor'
+import { removeTrackCascade } from './track'
 
 const projectStatusValidator = v.union(
-  v.literal("active"),
-  v.literal("inactive"),
-  v.literal("terminated"),
-);
+  v.literal('active'),
+  v.literal('inactive'),
+  v.literal('terminated'),
+)
 
 const projectReturn = v.object({
-  _id: v.id("projects"),
+  _id: v.id('projects'),
   _creationTime: v.number(),
   organizationId: v.string(),
   name: v.string(),
@@ -33,7 +33,7 @@ const projectReturn = v.object({
   status: projectStatusValidator,
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
-});
+})
 
 export const create = mutation({
   args: {
@@ -45,18 +45,18 @@ export const create = mutation({
     endDate: v.number(),
     status: projectStatusValidator,
   },
-  returns: v.id("projects"),
+  returns: v.id('projects'),
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-    const { orgId, userId } = await requireOrganization(ctx);
+    const identity = await requireIdentity(ctx)
+    const { orgId, userId } = await requireOrganization(ctx)
 
     if (args.endDate < args.startDate) {
-      throw new Error("End date cannot be before start date");
+      throw new Error('End date cannot be before start date')
     }
 
-    const now = Date.now();
+    const now = Date.now()
 
-    const insertedProjectId = await ctx.db.insert("projects", {
+    const insertedProjectId = await ctx.db.insert('projects', {
       organizationId: orgId,
       name: args.name.trim(),
       summary: args.summary?.trim() || undefined,
@@ -67,25 +67,25 @@ export const create = mutation({
       status: args.status,
       createdAt: now,
       updatedAt: undefined,
-    });
+    })
 
     await ctx.runMutation(internal.syncEditor.createEditor, {
       id: getProjectEditorId(insertedProjectId),
       content: EMPTY_PROSEMIRROR_DOC,
-    });
+    })
 
     await logProjectActivity(ctx, {
       projectId: insertedProjectId,
       organizationId: orgId,
       actorUserId: userId,
       actorName: actorDisplayName(identity),
-      kind: "created",
+      kind: 'created',
       toValue: args.name.trim(),
-    });
+    })
 
-    return insertedProjectId;
+    return insertedProjectId
   },
-});
+})
 
 export const list = query({
   args: {},
@@ -96,29 +96,29 @@ export const list = query({
     }),
   ),
   handler: async (ctx) => {
-    await requireIdentity(ctx);
-    const { orgId } = await requireOrganization(ctx);
+    await requireIdentity(ctx)
+    const { orgId } = await requireOrganization(ctx)
     const projects = await ctx.db
-      .query("projects")
-      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
-      .order("desc")
-      .collect();
+      .query('projects')
+      .withIndex('by_organization', (q) => q.eq('organizationId', orgId))
+      .order('desc')
+      .collect()
 
     return await Promise.all(
       projects.map(async (project) => ({
         ...project,
         tracks: await ctx.db
-          .query("tracks")
-          .withIndex("by_project", (q) => q.eq("projectId", project._id))
+          .query('tracks')
+          .withIndex('by_project', (q) => q.eq('projectId', project._id))
           .collect(),
       })),
-    );
+    )
   },
-});
+})
 
 export const get = query({
   args: {
-    projectId: v.id("projects"),
+    projectId: v.id('projects'),
   },
   returns: v.union(
     v.object({
@@ -126,14 +126,14 @@ export const get = query({
 
       members: v.array(
         v.object({
-          _id: v.id("projectMember"),
+          _id: v.id('projectMember'),
           employeeId: v.string(),
         }),
       ),
 
       manager: v.union(
         v.object({
-          _id: v.id("projectMember"),
+          _id: v.id('projectMember'),
           employeeId: v.string(),
         }),
         v.null(),
@@ -142,31 +142,31 @@ export const get = query({
     v.null(),
   ),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
-    const { orgId } = await requireOrganization(ctx);
-    const project = await ctx.db.get(args.projectId);
+    await requireIdentity(ctx)
+    const { orgId } = await requireOrganization(ctx)
+    const project = await ctx.db.get(args.projectId)
     if (!project || project.organizationId !== orgId) {
-      return null;
+      return null
     }
 
     const content = await ctx.runQuery(
       components.prosemirrorSync.lib.getSnapshot,
       { id: getProjectEditorId(args.projectId) },
-    );
+    )
 
-    const { members, manager } = await getProjectMembers(ctx, project._id);
+    const { members, manager } = await getProjectMembers(ctx, project._id)
 
     return {
       ...{ ...project, description: content },
       members,
       manager,
-    };
+    }
   },
-});
+})
 
 export const update = mutation({
   args: {
-    projectId: v.id("projects"),
+    projectId: v.id('projects'),
     body: v.object({
       name: v.optional(v.string()),
       summary: v.optional(v.string()),
@@ -179,30 +179,30 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-    const { orgId, userId } = await requireOrganization(ctx);
-    const actorName = actorDisplayName(identity);
+    const identity = await requireIdentity(ctx)
+    const { orgId, userId } = await requireOrganization(ctx)
+    const actorName = actorDisplayName(identity)
 
-    const project = await ctx.db.get(args.projectId);
+    const project = await ctx.db.get(args.projectId)
 
     if (!project || project.organizationId !== orgId) {
-      throw new Error("Not found");
+      throw new Error('Not found')
     }
 
-    const nextStartDate = args.body.startDate ?? project.startDate;
-    const nextEndDate = args.body.endDate ?? project.endDate;
+    const nextStartDate = args.body.startDate ?? project.startDate
+    const nextEndDate = args.body.endDate ?? project.endDate
 
     if (nextEndDate < nextStartDate) {
-      throw new Error("End date cannot be before start date");
+      throw new Error('End date cannot be before start date')
     }
 
-    const patch: Partial<Doc<"projects">> = {};
+    const patch: Partial<Doc<'projects'>> = {}
 
     if (args.body.name !== undefined) {
-      const trimmed = args.body.name.trim();
+      const trimmed = args.body.name.trim()
 
       if (trimmed.length === 0) {
-        throw new Error("Project name cannot be empty");
+        throw new Error('Project name cannot be empty')
       }
 
       if (trimmed !== project.name) {
@@ -211,18 +211,18 @@ export const update = mutation({
           organizationId: orgId,
           actorUserId: userId,
           actorName,
-          kind: "name_changed",
+          kind: 'name_changed',
           fromValue: project.name,
           toValue: trimmed,
-        });
+        })
       }
 
-      patch.name = trimmed;
+      patch.name = trimmed
     }
 
     if (args.body.summary !== undefined) {
-      const trimmed = args.body.summary.trim();
-      const nextSummary = trimmed.length > 0 ? trimmed : undefined;
+      const trimmed = args.body.summary.trim()
+      const nextSummary = trimmed.length > 0 ? trimmed : undefined
 
       if (nextSummary !== (project.summary ?? undefined)) {
         await logProjectActivity(ctx, {
@@ -230,13 +230,13 @@ export const update = mutation({
           organizationId: orgId,
           actorUserId: userId,
           actorName,
-          kind: "summary_changed",
+          kind: 'summary_changed',
           fromValue: project.summary,
           toValue: nextSummary,
-        });
+        })
       }
 
-      patch.summary = nextSummary;
+      patch.summary = nextSummary
     }
 
     if (args.body.status !== undefined && args.body.status !== project.status) {
@@ -245,11 +245,11 @@ export const update = mutation({
         organizationId: orgId,
         actorUserId: userId,
         actorName,
-        kind: "status_changed",
+        kind: 'status_changed',
         fromValue: project.status,
         toValue: args.body.status,
-      });
-      patch.status = args.body.status;
+      })
+      patch.status = args.body.status
     }
 
     if (
@@ -261,11 +261,11 @@ export const update = mutation({
         organizationId: orgId,
         actorUserId: userId,
         actorName,
-        kind: "start_date_changed",
+        kind: 'start_date_changed',
         fromValue: formatProjectDate(project.startDate),
         toValue: formatProjectDate(args.body.startDate),
-      });
-      patch.startDate = args.body.startDate;
+      })
+      patch.startDate = args.body.startDate
     }
 
     if (
@@ -277,11 +277,11 @@ export const update = mutation({
         organizationId: orgId,
         actorUserId: userId,
         actorName,
-        kind: "end_date_changed",
+        kind: 'end_date_changed',
         fromValue: formatProjectDate(project.endDate),
         toValue: formatProjectDate(args.body.endDate),
-      });
-      patch.endDate = args.body.endDate;
+      })
+      patch.endDate = args.body.endDate
     }
 
     if (args.body.icon !== undefined && args.body.icon !== project.icon) {
@@ -290,11 +290,11 @@ export const update = mutation({
         organizationId: orgId,
         actorUserId: userId,
         actorName,
-        kind: "icon_changed",
+        kind: 'icon_changed',
         fromValue: project.icon,
         toValue: args.body.icon,
-      });
-      patch.icon = args.body.icon;
+      })
+      patch.icon = args.body.icon
     }
 
     if (args.body.color !== undefined && args.body.color !== project.color) {
@@ -303,160 +303,160 @@ export const update = mutation({
         organizationId: orgId,
         actorUserId: userId,
         actorName,
-        kind: "color_changed",
+        kind: 'color_changed',
         fromValue: project.color,
         toValue: args.body.color,
-      });
-      patch.color = args.body.color;
+      })
+      patch.color = args.body.color
     }
 
     if (Object.keys(patch).length === 0) {
-      return null;
+      return null
     }
 
-    patch.updatedAt = Date.now();
+    patch.updatedAt = Date.now()
 
-    await ctx.db.patch(args.projectId, patch);
+    await ctx.db.patch(args.projectId, patch)
 
-    return null;
+    return null
   },
-});
+})
 
 export const updateDescription = mutation({
   args: {
-    projectId: v.id("projects"),
+    projectId: v.id('projects'),
     description: v.any(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
-    const { orgId } = await requireOrganization(ctx);
+    await requireIdentity(ctx)
+    const { orgId } = await requireOrganization(ctx)
 
-    const project = await ctx.db.get(args.projectId);
+    const project = await ctx.db.get(args.projectId)
 
     if (!project || project.organizationId !== orgId) {
-      throw new Error("Not found");
+      throw new Error('Not found')
     }
 
     await ctx.db.patch(args.projectId, {
       description: args.description,
       updatedAt: Date.now(),
-    });
+    })
 
-    return null;
+    return null
   },
-});
+})
 
 export const remove = mutation({
   args: {
-    projectId: v.id("projects"),
+    projectId: v.id('projects'),
   },
   returns: v.object({
     success: v.boolean(),
     message: v.string(),
   }),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx);
+    await requireIdentity(ctx)
 
-    const project = await ctx.db.get(args.projectId);
-    const { orgId } = await requireOrganization(ctx);
+    const project = await ctx.db.get(args.projectId)
+    const { orgId } = await requireOrganization(ctx)
 
     if (!project || project.organizationId !== orgId) {
-      throw new Error("Not found");
+      throw new Error('Not found')
     }
 
     const tracks = await ctx.db
-      .query("tracks")
-      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
-      .collect();
+      .query('tracks')
+      .withIndex('by_project', (q) => q.eq('projectId', args.projectId))
+      .collect()
 
     for (const track of tracks) {
-      await removeTrackCascade(ctx, track._id);
+      await removeTrackCascade(ctx, track._id)
     }
 
     const labels = await ctx.db
-      .query("labels")
-      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
-      .collect();
+      .query('labels')
+      .withIndex('by_project', (q) => q.eq('projectId', args.projectId))
+      .collect()
 
-    await Promise.all(labels.map((label) => ctx.db.delete(label._id)));
+    await Promise.all(labels.map((label) => ctx.db.delete(label._id)))
 
-    const editorId = getProjectEditorId(args.projectId);
+    const editorId = getProjectEditorId(args.projectId)
     const latestVersion = await ctx.runQuery(
       components.prosemirrorSync.lib.latestVersion,
       {
         id: editorId,
       },
-    );
+    )
 
     if (latestVersion !== null) {
       await ctx.runMutation(components.prosemirrorSync.lib.deleteDocument, {
         id: editorId,
-      });
+      })
     }
 
-    await ctx.db.delete(args.projectId);
+    await ctx.db.delete(args.projectId)
 
     return {
       success: true,
-      message: "Project deleted successfully",
-    };
+      message: 'Project deleted successfully',
+    }
   },
-});
+})
 
 /** Idempotent seed so new organizations have starter projects */
 export const seedStarterProjects = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const { orgId } = await requireOrganization(ctx);
+    const { orgId } = await requireOrganization(ctx)
 
     const existing = await ctx.db
-      .query("projects")
-      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
-      .take(1);
+      .query('projects')
+      .withIndex('by_organization', (q) => q.eq('organizationId', orgId))
+      .take(1)
 
     if (existing.length > 0) {
-      return null;
+      return null
     }
 
-    const now = Date.now();
+    const now = Date.now()
 
-    const samples: Omit<Doc<"projects">, "_id" | "_creationTime">[] = [
+    const samples: Omit<Doc<'projects'>, '_id' | '_creationTime'>[] = [
       {
         organizationId: orgId,
-        name: "Employee Attendance System",
-        summary: "Track employee attendance and manage reporting workflows.",
-        icon: "📊",
-        color: "blue",
+        name: 'Employee Attendance System',
+        summary: 'Track employee attendance and manage reporting workflows.',
+        icon: '📊',
+        color: 'blue',
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 30,
-        status: "active",
+        status: 'active',
         createdAt: now,
         updatedAt: undefined,
       },
       {
         organizationId: orgId,
-        name: "Payroll Automation",
-        summary: "Automate salary generation and payroll exports.",
-        icon: "💎",
-        color: "purple",
+        name: 'Payroll Automation',
+        summary: 'Automate salary generation and payroll exports.',
+        icon: '💎',
+        color: 'purple',
         startDate: now,
         endDate: now + 1000 * 60 * 60 * 24 * 60,
-        status: "inactive",
+        status: 'inactive',
         createdAt: now,
         updatedAt: undefined,
       },
-    ];
+    ]
 
     for (const row of samples) {
-      const insertedProjectId = await ctx.db.insert("projects", row);
+      const insertedProjectId = await ctx.db.insert('projects', row)
       await ctx.runMutation(internal.syncEditor.createEditor, {
         id: getProjectEditorId(insertedProjectId),
         content: EMPTY_PROSEMIRROR_DOC,
-      });
+      })
     }
 
-    return null;
+    return null
   },
-});
+})

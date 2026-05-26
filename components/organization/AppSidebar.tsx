@@ -1,10 +1,5 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
-import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import {
   RiAddLargeFill,
   RiArrowDownSLine,
@@ -17,7 +12,13 @@ import {
   RiSettings3Line,
   RiTeamFill,
   RiTeamLine,
-} from "@remixicon/react";
+} from '@remixicon/react'
+import { useQuery } from 'convex/react'
+import Link from 'next/link'
+import { useParams, usePathname } from 'next/navigation'
+import React, { useState } from 'react'
+import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog'
+import { ProjectIcon } from '@/components/projects/ProjectIcon'
 import {
   Sidebar,
   SidebarContent,
@@ -33,52 +34,50 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar";
-import { OrganizationSwitcher } from "./OrganizationSwitcher";
-import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
-import { ProjectIcon } from "@/components/projects/ProjectIcon";
-import React from "react";
-import { cn } from "@/lib/utils";
-import { NavPermissionGate } from "./NavPermissionGate";
-import type { PermissionRequest } from "@/lib/permissions";
+} from '@/components/ui/sidebar'
+import { api } from '@/convex/_generated/api'
+import type { PermissionRequest } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
+import { NavPermissionGate } from './NavPermissionGate'
+import { OrganizationSwitcher } from './OrganizationSwitcher'
 
 const navItems = [
-  { label: "Inbox", href: "", icon: RiInboxLine, fillIcon: RiInboxFill },
+  { label: 'Inbox', href: '', icon: RiInboxLine, fillIcon: RiInboxFill },
   {
-    label: "Employees",
-    href: "/employees",
+    label: 'Employees',
+    href: '/employees',
     icon: RiTeamLine,
     fillIcon: RiTeamFill,
-    permissions: { employee: ["list"] },
+    permissions: { employee: ['list'] },
   },
   {
-    label: "Attendance",
-    href: "/attendance",
+    label: 'Attendance',
+    href: '/attendance',
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
-    permissions: { attendance: ["read"] },
+    permissions: { attendance: ['read'] },
   },
   {
-    label: "Settings",
-    href: "/settings",
+    label: 'Settings',
+    href: '/settings',
     icon: RiSettings3Line,
     fillIcon: RiSettings3Line,
-    permissions: { settings: ["read"] },
+    permissions: { settings: ['read'] },
   },
-];
+]
 
 export function AppSidebar({
   className,
   showTooltip = false,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { showTooltip?: boolean }) {
-  const pathname = usePathname();
-  const params = useParams<{ orgSlug: string }>();
-  const basePath = `/${params.orgSlug}`;
-  const unreadCount = useQuery(api.inbox.unreadCount);
+  const pathname = usePathname()
+  const params = useParams<{ orgSlug: string }>()
+  const basePath = `/${params.orgSlug}`
+  const unreadCount = useQuery(api.inbox.unreadCount)
 
   return (
-    <Sidebar {...props} className={cn("group", className)}>
+    <Sidebar {...props} className={cn('group', className)}>
       <SidebarHeader className="p-2 h-14  justify-center border-b">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -92,11 +91,11 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                const href = `${basePath}${item.href}`;
+                const href = `${basePath}${item.href}`
                 const isActive =
-                  item.href === ""
+                  item.href === ''
                     ? pathname === basePath
-                    : pathname.startsWith(href);
+                    : pathname.startsWith(href)
 
                 const link = (
                   <SidebarMenuItem key={item.label}>
@@ -108,17 +107,17 @@ export function AppSidebar({
                       {isActive ? <item.fillIcon /> : <item.icon />}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
-                    {item.label === "Inbox" &&
-                    typeof unreadCount === "number" &&
+                    {item.label === 'Inbox' &&
+                    typeof unreadCount === 'number' &&
                     unreadCount > 0 ? (
                       <SidebarMenuBadge className="bg-primary/15 text-primary">
-                        {unreadCount > 99 ? "99+" : unreadCount}
+                        {unreadCount > 99 ? '99+' : unreadCount}
                       </SidebarMenuBadge>
                     ) : null}
                   </SidebarMenuItem>
-                );
+                )
 
-                if ("permissions" in item && item.permissions) {
+                if ('permissions' in item && item.permissions) {
                   return (
                     <NavPermissionGate
                       key={item.label}
@@ -126,10 +125,10 @@ export function AppSidebar({
                     >
                       {link}
                     </NavPermissionGate>
-                  );
+                  )
                 }
 
-                return link;
+                return link
               })}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -139,29 +138,29 @@ export function AppSidebar({
         <ProjectSidebarGroup />
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }
 
 function ProjectSidebarGroup() {
-  const pathname = usePathname();
-  const params = useParams<{ orgSlug: string }>();
-  const basePath = `/${params.orgSlug}`;
-  const projects = useQuery(api.project.list);
-  const [createOpen, setCreateOpen] = useState(false);
+  const pathname = usePathname()
+  const params = useParams<{ orgSlug: string }>()
+  const basePath = `/${params.orgSlug}`
+  const projects = useQuery(api.project.list)
+  const [createOpen, setCreateOpen] = useState(false)
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     () => new Set(),
-  );
+  )
 
   function toggleProject(projectId: string) {
     setExpandedProjects((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev)
       if (next.has(projectId)) {
-        next.delete(projectId);
+        next.delete(projectId)
       } else {
-        next.add(projectId);
+        next.add(projectId)
       }
-      return next;
-    });
+      return next
+    })
   }
 
   return (
@@ -178,18 +177,18 @@ function ProjectSidebarGroup() {
       <SidebarGroupContent>
         <SidebarMenu>
           {projects?.map((pro) => {
-            const href = `${basePath}/pro/${pro._id}`;
+            const href = `${basePath}/pro/${pro._id}`
             const isProjectActive =
-              pathname === href || pathname.startsWith(`${href}/`);
-            const isExpanded = expandedProjects.has(pro._id) || isProjectActive;
-            const tracks = pro.tracks ?? [];
-            const hasTracks = tracks.length > 0;
-            const Chevron = isExpanded ? RiArrowDownSLine : RiArrowRightSLine;
+              pathname === href || pathname.startsWith(`${href}/`)
+            const isExpanded = expandedProjects.has(pro._id) || isProjectActive
+            const tracks = pro.tracks ?? []
+            const hasTracks = tracks.length > 0
+            const Chevron = isExpanded ? RiArrowDownSLine : RiArrowRightSLine
 
             return (
               <SidebarMenuItem key={pro._id} className="relative">
                 <SidebarMenuButton
-                  isActive={isProjectActive && !pathname.includes("/track/")}
+                  isActive={isProjectActive && !pathname.includes('/track/')}
                   tooltip={{ children: pro.name }}
                   render={<Link href={href} />}
                 >
@@ -201,12 +200,12 @@ function ProjectSidebarGroup() {
                     type="button"
                     className="absolute right-1 top-1.5 flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent"
                     aria-label={
-                      isExpanded ? "Collapse tracks" : "Expand tracks"
+                      isExpanded ? 'Collapse tracks' : 'Expand tracks'
                     }
                     onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      toggleProject(pro._id);
+                      event.preventDefault()
+                      event.stopPropagation()
+                      toggleProject(pro._id)
                     }}
                   >
                     <Chevron className="size-3.5" />
@@ -215,8 +214,8 @@ function ProjectSidebarGroup() {
                 {hasTracks && isExpanded ? (
                   <SidebarMenuSub>
                     {tracks.map((track) => {
-                      const trackHref = `${href}/track/${track._id}`;
-                      const isTrackActive = pathname === trackHref;
+                      const trackHref = `${href}/track/${track._id}`
+                      const isTrackActive = pathname === trackHref
 
                       return (
                         <SidebarMenuSubItem key={track._id}>
@@ -228,16 +227,16 @@ function ProjectSidebarGroup() {
                             <span className="truncate">{track.name}</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
-                      );
+                      )
                     })}
                   </SidebarMenuSub>
                 ) : null}
               </SidebarMenuItem>
-            );
+            )
           })}
         </SidebarMenu>
       </SidebarGroupContent>
       <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
     </SidebarGroup>
-  );
+  )
 }

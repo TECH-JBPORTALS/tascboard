@@ -1,21 +1,17 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation, useQuery } from "convex/react";
 import {
+  RemixiconComponentType,
   RiAddLine,
   RiArchiveLine,
   RiCheckboxCircleLine,
-  RiRouteLine,
-  RiTriangleFill,
   RiMoreFill,
   RiPlayCircleLine,
-  RemixiconComponentType,
-} from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { authClient } from "@/lib/auth-client";
-import { nextTrackCode, type TrackStatus } from "@/lib/track-utils";
+  RiRouteLine,
+  RiTriangleFill,
+} from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,98 +21,102 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/select'
+import { api } from '@/convex/_generated/api'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { authClient } from '@/lib/auth-client'
+import { nextTrackCode, type TrackStatus } from '@/lib/track-utils'
+import { RichTextEditor } from '../editor/RichTextEditor'
+import { TitleInput } from '../TitleInput'
+import { Card, CardContent, CardFooter, CardHeader } from '../ui/card'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
-import { TitleInput } from "../TitleInput";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { RichTextEditor } from "../editor/RichTextEditor";
-import { TrackLeadPicker, TrackLeadDraftPicker } from "./TrackLeadPicker";
-import { TrackMembersPicker } from "./TrackMembersPicker";
+} from '../ui/collapsible'
+import { TrackLeadDraftPicker, TrackLeadPicker } from './TrackLeadPicker'
+import { TrackMembersPicker } from './TrackMembersPicker'
 
 type ProjectTracksSectionProps = {
-  projectId: Id<"projects">;
-  orgSlug: string;
-};
+  projectId: Id<'projects'>
+  orgSlug: string
+}
 
 type TrackCreateComposerProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  projectId: Id<"projects">;
-  existingTrackCodes: string[];
-  defaultLeaderId: string;
-  onCreated: () => void;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  projectId: Id<'projects'>
+  existingTrackCodes: string[]
+  defaultLeaderId: string
+  onCreated: () => void
+}
 
 type TrackListRowProps = {
-  track: Doc<"tracks">;
-  onDelete: (track: Doc<"tracks">) => void;
-};
+  track: Doc<'tracks'>
+  onDelete: (track: Doc<'tracks'>) => void
+}
 
 type TrackStatusSelectProps = {
-  value: TrackStatus;
-  onValueChange: (value: TrackStatus | null) => void;
-  disabled?: boolean;
-  align?: "start" | "center" | "end";
-  triggerClassName?: string;
-};
+  value: TrackStatus
+  onValueChange: (value: TrackStatus | null) => void
+  disabled?: boolean
+  align?: 'start' | 'center' | 'end'
+  triggerClassName?: string
+}
 
 const TRACK_STATUS_OPTIONS: Array<{
-  value: TrackStatus;
-  icon: RemixiconComponentType;
-  label: string;
-  iconColor: string;
+  value: TrackStatus
+  icon: RemixiconComponentType
+  label: string
+  iconColor: string
 }> = [
   {
-    value: "active",
+    value: 'active',
     icon: RiPlayCircleLine,
-    label: "Active",
-    iconColor: "var(--color-primary)",
+    label: 'Active',
+    iconColor: 'var(--color-primary)',
   },
   {
-    value: "completed",
+    value: 'completed',
     icon: RiCheckboxCircleLine,
-    label: "Completed",
-    iconColor: "var(--color-green-600)",
+    label: 'Completed',
+    iconColor: 'var(--color-green-600)',
   },
   {
-    value: "archived",
+    value: 'archived',
     icon: RiArchiveLine,
-    label: "Archived",
-    iconColor: "var(--color-amber-600)",
+    label: 'Archived',
+    iconColor: 'var(--color-amber-600)',
   },
-];
+]
 
 function TrackStatusSelect({
   value,
   onValueChange,
   disabled,
-  align = "end",
+  align = 'end',
   triggerClassName,
 }: TrackStatusSelectProps) {
   const statusMeta = TRACK_STATUS_OPTIONS.find(
     (option) => option.value === value,
-  );
-  if (!statusMeta) return null;
-  const StatusIcon = statusMeta.icon;
-  const StatusIconColor = statusMeta.iconColor;
+  )
+  if (!statusMeta) return null
+  const StatusIcon = statusMeta.icon
+  const StatusIconColor = statusMeta.iconColor
 
   return (
     <Select
@@ -128,7 +128,7 @@ function TrackStatusSelect({
     >
       <SelectTrigger
         size="sm"
-        className={`h-7 w-fit border-none text-xs! ${triggerClassName ?? ""}`}
+        className={`h-7 w-fit border-none text-xs! ${triggerClassName ?? ''}`}
       >
         <span className="inline-flex items-center gap-1.5">
           <StatusIcon color={StatusIconColor} className="size-3.5" />
@@ -148,7 +148,7 @@ function TrackStatusSelect({
         </SelectGroup>
       </SelectContent>
     </Select>
-  );
+  )
 }
 
 function TrackCreateComposer({
@@ -159,43 +159,43 @@ function TrackCreateComposer({
   defaultLeaderId,
   onCreated,
 }: TrackCreateComposerProps) {
-  const createTrack = useMutation(api.track.create);
-  const nameInputRef = React.useRef<HTMLInputElement>(null);
-  const [newName, setNewName] = React.useState("");
-  const [newDescription, setNewDescription] = React.useState("");
-  const [newStatus, setNewStatus] = React.useState<TrackStatus>("active");
-  const [selectedLeadId, setSelectedLeadId] = React.useState(defaultLeaderId);
-  const [createError, setCreateError] = React.useState<string | null>(null);
-  const [isCreating, setIsCreating] = React.useState(false);
+  const createTrack = useMutation(api.track.create)
+  const nameInputRef = React.useRef<HTMLInputElement>(null)
+  const [newName, setNewName] = React.useState('')
+  const [newDescription, setNewDescription] = React.useState('')
+  const [newStatus, setNewStatus] = React.useState<TrackStatus>('active')
+  const [selectedLeadId, setSelectedLeadId] = React.useState(defaultLeaderId)
+  const [createError, setCreateError] = React.useState<string | null>(null)
+  const [isCreating, setIsCreating] = React.useState(false)
 
   React.useEffect(() => {
     if (open) {
-      const timer = setTimeout(() => nameInputRef.current?.focus(), 120);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => nameInputRef.current?.focus(), 120)
+      return () => clearTimeout(timer)
     }
-  }, [open]);
+  }, [open])
 
   function resetForm() {
-    setNewName("");
-    setNewDescription("");
-    setNewStatus("active");
-    setSelectedLeadId(defaultLeaderId);
-    setCreateError(null);
+    setNewName('')
+    setNewDescription('')
+    setNewStatus('active')
+    setSelectedLeadId(defaultLeaderId)
+    setCreateError(null)
   }
 
   function closeForm() {
-    onOpenChange(false);
-    resetForm();
+    onOpenChange(false)
+    resetForm()
   }
 
   async function handleCreateTrack() {
-    const trimmedName = newName.trim();
+    const trimmedName = newName.trim()
     if (!trimmedName) {
-      setCreateError("Track title is required");
-      return;
+      setCreateError('Track title is required')
+      return
     }
-    setIsCreating(true);
-    setCreateError(null);
+    setIsCreating(true)
+    setCreateError(null)
     try {
       await createTrack({
         name: trimmedName,
@@ -204,22 +204,22 @@ function TrackCreateComposer({
         trackCode: nextTrackCode(existingTrackCodes),
         trackLeaderID: selectedLeadId,
         status: newStatus,
-      });
-      closeForm();
-      onCreated();
+      })
+      closeForm()
+      onCreated()
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : "Failed to create track",
-      );
+        error instanceof Error ? error.message : 'Failed to create track',
+      )
     } finally {
-      setIsCreating(false);
+      setIsCreating(false)
     }
   }
 
   return (
     <div
       className={`grid transition-all origin-top px-1.5 duration-200 ease-out ${
-        open ? "grid-rows-[1fr] opacity-100 " : "grid-rows-[0fr]  opacity-0"
+        open ? 'grid-rows-[1fr] opacity-100 ' : 'grid-rows-[0fr]  opacity-0'
       }`}
       aria-hidden={!open}
     >
@@ -256,7 +256,7 @@ function TrackCreateComposer({
               <TrackStatusSelect
                 value={newStatus}
                 onValueChange={(value) => {
-                  if (value) setNewStatus(value);
+                  if (value) setNewStatus(value)
                 }}
                 triggerClassName="h-8 w-fit bg-transparent shadow-none hover:bg-muted"
               />
@@ -278,36 +278,36 @@ function TrackCreateComposer({
               onClick={() => handleCreateTrack()}
               disabled={isCreating}
             >
-              {isCreating ? "Creating…" : "Create track"}
+              {isCreating ? 'Creating…' : 'Create track'}
             </Button>
           </div>
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }
 
 function TrackListRow({ track, onDelete }: TrackListRowProps) {
-  const updateTrack = useMutation(api.track.update);
-  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
-  const [isSavingText, setIsSavingText] = React.useState(false);
-  const [titleDraft, setTitleDraft] = React.useState(track.name);
-  const descriptionDraft = track.description ?? "";
+  const updateTrack = useMutation(api.track.update)
+  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false)
+  const [isSavingText, setIsSavingText] = React.useState(false)
+  const [titleDraft, setTitleDraft] = React.useState(track.name)
+  const descriptionDraft = track.description ?? ''
 
   async function saveTextFields(nextTitle: string, nextDescription: string) {
-    const trimmedTitle = nextTitle.trim();
-    const normalizedDescription = nextDescription.trim();
+    const trimmedTitle = nextTitle.trim()
+    const normalizedDescription = nextDescription.trim()
     if (!trimmedTitle) {
-      setTitleDraft(track.name);
-      return;
+      setTitleDraft(track.name)
+      return
     }
-    const hasNameChange = trimmedTitle !== track.name;
+    const hasNameChange = trimmedTitle !== track.name
     const hasDescriptionChange =
-      normalizedDescription !== (track.description ?? "").trim();
-    if (!hasNameChange && !hasDescriptionChange) return;
+      normalizedDescription !== (track.description ?? '').trim()
+    if (!hasNameChange && !hasDescriptionChange) return
 
-    setIsSavingText(true);
-    setTitleDraft(trimmedTitle);
+    setIsSavingText(true)
+    setTitleDraft(trimmedTitle)
     try {
       await updateTrack({
         trackId: track._id,
@@ -315,26 +315,26 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
           name: trimmedTitle,
           description: normalizedDescription,
         },
-      });
+      })
     } finally {
-      setIsSavingText(false);
+      setIsSavingText(false)
     }
   }
 
   async function handleStatusChange(value: TrackStatus | null) {
-    if (!value) return;
-    const nextStatus = value;
-    if (nextStatus === track.status) return;
-    setIsUpdatingStatus(true);
+    if (!value) return
+    const nextStatus = value
+    if (nextStatus === track.status) return
+    setIsUpdatingStatus(true)
     try {
       await updateTrack({
         trackId: track._id,
         body: {
           status: nextStatus,
         },
-      });
+      })
     } finally {
-      setIsUpdatingStatus(false);
+      setIsUpdatingStatus(false)
     }
   }
 
@@ -346,14 +346,14 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
           <TitleInput
             value={titleDraft}
             onSave={(save) => {
-              setTitleDraft(save);
-              void saveTextFields(save, descriptionDraft);
+              setTitleDraft(save)
+              void saveTextFields(save, descriptionDraft)
             }}
             disabled={isSavingText}
             className="text-base! pb-0!"
           />
           <CollapsibleTrigger
-            render={<Button size={"icon-xs"} variant={"ghost"} />}
+            render={<Button size={'icon-xs'} variant={'ghost'} />}
           >
             <RiTriangleFill className="size-1.5 text-muted-foreground group-aria-expanded/button:rotate-180! rotate-90 transition-transform duration-150" />
           </CollapsibleTrigger>
@@ -368,7 +368,7 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
           <TrackStatusSelect
             value={track.status}
             onValueChange={(value) => {
-              void handleStatusChange(value);
+              void handleStatusChange(value)
             }}
             disabled={isUpdatingStatus}
           />
@@ -378,7 +378,7 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label="Track actions"
-              render={<Button size={"icon-xs"} variant={"ghost"} />}
+              render={<Button size={'icon-xs'} variant={'ghost'} />}
             >
               <RiMoreFill className="size-3" />
             </DropdownMenuTrigger>
@@ -393,7 +393,7 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
           </DropdownMenu>
         </div>
       </div>
-      <CollapsibleContent className={"px-6 py-2.5"}>
+      <CollapsibleContent className={'px-6 py-2.5'}>
         <RichTextEditor
           value={descriptionDraft}
           onSave={(save) => void saveTextFields(titleDraft, save)}
@@ -402,47 +402,47 @@ function TrackListRow({ track, onDelete }: TrackListRowProps) {
         />
       </CollapsibleContent>
     </Collapsible>
-  );
+  )
 }
 
 export function ProjectTracksSection(props: ProjectTracksSectionProps) {
-  const { projectId } = props;
-  const tracks = useQuery(api.track.listByProject, { projectId });
-  const removeTrack = useMutation(api.track.remove);
-  const { data: session } = authClient.useSession();
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [hasStartedCreating, setHasStartedCreating] = React.useState(false);
+  const { projectId } = props
+  const tracks = useQuery(api.track.listByProject, { projectId })
+  const removeTrack = useMutation(api.track.remove)
+  const { data: session } = authClient.useSession()
+  const [createOpen, setCreateOpen] = React.useState(false)
+  const [hasStartedCreating, setHasStartedCreating] = React.useState(false)
   const [deletingTrack, setDeletingTrack] =
-    React.useState<Doc<"tracks"> | null>(null);
-  const [isDeleting, setIsDeleting] = React.useState(false);
+    React.useState<Doc<'tracks'> | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
-  const defaultLeaderId = session?.user?.id ?? "unassigned";
-  const existingTrackCodes = tracks?.map((t) => t.trackCode) ?? [];
-  const hasTracks = (tracks?.length ?? 0) > 0;
-  const showHeader = hasTracks || hasStartedCreating || createOpen;
+  const defaultLeaderId = session?.user?.id ?? 'unassigned'
+  const existingTrackCodes = tracks?.map((t) => t.trackCode) ?? []
+  const hasTracks = (tracks?.length ?? 0) > 0
+  const showHeader = hasTracks || hasStartedCreating || createOpen
 
   function openCreateForm() {
-    setHasStartedCreating(true);
-    setCreateOpen(true);
+    setHasStartedCreating(true)
+    setCreateOpen(true)
   }
 
   function closeCreateForm(open: boolean) {
     if (open) {
-      openCreateForm();
-      return;
+      openCreateForm()
+      return
     }
-    setHasStartedCreating(false);
-    setCreateOpen(false);
+    setHasStartedCreating(false)
+    setCreateOpen(false)
   }
 
   async function handleDelete() {
-    if (!deletingTrack) return;
-    setIsDeleting(true);
+    if (!deletingTrack) return
+    setIsDeleting(true)
     try {
-      await removeTrack({ trackId: deletingTrack._id });
-      setDeletingTrack(null);
+      await removeTrack({ trackId: deletingTrack._id })
+      setDeletingTrack(null)
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
   }
 
@@ -505,7 +505,7 @@ export function ProjectTracksSection(props: ProjectTracksSectionProps) {
               disabled={createOpen}
               variant="ghost"
               onClick={openCreateForm}
-              className={"text-muted-foreground hover:text-foreground"}
+              className={'text-muted-foreground hover:text-foreground'}
             >
               <RiAddLine className="size-4" />
               Track
@@ -517,7 +517,7 @@ export function ProjectTracksSection(props: ProjectTracksSectionProps) {
       <AlertDialog
         open={deletingTrack !== null}
         onOpenChange={(open) => {
-          if (!open) setDeletingTrack(null);
+          if (!open) setDeletingTrack(null)
         }}
       >
         <AlertDialogContent>
@@ -535,11 +535,11 @@ export function ProjectTracksSection(props: ProjectTracksSectionProps) {
               disabled={isDeleting}
               onClick={() => void handleDelete()}
             >
-              {isDeleting ? "Deleting…" : "Delete"}
+              {isDeleting ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </section>
-  );
+  )
 }

@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { RiAccountCircle2Line } from "@remixicon/react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
-import { UserAvatar } from "../employees/UserAvatar";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { RiAccountCircle2Line } from '@remixicon/react'
+import { useMutation } from 'convex/react'
+import * as React from 'react'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { UserAvatar } from '../employees/UserAvatar'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
 import {
   Command,
   CommandEmpty,
@@ -16,22 +16,22 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { useTrackMemberGroups } from "./TrackLeadPicker";
+} from '../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { useTrackMemberGroups } from './TrackLeadPicker'
 
 interface TrackMembersPickerProps {
-  trackId: Id<"tracks">;
-  projectId: Id<"projects">;
+  trackId: Id<'tracks'>
+  projectId: Id<'projects'>
 }
 
 export function TrackMembersPicker({
   trackId,
   projectId,
 }: TrackMembersPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const membersGroup = useTrackMemberGroups(trackId, projectId);
-  const toggleMember = useMutation(api.trackMember.toggleMember);
+  const [open, setOpen] = React.useState(false)
+  const membersGroup = useTrackMemberGroups(trackId, projectId)
+  const toggleMember = useMutation(api.trackMember.toggleMember)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -41,7 +41,7 @@ export function TrackMembersPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground",
+              'h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground',
             )}
           />
         }
@@ -68,7 +68,7 @@ export function TrackMembersPicker({
         <Command
           value={membersGroup.trackMembers
             .map((member) => member.employeeId)
-            .join(",")}
+            .join(',')}
         >
           <CommandList>
             <CommandInput placeholder="Set member..." />
@@ -80,7 +80,10 @@ export function TrackMembersPicker({
                   key={member.employeeId}
                   value={member.employeeId}
                   onSelect={() =>
-                    void toggleMember({ trackId, employeeId: member.employeeId })
+                    void toggleMember({
+                      trackId,
+                      employeeId: member.employeeId,
+                    })
                   }
                   className="w-full"
                 >
@@ -104,7 +107,10 @@ export function TrackMembersPicker({
                     key={member.employeeId}
                     value={member.employeeId}
                     onSelect={() =>
-                      void toggleMember({ trackId, employeeId: member.employeeId })
+                      void toggleMember({
+                        trackId,
+                        employeeId: member.employeeId,
+                      })
                     }
                   >
                     <UserAvatar
@@ -142,5 +148,5 @@ export function TrackMembersPicker({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

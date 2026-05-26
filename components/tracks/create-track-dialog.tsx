@@ -1,11 +1,8 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { nextTrackCode } from "@/lib/track-utils";
-import { Button } from "@/components/ui/button";
+import { useMutation } from 'convex/react'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -13,25 +10,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { nextTrackCode } from '@/lib/track-utils'
 
 type CreateTrackDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  projectId: Id<"projects">;
-  existingTrackCodes: string[];
-  defaultLeaderId: string;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  projectId: Id<'projects'>
+  existingTrackCodes: string[]
+  defaultLeaderId: string
+}
 
 export function CreateTrackDialog({
   open,
@@ -40,34 +40,34 @@ export function CreateTrackDialog({
   existingTrackCodes,
   defaultLeaderId,
 }: CreateTrackDialogProps) {
-  const createTrack = useMutation(api.track.create);
-  const [name, setName] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [status, setStatus] = React.useState<"active" | "completed" | "archived">(
-    "active",
-  );
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const createTrack = useMutation(api.track.create)
+  const [name, setName] = React.useState('')
+  const [description, setDescription] = React.useState('')
+  const [status, setStatus] = React.useState<
+    'active' | 'completed' | 'archived'
+  >('active')
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (!open) {
-      setName("");
-      setDescription("");
-      setStatus("active");
-      setError(null);
+      setName('')
+      setDescription('')
+      setStatus('active')
+      setError(null)
     }
-  }, [open]);
+  }, [open])
 
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    const trimmed = name.trim();
+    event.preventDefault()
+    const trimmed = name.trim()
     if (!trimmed) {
-      setError("Track name is required");
-      return;
+      setError('Track name is required')
+      return
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true)
+    setError(null)
 
     try {
       await createTrack({
@@ -77,12 +77,12 @@ export function CreateTrackDialog({
         trackCode: nextTrackCode(existingTrackCodes),
         trackLeaderID: defaultLeaderId,
         status,
-      });
-      onOpenChange(false);
+      })
+      onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create track");
+      setError(err instanceof Error ? err.message : 'Failed to create track')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -122,7 +122,7 @@ export function CreateTrackDialog({
               <Select
                 value={status}
                 onValueChange={(value) =>
-                  setStatus(value as "active" | "completed" | "archived")
+                  setStatus(value as 'active' | 'completed' | 'archived')
                 }
               >
                 <SelectTrigger>
@@ -135,9 +135,7 @@ export function CreateTrackDialog({
                 </SelectContent>
               </Select>
             </div>
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>
           <DialogFooter>
             <Button
@@ -148,11 +146,11 @@ export function CreateTrackDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating…" : "Create track"}
+              {isSubmitting ? 'Creating…' : 'Create track'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

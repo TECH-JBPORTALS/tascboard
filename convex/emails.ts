@@ -1,11 +1,11 @@
-import { Resend } from "@convex-dev/resend";
-import { internalAction, internalMutation } from "./_generated/server";
-import { v } from "convex/values";
-import { components, internal } from "./_generated/api";
+import { Resend } from '@convex-dev/resend'
+import { v } from 'convex/values'
+import { components, internal } from './_generated/api'
+import { internalAction, internalMutation } from './_generated/server'
 
 export const resend = new Resend(components.resend, {
-  testMode: process.env.NODE_ENV === "development",
-});
+  testMode: process.env.NODE_ENV === 'development',
+})
 
 export const sendInvitationEmail = internalMutation({
   args: {
@@ -16,13 +16,13 @@ export const sendInvitationEmail = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
-    const inviteLink = `${siteUrl}/accept-invitation/${args.invitationId}`;
-    const displayName = args.email.split("@")[0] || args.email;
+    const siteUrl = process.env.SITE_URL ?? 'http://localhost:3000'
+    const inviteLink = `${siteUrl}/accept-invitation/${args.invitationId}`
+    const displayName = args.email.split('@')[0] || args.email
 
     await resend.sendEmail(ctx, {
       from:
-        process.env.RESEND_FROM_EMAIL ?? "Tascboard <onboarding@resend.dev>",
+        process.env.RESEND_FROM_EMAIL ?? 'Tascboard <onboarding@resend.dev>',
       to: args.email,
       subject: `You're invited to join ${args.organizationName} on Tascboard`,
       html: `
@@ -42,11 +42,11 @@ export const sendInvitationEmail = internalMutation({
           </p>
         </div>
       `,
-    });
+    })
 
-    return null;
+    return null
   },
-});
+})
 
 export const processInvitationEmail = internalAction({
   args: {
@@ -63,8 +63,8 @@ export const processInvitationEmail = internalAction({
       organizationName: args.organizationName,
       inviterName: args.inviterName,
       invitationId: args.invitationId,
-    });
+    })
 
-    return null;
+    return null
   },
-});
+})

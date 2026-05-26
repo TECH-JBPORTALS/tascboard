@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import type * as React from "react";
-import Link from "next/link";
-import { RiArrowRightSLine } from "@remixicon/react";
-import { ProjectIcon } from "@/components/projects/ProjectIcon";
-import { cn } from "@/lib/utils";
-import { PageHeader } from "../ui/page-header";
+import { RiArrowRightSLine } from '@remixicon/react'
+import Link from 'next/link'
+import type * as React from 'react'
+import { ProjectIcon } from '@/components/projects/ProjectIcon'
+import { cn } from '@/lib/utils'
+import { PageHeader } from '../ui/page-header'
 
 type ProjectPageHeaderProps = {
-  orgSlug: string;
-  projectName: string;
-  icon?: string | null;
-  color?: string | null;
-  actions?: React.ReactNode;
-  className?: string;
-};
+  orgSlug: string
+  projectName: string
+  icon?: string | null
+  color?: string | null
+  actions?: React.ReactNode
+  className?: string
+}
 
 export function ProjectPageHeader({
   orgSlug,
@@ -42,5 +42,5 @@ export function ProjectPageHeader({
         </div>
       }
     />
-  );
+  )
 }

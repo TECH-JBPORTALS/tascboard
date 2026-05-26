@@ -11,4 +11,4 @@ export {
   saveBankDetails,
   saveGeneralInfo,
   saveGovernmentId,
-} from "../employeeProfiles";
+} from '../employeeProfiles'

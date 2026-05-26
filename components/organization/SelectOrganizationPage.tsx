@@ -1,100 +1,98 @@
-"use client";
+'use client'
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import {
-  resolveOrganizationDestination,
-  type OrganizationListItem,
-} from "@/lib/organization-membership";
-import { parseOrganizationMetadata } from "@/lib/organization";
-import { OrganizationAvatar } from "./OrganizationAvatar";
-import { Button } from "@/components/ui/button";
+import { RiAddLine, RiArrowRightLine } from '@remixicon/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { RiAddLine, RiArrowRightLine } from "@remixicon/react";
+} from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { authClient } from '@/lib/auth-client'
+import { parseOrganizationMetadata } from '@/lib/organization'
+import {
+  type OrganizationListItem,
+  resolveOrganizationDestination,
+} from '@/lib/organization-membership'
+import { OrganizationAvatar } from './OrganizationAvatar'
 
 export function SelectOrganizationPage() {
-  const router = useRouter();
+  const router = useRouter()
   const { data: organizations, isPending: orgsPending } =
-    authClient.useListOrganizations();
-  const { data: session, isPending: sessionPending } = authClient.useSession();
-  const [selectingId, setSelectingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    authClient.useListOrganizations()
+  const { data: session, isPending: sessionPending } = authClient.useSession()
+  const [selectingId, setSelectingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const orgList = useMemo(
     () => (organizations ?? []) as OrganizationListItem[],
     [organizations],
-  );
-  const activeOrganizationId = session?.session.activeOrganizationId;
-  const isLoading = orgsPending || sessionPending;
+  )
+  const activeOrganizationId = session?.session.activeOrganizationId
+  const isLoading = orgsPending || sessionPending
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) return
 
     const destination = resolveOrganizationDestination(
       orgList,
       activeOrganizationId,
-    );
+    )
 
-    if (destination.type === "create") {
-      router.replace("/create-organization");
-      return;
+    if (destination.type === 'create') {
+      router.replace('/create-organization')
+      return
     }
 
-    if (destination.type === "organization") {
-      const { id, slug } = destination.organization;
+    if (destination.type === 'organization') {
+      const { id, slug } = destination.organization
 
       if (activeOrganizationId === id) {
-        router.replace(`/${slug}`);
-        return;
+        router.replace(`/${slug}`)
+        return
       }
 
-      let cancelled = false;
+      let cancelled = false
       void (async () => {
         await authClient.organization.setActive({
           organizationId: id,
-        });
+        })
         if (!cancelled) {
-          router.replace(`/${slug}`);
+          router.replace(`/${slug}`)
         }
-      })();
+      })()
 
       return () => {
-        cancelled = true;
-      };
+        cancelled = true
+      }
     }
-  }, [activeOrganizationId, isLoading, orgList, router]);
+  }, [activeOrganizationId, isLoading, orgList, router])
 
   async function handleSelect(org: OrganizationListItem) {
-    setError(null);
-    setSelectingId(org.id);
+    setError(null)
+    setSelectingId(org.id)
 
     try {
       const result = await authClient.organization.setActive({
         organizationId: org.id,
-      });
+      })
 
       if (result.error) {
-        setError(result.error.message ?? "Could not switch organization");
-        return;
+        setError(result.error.message ?? 'Could not switch organization')
+        return
       }
 
-      router.replace(`/${org.slug}`);
-      router.refresh();
+      router.replace(`/${org.slug}`)
+      router.refresh()
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Could not switch organization",
-      );
+      setError(e instanceof Error ? e.message : 'Could not switch organization')
     } finally {
-      setSelectingId(null);
+      setSelectingId(null)
     }
   }
 
@@ -104,20 +102,20 @@ export function SelectOrganizationPage() {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-64" />
       </div>
-    );
+    )
   }
 
   const destination = resolveOrganizationDestination(
     orgList,
     activeOrganizationId,
-  );
-  if (destination.type !== "select") {
+  )
+  if (destination.type !== 'select') {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-3 p-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-64" />
       </div>
-    );
+    )
   }
 
   return (
@@ -134,9 +132,9 @@ export function SelectOrganizationPage() {
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <ul className="flex flex-col gap-2">
             {orgList.map((org) => {
-              const metadata = parseOrganizationMetadata(org.metadata);
-              const isActive = org.id === activeOrganizationId;
-              const isSelecting = selectingId === org.id;
+              const metadata = parseOrganizationMetadata(org.metadata)
+              const isActive = org.id === activeOrganizationId
+              const isSelecting = selectingId === org.id
 
               return (
                 <li key={org.id}>
@@ -158,15 +156,15 @@ export function SelectOrganizationPage() {
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {org.slug}
-                        {isActive ? " · Current" : ""}
+                        {isActive ? ' · Current' : ''}
                       </span>
                     </span>
                     <span className="shrink-0 text-muted-foreground">
-                      {isSelecting ? "Opening..." : <RiArrowRightLine />}
+                      {isSelecting ? 'Opening...' : <RiArrowRightLine />}
                     </span>
                   </Button>
                 </li>
-              );
+              )
             })}
           </ul>
           <Button
@@ -180,5 +178,5 @@ export function SelectOrganizationPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

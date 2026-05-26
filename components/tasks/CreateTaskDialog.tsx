@@ -1,48 +1,48 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation } from "convex/react";
-import { format, startOfDay } from "date-fns";
-import { motion } from "motion/react";
 import {
   RiCalendarLine,
   RiCloseLine,
   RiContractLeftRightLine,
   RiExpandDiagonalLine,
-} from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import {
-  taskPriorityConfig,
-  taskStatusConfig,
-  type TaskPriority,
-  type TaskStatus,
-} from "@/lib/task-utils";
-import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
+} from '@remixicon/react'
+import { useMutation } from 'convex/react'
+import { format, startOfDay } from 'date-fns'
+import { motion } from 'motion/react'
+import * as React from 'react'
+import { TaskDueDatePicker } from '@/components/tasks/TaskDueDatePicker'
 import {
   TaskPriorityIcon,
   TaskPriorityPicker,
-} from "@/components/tasks/TaskPriorityPicker";
+} from '@/components/tasks/TaskPriorityPicker'
 import {
   TaskStatusIcon,
   TaskStatusPicker,
-} from "@/components/tasks/TaskStatusPicker";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { TitleInput } from "../TitleInput";
+} from '@/components/tasks/TaskStatusPicker'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { api } from '@/convex/_generated/api'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import {
+  type TaskPriority,
+  type TaskStatus,
+  taskPriorityConfig,
+  taskStatusConfig,
+} from '@/lib/task-utils'
+import { cn } from '@/lib/utils'
+import { TitleInput } from '../TitleInput'
 
 type CreateTaskDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  track: Doc<"tracks">;
-  projectId: Id<"projects">;
-  sprintId?: Id<"sprints">;
-  defaultStatus?: Doc<"tasks">["status"];
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  track: Doc<'tracks'>
+  projectId: Id<'projects'>
+  sprintId?: Id<'sprints'>
+  defaultStatus?: Doc<'tasks'>['status']
+}
 
-const COMPACT_WIDTH = 480;
-const EXPANDED_WIDTH = 640;
+const COMPACT_WIDTH = 480
+const EXPANDED_WIDTH = 640
 
 function PropertyChip({
   className,
@@ -55,14 +55,14 @@ function PropertyChip({
       variant="outline"
       size="sm"
       className={cn(
-        "h-7 gap-1.5 rounded-md border-border/80 bg-muted/30 px-2.5 font-normal text-muted-foreground shadow-none hover:bg-muted/60 hover:text-foreground",
+        'h-7 gap-1.5 rounded-md border-border/80 bg-muted/30 px-2.5 font-normal text-muted-foreground shadow-none hover:bg-muted/60 hover:text-foreground',
         className,
       )}
       {...props}
     >
       {children}
     </Button>
-  );
+  )
 }
 
 export function CreateTaskDialog({
@@ -71,60 +71,60 @@ export function CreateTaskDialog({
   track,
   projectId,
   sprintId,
-  defaultStatus = "backlog",
+  defaultStatus = 'backlog',
 }: CreateTaskDialogProps) {
-  const createTask = useMutation(api.task.create);
-  const addToSprint = useMutation(api.sprint.addTask);
+  const createTask = useMutation(api.task.create)
+  const addToSprint = useMutation(api.sprint.addTask)
 
-  const [expanded, setExpanded] = React.useState(false);
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [status, setStatus] = React.useState<TaskStatus>(defaultStatus);
-  const [priority, setPriority] = React.useState<TaskPriority>("medium");
-  const [dueDate, setDueDate] = React.useState<Date>(() => new Date());
-  const [dueDateSet, setDueDateSet] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [expanded, setExpanded] = React.useState(false)
+  const [title, setTitle] = React.useState('')
+  const [description, setDescription] = React.useState('')
+  const [status, setStatus] = React.useState<TaskStatus>(defaultStatus)
+  const [priority, setPriority] = React.useState<TaskPriority>('medium')
+  const [dueDate, setDueDate] = React.useState<Date>(() => new Date())
+  const [dueDateSet, setDueDateSet] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
-  const titleRef = React.useRef<HTMLTextAreaElement>(null);
-  const startDate = startOfDay(new Date()).getTime();
+  const titleRef = React.useRef<HTMLTextAreaElement>(null)
+  const startDate = startOfDay(new Date()).getTime()
 
   function resetForm() {
-    setExpanded(false);
-    setTitle("");
-    setDescription("");
-    setStatus(defaultStatus);
-    setPriority("medium");
-    setDueDate(new Date());
-    setDueDateSet(false);
-    setError(null);
+    setExpanded(false)
+    setTitle('')
+    setDescription('')
+    setStatus(defaultStatus)
+    setPriority('medium')
+    setDueDate(new Date())
+    setDueDateSet(false)
+    setError(null)
   }
 
   function handleOpenChange(next: boolean) {
-    if (!next) resetForm();
-    onOpenChange(next);
+    if (!next) resetForm()
+    onOpenChange(next)
   }
 
   React.useEffect(() => {
-    if (!open) return;
-    const id = window.requestAnimationFrame(() => titleRef.current?.focus());
-    return () => window.cancelAnimationFrame(id);
-  }, [open]);
+    if (!open) return
+    const id = window.requestAnimationFrame(() => titleRef.current?.focus())
+    return () => window.cancelAnimationFrame(id)
+  }, [open])
 
   async function handleSubmit(event?: React.FormEvent) {
-    event?.preventDefault();
-    const trimmed = title.trim();
+    event?.preventDefault()
+    const trimmed = title.trim()
     if (!trimmed) {
-      setError("Title is required");
-      titleRef.current?.focus();
-      return;
+      setError('Title is required')
+      titleRef.current?.focus()
+      return
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true)
+    setError(null)
 
     try {
-      const end = dueDateSet ? startOfDay(dueDate).getTime() : startDate;
+      const end = dueDateSet ? startOfDay(dueDate).getTime() : startDate
 
       const taskId = await createTask({
         trackId: track._id,
@@ -133,24 +133,24 @@ export function CreateTaskDialog({
         description: description.trim() || undefined,
         status,
         priority,
-        complexity: "medium",
+        complexity: 'medium',
         dueDate: end,
-      });
+      })
 
       if (sprintId) {
-        await addToSprint({ taskId, sprintId });
+        await addToSprint({ taskId, sprintId })
       }
 
-      handleOpenChange(false);
+      handleOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create task");
+      setError(err instanceof Error ? err.message : 'Failed to create task')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
-  const statusLabel = taskStatusConfig[status].label;
-  const priorityLabel = taskPriorityConfig[priority].label;
+  const statusLabel = taskStatusConfig[status].label
+  const priorityLabel = taskPriorityConfig[priority].label
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -164,7 +164,7 @@ export function CreateTaskDialog({
           animate={{
             width: expanded ? EXPANDED_WIDTH : COMPACT_WIDTH,
           }}
-          transition={{ type: "spring", stiffness: 420, damping: 36 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 36 }}
           className="w-full min-w-0"
         >
           <form
@@ -191,15 +191,15 @@ export function CreateTaskDialog({
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.92 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   onClick={() => setExpanded((v) => !v)}
                   className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  aria-label={expanded ? "Collapse dialog" : "Expand dialog"}
+                  aria-label={expanded ? 'Collapse dialog' : 'Expand dialog'}
                 >
                   <motion.span
                     initial={false}
                     animate={{ rotate: expanded ? 180 : 0 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                     className="inline-flex"
                   >
                     {expanded ? (
@@ -235,9 +235,9 @@ export function CreateTaskDialog({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add description…"
                 animate={{
-                  height: expanded ? "320px" : "72px",
+                  height: expanded ? '320px' : '72px',
                 }}
-                transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 36 }}
                 className="mt-2 w-full resize-none bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
             </motion.div>
@@ -267,12 +267,12 @@ export function CreateTaskDialog({
                     <TaskPriorityIcon priority={priority} />
                     <span
                       className={cn(
-                        priority === "medium"
-                          ? "text-muted-foreground"
-                          : "text-foreground",
+                        priority === 'medium'
+                          ? 'text-muted-foreground'
+                          : 'text-foreground',
                       )}
                     >
-                      {priority === "medium" ? "Priority" : priorityLabel}
+                      {priority === 'medium' ? 'Priority' : priorityLabel}
                     </span>
                   </PropertyChip>
                 }
@@ -283,16 +283,16 @@ export function CreateTaskDialog({
                 hasDueDate={dueDateSet}
                 align="start"
                 onSelect={(date) => {
-                  setDueDate(date);
-                  setDueDateSet(true);
+                  setDueDate(date)
+                  setDueDateSet(true)
                 }}
                 onClear={() => setDueDateSet(false)}
                 trigger={
                   <PropertyChip>
                     <RiCalendarLine className="size-3.5 shrink-0" />
                     {dueDateSet
-                      ? format(dueDate, "MMM d, yyyy")
-                      : "Set due date"}
+                      ? format(dueDate, 'MMM d, yyyy')
+                      : 'Set due date'}
                   </PropertyChip>
                 }
               />
@@ -312,12 +312,12 @@ export function CreateTaskDialog({
                 disabled={isSubmitting}
                 className="min-w-28"
               >
-                {isSubmitting ? "Creating…" : "Create task"}
+                {isSubmitting ? 'Creating…' : 'Create task'}
               </Button>
             </motion.div>
           </form>
         </motion.div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

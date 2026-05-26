@@ -1,5 +1,5 @@
-import { InboxPage } from "@/components/inbox/InboxPage";
+import { InboxPage } from '@/components/inbox/InboxPage'
 
 export default function Page() {
-  return <InboxPage />;
+  return <InboxPage />
 }

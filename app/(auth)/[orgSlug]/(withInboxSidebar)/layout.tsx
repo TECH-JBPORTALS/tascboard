@@ -1,18 +1,14 @@
-import { InboxProvider } from "@/components/inbox/InboxContext";
-import { InboxSidebar } from "@/components/inbox/InboxSidebar";
-import { AppSidebar } from "@/components/organization/AppSidebar";
-import {
-  Sidebar,
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { InboxProvider } from '@/components/inbox/InboxContext'
+import { InboxSidebar } from '@/components/inbox/InboxSidebar'
+import { AppSidebar } from '@/components/organization/AppSidebar'
+import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "350px",
+          '--sidebar-width': '350px',
         } as React.CSSProperties
       }
     >
@@ -33,5 +29,5 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </SidebarInset>
       </InboxProvider>
     </SidebarProvider>
-  );
+  )
 }

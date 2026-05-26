@@ -1,25 +1,25 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { RiAddLine, RiPlayFill } from "@remixicon/react";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { taskStatusLabels, type TaskStatus } from "@/lib/task-utils";
-import { TaskIssueRow } from "@/components/tasks/TaskIssueRow";
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
-import { Button } from "@/components/ui/button";
+import { RiAddLine, RiPlayFill } from '@remixicon/react'
+import * as React from 'react'
+import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog'
+import { TaskIssueRow } from '@/components/tasks/TaskIssueRow'
+import { Button } from '@/components/ui/button'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { TaskStatusIcon } from "../tasks/TaskStatusPicker";
+} from '@/components/ui/collapsible'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { type TaskStatus, taskStatusLabels } from '@/lib/task-utils'
+import { TaskStatusIcon } from '../tasks/TaskStatusPicker'
 
 type TrackStatusGroupProps = {
-  status: TaskStatus;
-  tasks: Doc<"tasks">[];
-  track: Doc<"tracks">;
-  projectId: Id<"projects">;
-};
+  status: TaskStatus
+  tasks: Doc<'tasks'>[]
+  track: Doc<'tracks'>
+  projectId: Id<'projects'>
+}
 
 export function TrackStatusGroup({
   status,
@@ -27,8 +27,8 @@ export function TrackStatusGroup({
   track,
   projectId,
 }: TrackStatusGroupProps) {
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const label = taskStatusLabels[status];
+  const [createOpen, setCreateOpen] = React.useState(false)
+  const label = taskStatusLabels[status]
 
   return (
     <Collapsible
@@ -39,7 +39,7 @@ export function TrackStatusGroup({
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left text-sm">
           <CollapsibleTrigger
             className="group"
-            render={<Button variant={"ghost"} size={"icon-xs"} />}
+            render={<Button variant={'ghost'} size={'icon-xs'} />}
           >
             <RiPlayFill className="size-3 shrink-0 group-hover:text-foreground text-muted-foreground transition-transform duration-200 group-data-panel-open:rotate-90" />
           </CollapsibleTrigger>
@@ -75,5 +75,5 @@ export function TrackStatusGroup({
         defaultStatus={status}
       />
     </Collapsible>
-  );
+  )
 }

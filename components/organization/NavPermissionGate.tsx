@@ -1,16 +1,16 @@
-"use client";
+'use client'
 
-import type { PermissionRequest } from "@/lib/permissions";
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission } from '@/hooks/use-permission'
+import type { PermissionRequest } from '@/lib/permissions'
 
 export function NavPermissionGate({
   permissions,
   children,
 }: {
-  permissions: PermissionRequest;
-  children: React.ReactNode;
+  permissions: PermissionRequest
+  children: React.ReactNode
 }) {
-  const { allowed, isLoading } = usePermission(permissions);
-  if (isLoading || !allowed) return null;
-  return <>{children}</>;
+  const { allowed, isLoading } = usePermission(permissions)
+  if (isLoading || !allowed) return null
+  return <>{children}</>
 }

@@ -1,5 +1,5 @@
-import { AcceptInvitationPage } from "@/components/employees/AcceptInvitationPage";
+import { AcceptInvitationPage } from '@/components/employees/AcceptInvitationPage'
 
 export default function Page() {
-  return <AcceptInvitationPage />;
+  return <AcceptInvitationPage />
 }

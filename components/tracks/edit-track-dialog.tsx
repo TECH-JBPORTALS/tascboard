@@ -1,10 +1,8 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
+import { useMutation } from 'convex/react'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,52 +10,54 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/convex/_generated/api'
+import type { Doc } from '@/convex/_generated/dataModel'
 
 type EditTrackDialogProps = {
-  track: Doc<"tracks"> | null;
-  onOpenChange: (open: boolean) => void;
-};
+  track: Doc<'tracks'> | null
+  onOpenChange: (open: boolean) => void
+}
 
 export function EditTrackDialog({ track, onOpenChange }: EditTrackDialogProps) {
-  const updateTrack = useMutation(api.track.update);
-  const [name, setName] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [status, setStatus] = React.useState<Doc<"tracks">["status"]>("active");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const updateTrack = useMutation(api.track.update)
+  const [name, setName] = React.useState('')
+  const [description, setDescription] = React.useState('')
+  const [status, setStatus] = React.useState<Doc<'tracks'>['status']>('active')
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (track) {
-      setName(track.name);
-      setDescription(track.description ?? "");
-      setStatus(track.status);
-      setError(null);
+      setName(track.name)
+      setDescription(track.description ?? '')
+      setStatus(track.status)
+      setError(null)
     }
-  }, [track]);
+  }, [track])
 
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!track) return;
+    event.preventDefault()
+    if (!track) return
 
-    const trimmed = name.trim();
+    const trimmed = name.trim()
     if (!trimmed) {
-      setError("Track name is required");
-      return;
+      setError('Track name is required')
+      return
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true)
+    setError(null)
 
     try {
       await updateTrack({
@@ -67,12 +67,12 @@ export function EditTrackDialog({ track, onOpenChange }: EditTrackDialogProps) {
           description: description.trim(),
           status,
         },
-      });
-      onOpenChange(false);
+      })
+      onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update track");
+      setError(err instanceof Error ? err.message : 'Failed to update track')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -107,7 +107,7 @@ export function EditTrackDialog({ track, onOpenChange }: EditTrackDialogProps) {
               <Select
                 value={status}
                 onValueChange={(value) =>
-                  setStatus(value as Doc<"tracks">["status"])
+                  setStatus(value as Doc<'tracks'>['status'])
                 }
               >
                 <SelectTrigger>
@@ -120,9 +120,7 @@ export function EditTrackDialog({ track, onOpenChange }: EditTrackDialogProps) {
                 </SelectContent>
               </Select>
             </div>
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>
           <DialogFooter>
             <Button
@@ -133,11 +131,11 @@ export function EditTrackDialog({ track, onOpenChange }: EditTrackDialogProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save"}
+              {isSubmitting ? 'Saving…' : 'Save'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

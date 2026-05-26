@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import type * as React from "react";
-import Link from "next/link";
-import { RiArrowRightSLine, RiRouteLine } from "@remixicon/react";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { trackStatusLabels } from "@/lib/track-utils";
-import { PageHeader } from "@/components/ui/page-header";
-import { cn } from "@/lib/utils";
+import { RiArrowRightSLine, RiRouteLine } from '@remixicon/react'
+import Link from 'next/link'
+import type * as React from 'react'
+import { PageHeader } from '@/components/ui/page-header'
+import type { Doc } from '@/convex/_generated/dataModel'
+import { trackStatusLabels } from '@/lib/track-utils'
+import { cn } from '@/lib/utils'
 
 type TrackPageHeaderProps = {
-  orgSlug: string;
-  project: Doc<"projects">;
-  track: Doc<"tracks">;
-  issueCount: number;
-  actions?: React.ReactNode;
-  className?: string;
-};
+  orgSlug: string
+  project: Doc<'projects'>
+  track: Doc<'tracks'>
+  issueCount: number
+  actions?: React.ReactNode
+  className?: string
+}
 
 export function TrackPageHeader({
   orgSlug,
@@ -25,8 +25,8 @@ export function TrackPageHeader({
   actions,
   className,
 }: TrackPageHeaderProps) {
-  const isActive = track.status === "active";
-  const projectHref = `/${orgSlug}/pro/${project._id}`;
+  const isActive = track.status === 'active'
+  const projectHref = `/${orgSlug}/pro/${project._id}`
 
   return (
     <PageHeader
@@ -48,26 +48,26 @@ export function TrackPageHeader({
         <span className="inline-flex min-w-0 max-w-full items-center gap-x-2 whitespace-nowrap">
           <span
             className={cn(
-              "inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium leading-none",
+              'inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium leading-none',
               isActive
-                ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                : "bg-muted text-muted-foreground",
+                ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                : 'bg-muted text-muted-foreground',
             )}
           >
             <span
               className={cn(
-                "size-1.5 shrink-0 rounded-full",
-                isActive ? "bg-green-500" : "bg-muted-foreground",
+                'size-1.5 shrink-0 rounded-full',
+                isActive ? 'bg-green-500' : 'bg-muted-foreground',
               )}
             />
             {trackStatusLabels[track.status]}
           </span>
           <span className="shrink-0">
-            {issueCount} {issueCount === 1 ? "Issue" : "Issues"}
+            {issueCount} {issueCount === 1 ? 'Issue' : 'Issues'}
           </span>
         </span>
       }
       actions={actions}
     />
-  );
+  )
 }

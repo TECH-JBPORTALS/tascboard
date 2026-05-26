@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
-import * as React from "react";
+import * as React from 'react'
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 
 export type PageHeaderProps = {
   /** Shown inside the rounded muted icon container (e.g. an icon). */
-  icon?: React.ReactNode;
-  title: React.ReactNode;
-  description?: React.ReactNode;
-  actions?: React.ReactNode;
-  className?: string;
-};
+  icon?: React.ReactNode
+  title: React.ReactNode
+  description?: React.ReactNode
+  actions?: React.ReactNode
+  className?: string
+}
 
 export function PageHeader({
   icon,
@@ -23,7 +23,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-10 h-(--header-height) flex shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80",
+        'sticky top-0 z-10 h-(--header-height) flex shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80',
         className,
       )}
     >
@@ -48,5 +48,5 @@ export function PageHeader({
         <div className="flex shrink-0 items-center gap-2">{actions}</div>
       ) : null}
     </header>
-  );
+  )
 }

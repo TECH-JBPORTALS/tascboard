@@ -3,9 +3,9 @@ export {
   admin,
   checkRolePermission,
   employee,
+  type OrgRole,
   orgRoles,
   owner,
-  statement,
-  type OrgRole,
   type PermissionRequest,
-} from "../../lib/permissions";
+  statement,
+} from '../../lib/permissions'

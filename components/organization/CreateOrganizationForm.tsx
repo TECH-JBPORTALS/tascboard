@@ -1,19 +1,12 @@
-"use client";
+'use client'
 
-import { useMutation } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { authClient } from "@/lib/auth-client";
-import {
-  buildOrganizationMetadata,
-  slugifyOrganizationName,
-} from "@/lib/organization";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from 'convex/react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import z from 'zod'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -21,89 +14,96 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Field, FieldError } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { OrganizationAvatar } from "./OrganizationAvatar";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/card'
+import { Field, FieldError } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { authClient } from '@/lib/auth-client'
+import {
+  buildOrganizationMetadata,
+  slugifyOrganizationName,
+} from '@/lib/organization'
+import { cn } from '@/lib/utils'
+import { OrganizationAvatar } from './OrganizationAvatar'
 
 const createOrganizationSchema = z.object({
-  name: z.string().min(2, "Organization name is required"),
-  address: z.string().min(5, "Address is required"),
+  name: z.string().min(2, 'Organization name is required'),
+  address: z.string().min(5, 'Address is required'),
   image: z
     .custom<FileList>()
-    .refine((files) => files?.length === 1, "Organization image is required")
+    .refine((files) => files?.length === 1, 'Organization image is required')
     .refine(
-      (files) => files?.[0]?.type.startsWith("image/"),
-      "Image must be a valid image file",
+      (files) => files?.[0]?.type.startsWith('image/'),
+      'Image must be a valid image file',
     ),
-});
+})
 
-type CreateOrganizationValues = z.infer<typeof createOrganizationSchema>;
+type CreateOrganizationValues = z.infer<typeof createOrganizationSchema>
 
 export function CreateOrganizationForm() {
-  const router = useRouter();
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter()
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<CreateOrganizationValues>({
     resolver: zodResolver(createOrganizationSchema),
     defaultValues: {
-      name: "",
-      address: "",
+      name: '',
+      address: '',
     },
-  });
+  })
 
-  const organizationName = form.watch("name");
-  const selectedImage = form.watch("image");
+  const organizationName = form.watch('name')
+  const selectedImage = form.watch('image')
 
   useEffect(() => {
-    const file = selectedImage?.[0];
+    const file = selectedImage?.[0]
     if (!file) {
-      setPreviewUrl(null);
-      return;
+      setPreviewUrl(null)
+      return
     }
 
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedImage]);
+    const objectUrl = URL.createObjectURL(file)
+    setPreviewUrl(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [selectedImage])
 
-  async function uploadImage(file: File): Promise<Id<"_storage">> {
-    const uploadUrl = await generateUploadUrl({});
+  async function uploadImage(file: File): Promise<Id<'_storage'>> {
+    const uploadUrl = await generateUploadUrl({})
     const response = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": file.type },
+      method: 'POST',
+      headers: { 'Content-Type': file.type },
       body: file,
-    });
+    })
 
     if (!response.ok) {
-      throw new Error("Failed to upload organization image");
+      throw new Error('Failed to upload organization image')
     }
 
     const { storageId } = (await response.json()) as {
-      storageId: Id<"_storage">;
-    };
-    return storageId;
+      storageId: Id<'_storage'>
+    }
+    return storageId
   }
 
   async function onSubmit(values: CreateOrganizationValues) {
-    setSubmitError(null);
-    setIsSubmitting(true);
+    setSubmitError(null)
+    setIsSubmitting(true)
 
     try {
-      const file = values.image[0];
-      const imageStorageId = await uploadImage(file);
-      const slug = slugifyOrganizationName(values.name);
+      const file = values.image[0]
+      const imageStorageId = await uploadImage(file)
+      const slug = slugifyOrganizationName(values.name)
 
-      const slugCheck = await authClient.organization.checkSlug({ slug });
+      const slugCheck = await authClient.organization.checkSlug({ slug })
       if (slugCheck.error) {
-        setSubmitError("Could not verify organization URL. Try again.");
-        return;
+        setSubmitError('Could not verify organization URL. Try again.')
+        return
       }
 
       const result = await authClient.organization.create({
@@ -113,25 +113,25 @@ export function CreateOrganizationForm() {
           address: values.address.trim(),
           imageStorageId,
         }),
-      });
+      })
 
       if (result.error) {
-        setSubmitError(result.error.message ?? "Failed to create organization");
-        return;
+        setSubmitError(result.error.message ?? 'Failed to create organization')
+        return
       }
 
-      const organization = result.data;
+      const organization = result.data
       if (!organization?.slug) {
-        setSubmitError("Organization was created but could not be opened.");
-        return;
+        setSubmitError('Organization was created but could not be opened.')
+        return
       }
 
-      router.replace(`/${organization.slug}`);
-      router.refresh();
+      router.replace(`/${organization.slug}`)
+      router.refresh()
     } catch {
-      setSubmitError("Something went wrong. Please try again.");
+      setSubmitError('Something went wrong. Please try again.')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -154,11 +154,11 @@ export function CreateOrganizationForm() {
                   <Label htmlFor="org-image">
                     <div
                       className={cn(
-                        "mb-2 flex border-2 border-dashed active:scale-95 size-16 items-center justify-center overflow-hidden rounded-xl",
+                        'mb-2 flex border-2 border-dashed active:scale-95 size-16 items-center justify-center overflow-hidden rounded-xl',
                       )}
                     >
                       {previewUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
+                        // biome-ignore lint/performance/noImgElement: <No need of Next Image>
                         <img
                           src={previewUrl}
                           alt="Organization preview"
@@ -166,7 +166,7 @@ export function CreateOrganizationForm() {
                         />
                       ) : (
                         <OrganizationAvatar
-                          name={organizationName || "Organization"}
+                          name={organizationName || 'Organization'}
                           className="size-16 rounded-xl text-base"
                         />
                       )}
@@ -229,10 +229,10 @@ export function CreateOrganizationForm() {
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create organization"}
+            {isSubmitting ? 'Creating...' : 'Create organization'}
           </Button>
         </CardFooter>
       </form>
     </Card>
-  );
+  )
 }

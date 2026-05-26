@@ -1,30 +1,30 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { TrackView } from "@/components/tracks/track-view";
-import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from 'convex/react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { TrackView } from '@/components/tracks/track-view'
+import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
+import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
 
 export default function TrackPage() {
   const params = useParams<{
-    orgSlug: string;
-    projectId: string;
-    trackId: string;
-  }>();
+    orgSlug: string
+    projectId: string
+    trackId: string
+  }>()
 
-  const projectId = params.projectId as Id<"projects">;
-  const trackId = params.trackId as Id<"tracks">;
+  const projectId = params.projectId as Id<'projects'>
+  const trackId = params.trackId as Id<'tracks'>
 
-  const project = useQuery(api.project.get, { projectId });
-  const track = useQuery(api.track.get, { trackId });
+  const project = useQuery(api.project.get, { projectId })
+  const track = useQuery(api.track.get, { trackId })
 
   if (project === undefined || track === undefined) {
-    return <TrackPageSkeleton />;
+    return <TrackPageSkeleton />
   }
 
   if (project === null || track === null) {
@@ -35,7 +35,7 @@ export default function TrackPage() {
           Back to project
         </Button>
       </div>
-    );
+    )
   }
 
   if (track.projectId !== project._id) {
@@ -48,12 +48,10 @@ export default function TrackPage() {
           Back to project
         </Button>
       </div>
-    );
+    )
   }
 
-  return (
-    <TrackView orgSlug={params.orgSlug} project={project} track={track} />
-  );
+  return <TrackView orgSlug={params.orgSlug} project={project} track={track} />
 }
 
 function TrackPageSkeleton() {
@@ -71,5 +69,5 @@ function TrackPageSkeleton() {
         </div>
       </div>
     </div>
-  );
+  )
 }

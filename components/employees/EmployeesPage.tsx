@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import { useMemo } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { usePermission } from "@/hooks/use-permission";
-import { Skeleton } from "@/components/ui/skeleton";
-import { employeeColumns, type EmployeeRow } from "./employees-columns";
-import { EmployeesDataTable } from "./employees-data-table";
+import { useQuery } from 'convex/react'
+import { useMemo } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/convex/_generated/api'
+import { usePermission } from '@/hooks/use-permission'
+import { type EmployeeRow, employeeColumns } from './employees-columns'
+import { EmployeesDataTable } from './employees-data-table'
 
 export function EmployeesPage() {
   const { allowed, isLoading: permissionLoading } = usePermission({
-    employee: ["list"],
-  });
-  const employees = useQuery(api.employees.auth.list, allowed ? {} : "skip");
+    employee: ['list'],
+  })
+  const employees = useQuery(api.employees.auth.list, allowed ? {} : 'skip')
 
   const rows = useMemo<EmployeeRow[]>(() => {
-    if (!employees) return [];
+    if (!employees) return []
     return employees.map((employee) => ({
       id: employee.id,
       name: employee.name,
@@ -23,8 +23,8 @@ export function EmployeesPage() {
       image: employee.image,
       role: employee.role,
       active: employee.active,
-    }));
-  }, [employees]);
+    }))
+  }, [employees])
 
   if (!permissionLoading && !allowed) {
     return (
@@ -33,7 +33,7 @@ export function EmployeesPage() {
           You do not have permission to view employees.
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -54,5 +54,5 @@ export function EmployeesPage() {
         />
       )}
     </div>
-  );
+  )
 }

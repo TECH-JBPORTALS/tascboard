@@ -1,5 +1,5 @@
-import { InvitationsPage } from "@/components/employees/InvitationsPage";
+import { InvitationsPage } from '@/components/employees/InvitationsPage'
 
 export default function Page() {
-  return <InvitationsPage />;
+  return <InvitationsPage />
 }

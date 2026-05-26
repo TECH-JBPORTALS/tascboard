@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { motion } from "motion/react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { RiDeleteBinLine } from "@remixicon/react";
-import { TodoInlineEdit } from "./todo-inline-input";
-import type { Todo } from "./types";
+import { RiDeleteBinLine } from '@remixicon/react'
+import { useMutation } from 'convex/react'
+import { motion } from 'motion/react'
+import { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { api } from '@/convex/_generated/api'
+import { TodoInlineEdit } from './todo-inline-input'
+import type { Todo } from './types'
 
 export function TodoRow({ todo }: { todo: Todo }) {
-  const [flash, setFlash] = useState(false);
-  const update = useMutation(api.employeeTodos.update);
-  const remove = useMutation(api.employeeTodos.remove);
+  const [flash, setFlash] = useState(false)
+  const update = useMutation(api.employeeTodos.update)
+  const remove = useMutation(api.employeeTodos.remove)
 
   return (
     <motion.div
@@ -23,7 +23,7 @@ export function TodoRow({ todo }: { todo: Todo }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.18 }}
-      className={`group flex items-start gap-2.5 rounded-md px-2 py-2 transition-colors hover:bg-accent ${flash ? "bg-yellow-500/10" : ""}`}
+      className={`group flex items-start gap-2.5 rounded-md px-2 py-2 transition-colors hover:bg-accent ${flash ? 'bg-yellow-500/10' : ''}`}
     >
       <Checkbox
         checked={todo.isCompleted}
@@ -39,8 +39,8 @@ export function TodoRow({ todo }: { todo: Todo }) {
           title={todo.title}
           isCompleted={todo.isCompleted}
           onFlash={() => {
-            setFlash(true);
-            setTimeout(() => setFlash(false), 700);
+            setFlash(true)
+            setTimeout(() => setFlash(false), 700)
           }}
         />
         <Badge variant="outline" className="text-[10px] h-4 px-1.5 capitalize">
@@ -57,5 +57,5 @@ export function TodoRow({ todo }: { todo: Todo }) {
         <RiDeleteBinLine className="size-3.5" />
       </Button>
     </motion.div>
-  );
+  )
 }

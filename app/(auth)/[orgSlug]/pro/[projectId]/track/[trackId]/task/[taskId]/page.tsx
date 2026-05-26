@@ -1,30 +1,30 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { TaskDetailView } from "@/components/tasks/TaskDetailsView";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from 'convex/react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { TaskDetailView } from '@/components/tasks/TaskDetailsView'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
 
 export default function TaskDetailPage() {
   const params = useParams<{
-    orgSlug: string;
-    projectId: string;
-    trackId: string;
-    taskId: string;
-  }>();
+    orgSlug: string
+    projectId: string
+    trackId: string
+    taskId: string
+  }>()
 
-  const taskId = params.taskId as Id<"tasks">;
-  const trackId = params.trackId as Id<"tracks">;
-  const projectId = params.projectId as Id<"projects">;
+  const taskId = params.taskId as Id<'tasks'>
+  const trackId = params.trackId as Id<'tracks'>
+  const projectId = params.projectId as Id<'projects'>
 
-  const task = useQuery(api.task.get, { taskId });
+  const task = useQuery(api.task.get, { taskId })
 
   if (task === undefined) {
-    return <TaskDetailSkeleton />;
+    return <TaskDetailSkeleton />
   }
 
   if (task === null) {
@@ -41,7 +41,7 @@ export default function TaskDetailPage() {
           Back to track
         </Button>
       </div>
-    );
+    )
   }
 
   if (task.trackId !== trackId || task.projectId !== projectId) {
@@ -60,10 +60,10 @@ export default function TaskDetailPage() {
           Back to track
         </Button>
       </div>
-    );
+    )
   }
 
-  return <TaskDetailView orgSlug={params.orgSlug} task={task} />;
+  return <TaskDetailView orgSlug={params.orgSlug} task={task} />
 }
 
 function TaskDetailSkeleton() {
@@ -83,5 +83,5 @@ function TaskDetailSkeleton() {
         <Skeleton className="min-h-[200px] w-full" />
       </div>
     </div>
-  );
+  )
 }

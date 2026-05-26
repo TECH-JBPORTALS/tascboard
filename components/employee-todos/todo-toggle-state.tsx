@@ -5,16 +5,16 @@
  * - Morphing icon animations transitioning between open (close icon) and closed (task icon) states.
  * - Dynamic, auto-collapsing notification badge that caps at "9+".
  */
-"use client";
+'use client'
 
-import { AnimatePresence, motion } from "motion/react";
-import { Badge } from "@/components/ui/badge";
-import { RiTaskLine, RiCloseLine } from "@remixicon/react";
+import { RiCloseLine, RiTaskLine } from '@remixicon/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { Badge } from '@/components/ui/badge'
 
 interface Props {
-  isOpen: boolean;
-  pendingCount: number;
-  onToggle: () => void;
+  isOpen: boolean
+  pendingCount: number
+  onToggle: () => void
 }
 
 export function TodoFab({ isOpen, pendingCount, onToggle }: Props) {
@@ -23,20 +23,22 @@ export function TodoFab({ isOpen, pendingCount, onToggle }: Props) {
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.92 }}
       onClick={onToggle}
-      title={isOpen ? "Minimize" : "My Tasks"}
+      title={isOpen ? 'Minimize' : 'My Tasks'}
       className="relative flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
     >
       <AnimatePresence mode="wait">
         <motion.span
-          key={isOpen ? "close" : "open"}
+          key={isOpen ? 'close' : 'open'}
           initial={{ rotate: -45, opacity: 0 }}
           animate={{ rotate: 0, opacity: 1 }}
           exit={{ rotate: 45, opacity: 0 }}
           transition={{ duration: 0.14 }}
         >
-          {isOpen
-            ? <RiCloseLine className="size-5" />
-            : <RiTaskLine className="size-5" />}
+          {isOpen ? (
+            <RiCloseLine className="size-5" />
+          ) : (
+            <RiTaskLine className="size-5" />
+          )}
         </motion.span>
       </AnimatePresence>
 
@@ -50,11 +52,11 @@ export function TodoFab({ isOpen, pendingCount, onToggle }: Props) {
             className="absolute -top-1 -right-1"
           >
             <Badge className="size-4 p-0 flex items-center justify-center text-[10px]">
-              {pendingCount > 9 ? "9+" : pendingCount}
+              {pendingCount > 9 ? '9+' : pendingCount}
             </Badge>
           </motion.span>
         )}
       </AnimatePresence>
     </motion.button>
-  );
+  )
 }

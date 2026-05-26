@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { AnimatePresence } from "motion/react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { RiTaskLine } from "@remixicon/react";
-import { TodoRow } from "./todo-row";
-import { TodoCompleted } from "./todo-completed-section";
-import type { Todo } from "./types";
+import { RiTaskLine } from '@remixicon/react'
+import { AnimatePresence } from 'motion/react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { TodoCompleted } from './todo-completed-section'
+import { TodoRow } from './todo-row'
+import type { Todo } from './types'
 
 interface Props {
-  todos: Todo[] | undefined;
+  todos: Todo[] | undefined
 }
 
 export function TodoList({ todos }: Props) {
@@ -19,11 +19,11 @@ export function TodoList({ todos }: Props) {
           <Skeleton key={i} className="h-10 w-full rounded-md" />
         ))}
       </div>
-    );
+    )
   }
 
-  const pending = todos.filter((t) => !t.isCompleted);
-  const completed = todos.filter((t) => t.isCompleted);
+  const pending = todos.filter((t) => !t.isCompleted)
+  const completed = todos.filter((t) => t.isCompleted)
 
   if (pending.length === 0 && completed.length === 0) {
     return (
@@ -34,7 +34,7 @@ export function TodoList({ todos }: Props) {
           Type below and press Enter to add one
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -46,5 +46,5 @@ export function TodoList({ todos }: Props) {
       </AnimatePresence>
       <TodoCompleted todos={completed} />
     </>
-  );
+  )
 }

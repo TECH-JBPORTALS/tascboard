@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import * as React from "react";
+import * as React from 'react'
 import {
   Command,
   CommandEmpty,
@@ -9,35 +9,35 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "@/components/ui/command";
+} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 
 export type TaskCommandOption<T extends string> = {
-  value: T;
-  label: string;
-  icon?: React.ReactNode;
-  shortcut?: string;
-  keywords?: string;
-};
+  value: T
+  label: string
+  icon?: React.ReactNode
+  shortcut?: string
+  keywords?: string
+}
 
 type TaskCommandPopoverProps<T extends string> = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  trigger: React.ReactNode;
-  placeholder: string;
-  shortcutKey?: string;
-  options: TaskCommandOption<T>[];
-  value: T;
-  onSelect: (value: T) => void;
-  align?: "start" | "center" | "end";
-  className?: string;
-  emptyMessage?: string;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  trigger: React.ReactNode
+  placeholder: string
+  shortcutKey?: string
+  options: TaskCommandOption<T>[]
+  value: T
+  onSelect: (value: T) => void
+  align?: 'start' | 'center' | 'end'
+  className?: string
+  emptyMessage?: string
+}
 
 export function TaskCommandPopover<T extends string>({
   open,
@@ -47,15 +47,15 @@ export function TaskCommandPopover<T extends string>({
   options,
   value,
   onSelect,
-  align = "start",
+  align = 'start',
   className,
-  emptyMessage = "No results",
+  emptyMessage = 'No results',
 }: TaskCommandPopoverProps<T>) {
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger render={trigger as React.ReactElement} />
       <PopoverContent
-        className={cn("w-56 p-0", className)}
+        className={cn('w-56 p-0', className)}
         align={align}
         sideOffset={4}
       >
@@ -70,11 +70,11 @@ export function TaskCommandPopover<T extends string>({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={`${option.label} ${option.keywords ?? ""}`}
+                  value={`${option.label} ${option.keywords ?? ''}`}
                   data-checked={value === option.value}
                   onSelect={() => {
-                    onSelect(option.value);
-                    onOpenChange(false);
+                    onSelect(option.value)
+                    onOpenChange(false)
                   }}
                 >
                   {option.icon}
@@ -89,5 +89,5 @@ export function TaskCommandPopover<T extends string>({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

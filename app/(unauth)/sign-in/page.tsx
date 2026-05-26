@@ -1,10 +1,10 @@
-import { Suspense } from "react";
-import { SignInPage } from "@/components/SignInPage";
+import { Suspense } from 'react'
+import { SignInPage } from '@/components/SignInPage'
 
 export default function Page() {
   return (
     <Suspense>
       <SignInPage />
     </Suspense>
-  );
+  )
 }

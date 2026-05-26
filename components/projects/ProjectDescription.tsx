@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import React from "react";
-import { useTiptapSync } from "@convex-dev/prosemirror-sync/tiptap";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { GlobalTiptapEditor } from "@/components/editor/GlobalTiptapEditor";
+import { useTiptapSync } from '@convex-dev/prosemirror-sync/tiptap'
+import React from 'react'
+import { GlobalTiptapEditor } from '@/components/editor/GlobalTiptapEditor'
+import { api } from '@/convex/_generated/api'
+import { Id } from '@/convex/_generated/dataModel'
 
-const EMPTY_PROSEMIRROR_DOC = { type: "doc", content: [] };
+const EMPTY_PROSEMIRROR_DOC = { type: 'doc', content: [] }
 
 export function ProjectDescription({
   projectId,
 }: {
-  projectId: Id<"projects">;
+  projectId: Id<'projects'>
 }) {
-  const sync = useTiptapSync(api.syncEditor, `project-${projectId}`);
-  const { create, extension, initialContent, isLoading } = sync;
+  const sync = useTiptapSync(api.syncEditor, `project-${projectId}`)
+  const { create, extension, initialContent, isLoading } = sync
 
   React.useEffect(() => {
     if (isLoading || initialContent !== null || !create) {
-      return;
+      return
     }
-    void create(EMPTY_PROSEMIRROR_DOC);
-  }, [create, initialContent, isLoading]);
+    void create(EMPTY_PROSEMIRROR_DOC)
+  }, [create, initialContent, isLoading])
 
   return (
     <div>
@@ -46,5 +46,5 @@ export function ProjectDescription({
         />
       )}
     </div>
-  );
+  )
 }

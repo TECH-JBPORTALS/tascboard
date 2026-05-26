@@ -1,8 +1,14 @@
-"use client";
+'use client'
 
-import z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { RiEyeLine, RiEyeOffLine } from '@remixicon/react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import z from 'zod'
+import { authClient } from '@/lib/auth-client'
+import { Button } from './ui/button'
 import {
   Card,
   CardContent,
@@ -10,41 +16,31 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { Field, FieldError } from "./ui/field";
-import { Button } from "./ui/button";
-import { authClient } from "@/lib/auth-client";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import {
-  InputGroup,
-  InputGroupButton,
-  InputGroupInput,
-} from "./ui/input-group";
-import { useState } from "react";
-import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+} from './ui/card'
+import { Field, FieldError } from './ui/field'
+import { Input } from './ui/input'
+import { InputGroup, InputGroupButton, InputGroupInput } from './ui/input-group'
+import { Label } from './ui/label'
 
 const signUpSchema = z.object({
-  name: z.string().min(2, "Full name must be atleast 2 characters long!"),
-  email: z.string().min(1, "Email is required!"),
-  password: z.string().min(1, "Password is required!"),
-});
+  name: z.string().min(2, 'Full name must be atleast 2 characters long!'),
+  email: z.string().min(1, 'Email is required!'),
+  password: z.string().min(1, 'Password is required!'),
+})
 
 export function SignUpPage() {
-  const [show, setShow] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect");
+  const [show, setShow] = useState(false)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
+      name: '',
+      email: '',
+      password: '',
     },
-  });
+  })
 
   async function onSubmit(values: z.infer<typeof signUpSchema>) {
     await authClient.signUp
@@ -55,16 +51,16 @@ export function SignUpPage() {
       })
       .then((res) => {
         if (res.error) {
-          form.setError("root", res.error);
-          return;
+          form.setError('root', res.error)
+          return
         }
 
         if (redirect) {
-          router.replace(redirect);
+          router.replace(redirect)
         } else {
-          router.refresh();
+          router.refresh()
         }
-      });
+      })
   }
 
   return (
@@ -117,7 +113,7 @@ export function SignUpPage() {
                   <Label>Password</Label>
                   <InputGroup>
                     <InputGroupInput
-                      type={show ? "text" : "password"}
+                      type={show ? 'text' : 'password'}
                       {...field}
                     />
                     <InputGroupButton onClick={() => setShow(!show)}>
@@ -135,11 +131,11 @@ export function SignUpPage() {
                 disabled={form.formState.isSubmitting}
                 type="submit"
                 form="sign-up-form"
-                className={"w-full"}
+                className={'w-full'}
               >
                 {form.formState.isSubmitting
-                  ? "Creating account..."
-                  : "Continue"}
+                  ? 'Creating account...'
+                  : 'Continue'}
               </Button>
             </Field>
           </CardContent>
@@ -147,7 +143,7 @@ export function SignUpPage() {
             <p className="text-sm">
               {`Already have an account? `}
               <Link
-                href={"/sign-in"}
+                href={'/sign-in'}
                 className="hover:underline text-primary/80 hover:text-primary"
               >
                 Sign in
@@ -157,5 +153,5 @@ export function SignUpPage() {
         </Card>
       </form>
     </section>
-  );
+  )
 }

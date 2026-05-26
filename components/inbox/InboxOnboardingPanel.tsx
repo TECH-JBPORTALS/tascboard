@@ -1,18 +1,7 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { useForm, Controller, type UseFormReturn } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { zodResolver } from '@hookform/resolvers/zod'
+import type { RemixiconComponentType } from '@remixicon/react'
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -24,15 +13,26 @@ import {
   RiSparklingLine,
   RiUpload2Line,
   RiUserLine,
-} from "@remixicon/react";
-import type { RemixiconComponentType } from "@remixicon/react";
+} from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { useState } from 'react'
+import { Controller, type UseFormReturn, useForm } from 'react-hook-form'
+import z from 'zod'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Field, FieldError } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import {
   InputGroup,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group";
-import { AnimatePresence, motion } from "motion/react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/input-group'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
 // Config & validation
@@ -41,75 +41,75 @@ import { cn } from "@/lib/utils";
 const ONBOARDING_STEPS = [
   {
     id: 0,
-    title: "About you",
-    description: "Name, date of birth, and address",
+    title: 'About you',
+    description: 'Name, date of birth, and address',
     icon: RiUserLine,
-    formId: "onboarding-general",
+    formId: 'onboarding-general',
   },
   {
     id: 1,
-    title: "Government ID",
-    description: "Aadhar and PAN for compliance",
+    title: 'Government ID',
+    description: 'Aadhar and PAN for compliance',
     icon: RiFileShieldLine,
-    formId: "onboarding-gov",
+    formId: 'onboarding-gov',
   },
   {
     id: 2,
-    title: "Bank account",
-    description: "Salary disbursement details",
+    title: 'Bank account',
+    description: 'Salary disbursement details',
     icon: RiBankLine,
-    formId: "onboarding-bank",
+    formId: 'onboarding-bank',
   },
   {
     id: 3,
-    title: "Documents",
-    description: "Certificates & credentials (optional)",
+    title: 'Documents',
+    description: 'Certificates & credentials (optional)',
     icon: RiUpload2Line,
     formId: null,
   },
-] as const;
+] as const
 
-const LAST_STEP_INDEX = ONBOARDING_STEPS.length - 1;
+const LAST_STEP_INDEX = ONBOARDING_STEPS.length - 1
 
 const generalSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
-  address: z.string().min(5, "Address is required"),
-});
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  address: z.string().min(5, 'Address is required'),
+})
 
 const govSchema = z.object({
-  aadharNumber: z.string().regex(/^\d{12}$/, "Aadhar must be 12 digits"),
-  panNumber: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/i, "Enter a valid PAN"),
-});
+  aadharNumber: z.string().regex(/^\d{12}$/, 'Aadhar must be 12 digits'),
+  panNumber: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/i, 'Enter a valid PAN'),
+})
 
 const bankSchema = z
   .object({
-    bankAccountNumber: z.string().min(8, "Account number is required"),
-    confirmAccountNumber: z.string().min(8, "Confirm account number"),
-    bankName: z.string().min(2, "Bank name is required"),
+    bankAccountNumber: z.string().min(8, 'Account number is required'),
+    confirmAccountNumber: z.string().min(8, 'Confirm account number'),
+    bankName: z.string().min(2, 'Bank name is required'),
     ifscCode: z
       .string()
-      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/i, "Enter a valid IFSC code"),
-    branchName: z.string().min(2, "Branch name is required"),
+      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/i, 'Enter a valid IFSC code'),
+    branchName: z.string().min(2, 'Branch name is required'),
   })
   .refine((d) => d.bankAccountNumber === d.confirmAccountNumber, {
-    message: "Account numbers do not match",
-    path: ["confirmAccountNumber"],
-  });
+    message: 'Account numbers do not match',
+    path: ['confirmAccountNumber'],
+  })
 
-type GeneralFormValues = z.infer<typeof generalSchema>;
-type GovFormValues = z.infer<typeof govSchema>;
-type BankFormValues = z.infer<typeof bankSchema>;
+type GeneralFormValues = z.infer<typeof generalSchema>
+type GovFormValues = z.infer<typeof govSchema>
+type BankFormValues = z.infer<typeof bankSchema>
 
-type CertificateEntry = { id: string; fileName: string };
+type CertificateEntry = { id: string; fileName: string }
 
-type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
 
 type InboxOnboardingPanelProps = {
-  initialStep?: number;
-  onCompleted?: () => void;
-};
+  initialStep?: number
+  onCompleted?: () => void
+}
 
 // ---------------------------------------------------------------------------
 // Hook — data, forms, and step actions
@@ -119,163 +119,161 @@ function useInboxOnboarding({
   initialStep = 0,
   onCompleted,
 }: InboxOnboardingPanelProps) {
-  const status = useQuery(api.employees.profile.getMyOnboardingStatus, {});
+  const status = useQuery(api.employees.profile.getMyOnboardingStatus, {})
   const [step, setStep] = useState(
     Math.min(Math.max(initialStep, 0), LAST_STEP_INDEX),
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [certificates, setCertificates] = useState<CertificateEntry[]>([]);
-  const [showAccountNumber, setShowAccountNumber] = useState(false);
+  )
+  const [error, setError] = useState<string | null>(null)
+  const [certificates, setCertificates] = useState<CertificateEntry[]>([])
+  const [showAccountNumber, setShowAccountNumber] = useState(false)
 
-  const saveGeneral = useMutation(api.employees.profile.saveGeneralInfo);
-  const saveGov = useMutation(api.employees.profile.saveGovernmentId);
-  const saveBank = useMutation(api.employees.profile.saveBankDetails);
-  const addCertificate = useMutation(api.employees.profile.addCertificate);
-  const removeCertificate = useMutation(
-    api.employees.profile.removeCertificate,
-  );
+  const saveGeneral = useMutation(api.employees.profile.saveGeneralInfo)
+  const saveGov = useMutation(api.employees.profile.saveGovernmentId)
+  const saveBank = useMutation(api.employees.profile.saveBankDetails)
+  const addCertificate = useMutation(api.employees.profile.addCertificate)
+  const removeCertificate = useMutation(api.employees.profile.removeCertificate)
   const completeOnboarding = useMutation(
     api.employees.profile.completeOnboarding,
-  );
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  )
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
 
   const generalForm = useForm<GeneralFormValues>({
     resolver: zodResolver(generalSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      dateOfBirth: "",
-      address: "",
+      firstName: '',
+      lastName: '',
+      dateOfBirth: '',
+      address: '',
     },
-  });
+  })
 
   const govForm = useForm<GovFormValues>({
     resolver: zodResolver(govSchema),
-    defaultValues: { aadharNumber: "", panNumber: "" },
-  });
+    defaultValues: { aadharNumber: '', panNumber: '' },
+  })
 
   const bankForm = useForm<BankFormValues>({
     resolver: zodResolver(bankSchema),
     defaultValues: {
-      bankAccountNumber: "",
-      confirmAccountNumber: "",
-      bankName: "",
-      ifscCode: "",
-      branchName: "",
+      bankAccountNumber: '',
+      confirmAccountNumber: '',
+      bankName: '',
+      ifscCode: '',
+      branchName: '',
     },
-  });
+  })
 
-  const currentStep = ONBOARDING_STEPS[step];
-  const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100;
-  const isProfileComplete = status?.onboardingStatus === "completed";
+  const currentStep = ONBOARDING_STEPS[step]
+  const progress = ((step + 1) / ONBOARDING_STEPS.length) * 100
+  const isProfileComplete = status?.onboardingStatus === 'completed'
 
   function clearError() {
-    setError(null);
+    setError(null)
   }
 
   function goToStep(index: number) {
-    setStep(Math.min(Math.max(index, 0), LAST_STEP_INDEX));
+    setStep(Math.min(Math.max(index, 0), LAST_STEP_INDEX))
   }
 
   function handleMutationError(e: unknown, fallback: string) {
-    setError(e instanceof Error ? e.message : fallback);
+    setError(e instanceof Error ? e.message : fallback)
   }
 
-  async function uploadFile(file: File): Promise<Id<"_storage">> {
-    const uploadUrl = await generateUploadUrl({});
+  async function uploadFile(file: File): Promise<Id<'_storage'>> {
+    const uploadUrl = await generateUploadUrl({})
     const response = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": file.type },
+      method: 'POST',
+      headers: { 'Content-Type': file.type },
       body: file,
-    });
-    if (!response.ok) throw new Error("Upload failed");
+    })
+    if (!response.ok) throw new Error('Upload failed')
     const { storageId } = (await response.json()) as {
-      storageId: Id<"_storage">;
-    };
-    return storageId;
+      storageId: Id<'_storage'>
+    }
+    return storageId
   }
 
   async function submitGeneral(values: GeneralFormValues) {
-    clearError();
+    clearError()
     try {
-      await saveGeneral(values);
-      goToStep(1);
+      await saveGeneral(values)
+      goToStep(1)
     } catch (e) {
-      handleMutationError(e, "Failed to save");
+      handleMutationError(e, 'Failed to save')
     }
   }
 
   async function submitGovernmentId(values: GovFormValues) {
-    clearError();
+    clearError()
     try {
       await saveGov({
         aadharNumber: values.aadharNumber,
         panNumber: values.panNumber.toUpperCase(),
-      });
-      goToStep(2);
+      })
+      goToStep(2)
     } catch (e) {
-      handleMutationError(e, "Failed to save");
+      handleMutationError(e, 'Failed to save')
     }
   }
 
   async function submitBankDetails(values: BankFormValues) {
-    clearError();
+    clearError()
     try {
       await saveBank({
         bankAccountNumber: values.bankAccountNumber,
         bankName: values.bankName,
         ifscCode: values.ifscCode.toUpperCase(),
         branchName: values.branchName,
-      });
-      goToStep(3);
+      })
+      goToStep(3)
     } catch (e) {
-      handleMutationError(e, "Failed to save");
+      handleMutationError(e, 'Failed to save')
     }
   }
 
   async function uploadCertificate(file: File) {
-    clearError();
-    const allowed = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    clearError()
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
     if (!allowed.includes(file.type)) {
-      setError("Only PDF, JPG, JPEG, and PNG files are allowed.");
-      return;
+      setError('Only PDF, JPG, JPEG, and PNG files are allowed.')
+      return
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError("Max file size is 10MB.");
-      return;
+      setError('Max file size is 10MB.')
+      return
     }
     if (certificates.length >= 5) {
-      setError("You can upload at most 5 documents.");
-      return;
+      setError('You can upload at most 5 documents.')
+      return
     }
 
     try {
-      const storageId = await uploadFile(file);
+      const storageId = await uploadFile(file)
       const id = await addCertificate({
         storageId,
         fileName: file.name,
         contentType: file.type,
-      });
-      setCertificates((prev) => [...prev, { id, fileName: file.name }]);
+      })
+      setCertificates((prev) => [...prev, { id, fileName: file.name }])
     } catch (e) {
-      handleMutationError(e, "Upload failed");
+      handleMutationError(e, 'Upload failed')
     }
   }
 
   async function removeCertificateEntry(
-    certificateId: Id<"employeeCertificates">,
+    certificateId: Id<'employeeCertificates'>,
   ) {
-    await removeCertificate({ certificateId });
-    setCertificates((prev) => prev.filter((c) => c.id !== certificateId));
+    await removeCertificate({ certificateId })
+    setCertificates((prev) => prev.filter((c) => c.id !== certificateId))
   }
 
   async function finishOnboarding() {
-    clearError();
+    clearError()
     try {
-      await completeOnboarding({});
-      onCompleted?.();
+      await completeOnboarding({})
+      onCompleted?.()
     } catch (e) {
-      handleMutationError(e, "Failed to complete onboarding");
+      handleMutationError(e, 'Failed to complete onboarding')
     }
   }
 
@@ -298,7 +296,7 @@ function useInboxOnboarding({
     uploadCertificate,
     removeCertificateEntry,
     finishOnboarding,
-  };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -310,7 +308,7 @@ function OnboardingErrorBanner({ message }: { message: string }) {
     <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
       {message}
     </p>
-  );
+  )
 }
 
 function OnboardingCompletedState() {
@@ -333,7 +331,7 @@ function OnboardingCompletedState() {
         </p>
       </motion.div>
     </motion.div>
-  );
+  )
 }
 
 function OnboardingHeader({
@@ -342,10 +340,10 @@ function OnboardingHeader({
   progress,
   onGoToStep,
 }: {
-  currentStep: OnboardingStep;
-  stepIndex: number;
-  progress: number;
-  onGoToStep: (index: number) => void;
+  currentStep: OnboardingStep
+  stepIndex: number
+  progress: number
+  onGoToStep: (index: number) => void
 }) {
   return (
     <motion.div
@@ -357,13 +355,13 @@ function OnboardingHeader({
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/12 via-background to-violet-500/8"
         animate={{ opacity: [0.85, 1, 0.85] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
         aria-hidden
         className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-primary/15 blur-3xl"
         animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.55, 0.4] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
       <div className="relative space-y-4">
@@ -394,15 +392,15 @@ function OnboardingHeader({
         <OnboardingProgressBar progress={progress} />
       </div>
     </motion.div>
-  );
+  )
 }
 
 function OnboardingStepIndicator({
   activeIndex,
   onGoToStep,
 }: {
-  activeIndex: number;
-  onGoToStep: (index: number) => void;
+  activeIndex: number
+  onGoToStep: (index: number) => void
 }) {
   return (
     <div className="flex gap-2">
@@ -418,7 +416,7 @@ function OnboardingStepIndicator({
         />
       ))}
     </div>
-  );
+  )
 }
 
 function StepPill({
@@ -429,12 +427,12 @@ function StepPill({
   isDisabled,
   onClick,
 }: {
-  title: string;
-  icon: RemixiconComponentType;
-  isActive: boolean;
-  isDone: boolean;
-  isDisabled: boolean;
-  onClick: () => void;
+  title: string
+  icon: RemixiconComponentType
+  isActive: boolean
+  isDone: boolean
+  isDisabled: boolean
+  onClick: () => void
 }) {
   return (
     <button
@@ -442,19 +440,19 @@ function StepPill({
       onClick={onClick}
       disabled={isDisabled}
       className={cn(
-        "flex flex-1 flex-col items-center gap-1.5 rounded-lg border px-2 py-2.5 text-center transition-all",
+        'flex flex-1 flex-col items-center gap-1.5 rounded-lg border px-2 py-2.5 text-center transition-all',
         isActive &&
-          "border-primary/40 bg-primary/5 shadow-sm shadow-primary/10",
-        isDone && "border-border/60 bg-muted/30 hover:border-primary/25",
-        !isActive && !isDone && "border-transparent bg-muted/20 opacity-50",
+          'border-primary/40 bg-primary/5 shadow-sm shadow-primary/10',
+        isDone && 'border-border/60 bg-muted/30 hover:border-primary/25',
+        !isActive && !isDone && 'border-transparent bg-muted/20 opacity-50',
       )}
     >
       <span
         className={cn(
-          "flex size-8 items-center justify-center rounded-full text-sm font-medium transition-colors",
-          isActive && "bg-primary text-primary-foreground",
-          isDone && "bg-primary/15 text-primary",
-          !isActive && !isDone && "bg-muted text-muted-foreground",
+          'flex size-8 items-center justify-center rounded-full text-sm font-medium transition-colors',
+          isActive && 'bg-primary text-primary-foreground',
+          isDone && 'bg-primary/15 text-primary',
+          !isActive && !isDone && 'bg-muted text-muted-foreground',
         )}
       >
         {isDone ? (
@@ -467,7 +465,7 @@ function StepPill({
         {title}
       </span>
     </button>
-  );
+  )
 }
 
 function OnboardingProgressBar({ progress }: { progress: number }) {
@@ -476,15 +474,15 @@ function OnboardingProgressBar({ progress }: { progress: number }) {
       className="h-1 overflow-hidden rounded-full bg-muted"
       initial={{ scaleX: 0 }}
       animate={{ scaleX: 1 }}
-      style={{ transformOrigin: "left" }}
+      style={{ transformOrigin: 'left' }}
     >
       <motion.div
         className="h-full rounded-full bg-linear-to-r from-primary to-violet-500"
         animate={{ width: `${progress}%` }}
-        transition={{ type: "spring", stiffness: 120, damping: 20 }}
+        transition={{ type: 'spring', stiffness: 120, damping: 20 }}
       />
     </motion.div>
-  );
+  )
 }
 
 function OnboardingFooter({
@@ -493,12 +491,12 @@ function OnboardingFooter({
   onBack,
   onFinish,
 }: {
-  stepIndex: number;
-  submitFormId: string | null;
-  onBack: () => void;
-  onFinish: () => void;
+  stepIndex: number
+  submitFormId: string | null
+  onBack: () => void
+  onFinish: () => void
 }) {
-  const isLastStep = stepIndex === LAST_STEP_INDEX;
+  const isLastStep = stepIndex === LAST_STEP_INDEX
 
   return (
     <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-background/90 px-6 py-4 backdrop-blur-sm">
@@ -525,7 +523,7 @@ function OnboardingFooter({
         </Button>
       )}
     </div>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -536,8 +534,8 @@ function GeneralInfoStepForm({
   form,
   onSubmit,
 }: {
-  form: UseFormReturn<GeneralFormValues>;
-  onSubmit: (values: GeneralFormValues) => void;
+  form: UseFormReturn<GeneralFormValues>
+  onSubmit: (values: GeneralFormValues) => void
 }) {
   return (
     <form
@@ -586,15 +584,15 @@ function GeneralInfoStepForm({
         )}
       />
     </form>
-  );
+  )
 }
 
 function GovernmentIdStepForm({
   form,
   onSubmit,
 }: {
-  form: UseFormReturn<GovFormValues>;
-  onSubmit: (values: GovFormValues) => void;
+  form: UseFormReturn<GovFormValues>
+  onSubmit: (values: GovFormValues) => void
 }) {
   return (
     <form
@@ -634,7 +632,7 @@ function GovernmentIdStepForm({
         )}
       />
     </form>
-  );
+  )
 }
 
 function BankDetailsStepForm({
@@ -643,10 +641,10 @@ function BankDetailsStepForm({
   onToggleAccountVisibility,
   onSubmit,
 }: {
-  form: UseFormReturn<BankFormValues>;
-  showAccountNumber: boolean;
-  onToggleAccountVisibility: () => void;
-  onSubmit: (values: BankFormValues) => void;
+  form: UseFormReturn<BankFormValues>
+  showAccountNumber: boolean
+  onToggleAccountVisibility: () => void
+  onSubmit: (values: BankFormValues) => void
 }) {
   return (
     <form
@@ -663,7 +661,7 @@ function BankDetailsStepForm({
             <InputGroup>
               <InputGroupInput
                 {...field}
-                type={showAccountNumber ? "text" : "password"}
+                type={showAccountNumber ? 'text' : 'password'}
                 autoComplete="off"
               />
               <InputGroupButton
@@ -705,7 +703,7 @@ function BankDetailsStepForm({
         />
       </motion.div>
     </form>
-  );
+  )
 }
 
 function CertificatesStepForm({
@@ -713,9 +711,9 @@ function CertificatesStepForm({
   onUpload,
   onRemove,
 }: {
-  certificates: CertificateEntry[];
-  onUpload: (file: File) => void;
-  onRemove: (id: Id<"employeeCertificates">) => void;
+  certificates: CertificateEntry[]
+  onUpload: (file: File) => void
+  onRemove: (id: Id<'employeeCertificates'>) => void
 }) {
   return (
     <motion.div className="space-y-4">
@@ -726,7 +724,7 @@ function CertificatesStepForm({
           Resume, course completion, ID copies — optional but helpful
         </p>
         <div className="mt-3 flex flex-wrap justify-center gap-2">
-          {[".PDF", ".JPG", ".PNG"].map((ext) => (
+          {['.PDF', '.JPG', '.PNG'].map((ext) => (
             <Badge key={ext} variant="secondary">
               {ext}
             </Badge>
@@ -739,9 +737,9 @@ function CertificatesStepForm({
               className="sr-only"
               accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) onUpload(file);
-                e.target.value = "";
+                const file = e.target.files?.[0]
+                if (file) onUpload(file)
+                e.target.value = ''
               }}
             />
             <span className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
@@ -759,15 +757,15 @@ function CertificatesStepForm({
         </p>
       )}
     </motion.div>
-  );
+  )
 }
 
 function CertificateList({
   certificates,
   onRemove,
 }: {
-  certificates: CertificateEntry[];
-  onRemove: (id: Id<"employeeCertificates">) => void;
+  certificates: CertificateEntry[]
+  onRemove: (id: Id<'employeeCertificates'>) => void
 }) {
   return (
     <ul className="space-y-2">
@@ -781,14 +779,14 @@ function CertificateList({
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => onRemove(cert.id as Id<"employeeCertificates">)}
+            onClick={() => onRemove(cert.id as Id<'employeeCertificates'>)}
           >
             Remove
           </Button>
         </li>
       ))}
     </ul>
-  );
+  )
 }
 
 /** Reusable controlled field for simple text/date/password inputs. */
@@ -796,16 +794,16 @@ function FormField<T extends Record<string, unknown>>({
   name,
   label,
   control,
-  inputType = "text",
+  inputType = 'text',
   className,
   stagger = false,
 }: {
-  name: keyof T & string;
-  label: string;
-  control: UseFormReturn<T>["control"];
-  inputType?: React.HTMLInputTypeAttribute;
-  className?: string;
-  stagger?: boolean;
+  name: keyof T & string
+  label: string
+  control: UseFormReturn<T>['control']
+  inputType?: React.HTMLInputTypeAttribute
+  className?: string
+  stagger?: boolean
 }) {
   const field = (
     <Controller
@@ -818,16 +816,16 @@ function FormField<T extends Record<string, unknown>>({
             {...inputField}
             type={inputType}
             value={inputField.value as string}
-            className={cn("bg-background/80", className)}
-            autoComplete={inputType === "password" ? "off" : undefined}
+            className={cn('bg-background/80', className)}
+            autoComplete={inputType === 'password' ? 'off' : undefined}
           />
           <FieldError errors={[fieldState.error]} />
         </Field>
       )}
     />
-  );
+  )
 
-  if (!stagger) return field;
+  if (!stagger) return field
 
   return (
     <motion.div
@@ -838,7 +836,7 @@ function FormField<T extends Record<string, unknown>>({
     >
       {field}
     </motion.div>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -850,9 +848,9 @@ function OnboardingStepContent({
   error,
   wizard,
 }: {
-  stepIndex: number;
-  error: string | null;
-  wizard: ReturnType<typeof useInboxOnboarding>;
+  stepIndex: number
+  error: string | null
+  wizard: ReturnType<typeof useInboxOnboarding>
 }) {
   return (
     <AnimatePresence mode="wait">
@@ -900,7 +898,7 @@ function OnboardingStepContent({
         ) : null}
       </motion.div>
     </AnimatePresence>
-  );
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -908,10 +906,10 @@ function OnboardingStepContent({
 // ---------------------------------------------------------------------------
 
 export function InboxOnboardingPanel(props: InboxOnboardingPanelProps) {
-  const wizard = useInboxOnboarding(props);
+  const wizard = useInboxOnboarding(props)
 
   if (wizard.isProfileComplete) {
-    return <OnboardingCompletedState />;
+    return <OnboardingCompletedState />
   }
 
   return (
@@ -942,5 +940,5 @@ export function InboxOnboardingPanel(props: InboxOnboardingPanelProps) {
         onFinish={() => void wizard.finishOnboarding()}
       />
     </motion.div>
-  );
+  )
 }

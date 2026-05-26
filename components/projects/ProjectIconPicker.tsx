@@ -1,39 +1,39 @@
-"use client";
+'use client'
 
-import * as React from "react";
+import * as React from 'react'
+import { ProjectIcon } from '@/components/projects/ProjectIcon'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
   PROJECT_COLORS,
   PROJECT_ICONS,
   type ProjectColorId,
-} from "@/lib/project-appearance";
-import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ProjectIcon } from "@/components/projects/ProjectIcon";
+} from '@/lib/project-appearance'
+import { cn } from '@/lib/utils'
 
 type ProjectIconPickerProps = {
-  icon: string;
-  color: ProjectColorId;
-  onIconChange: (icon: string) => void;
-  onColorChange: (color: ProjectColorId) => void;
-  size?: "sm" | "md" | "lg";
-  disabled?: boolean;
-};
+  icon: string
+  color: ProjectColorId
+  onIconChange: (icon: string) => void
+  onColorChange: (color: ProjectColorId) => void
+  size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
+}
 
 export function ProjectIconPicker({
   icon,
   color,
   onIconChange,
   onColorChange,
-  size = "lg",
+  size = 'lg',
   disabled,
 }: ProjectIconPickerProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -53,11 +53,11 @@ export function ProjectIconPicker({
               title={item.label}
               onClick={() => onColorChange(item.id)}
               className={cn(
-                "flex size-7 items-center justify-center rounded-md text-sm transition-opacity",
+                'flex size-7 items-center justify-center rounded-md text-sm transition-opacity',
                 item.className,
                 color === item.id
-                  ? "ring-2 ring-foreground/60 ring-offset-2 ring-offset-popover"
-                  : "opacity-80 hover:opacity-100",
+                  ? 'ring-2 ring-foreground/60 ring-offset-2 ring-offset-popover'
+                  : 'opacity-80 hover:opacity-100',
               )}
             >
               {icon}
@@ -71,12 +71,12 @@ export function ProjectIconPicker({
               key={item}
               type="button"
               onClick={() => {
-                onIconChange(item);
-                setOpen(false);
+                onIconChange(item)
+                setOpen(false)
               }}
               className={cn(
-                "flex size-8 items-center justify-center rounded-md text-base hover:bg-muted",
-                icon === item && "bg-muted ring-1 ring-border",
+                'flex size-8 items-center justify-center rounded-md text-base hover:bg-muted',
+                icon === item && 'bg-muted ring-1 ring-border',
               )}
             >
               {item}
@@ -85,15 +85,15 @@ export function ProjectIconPicker({
         </div>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
 export function useProjectIconPickerState(
   initialIcon = DEFAULT_PROJECT_ICON,
   initialColor: ProjectColorId = DEFAULT_PROJECT_COLOR,
 ) {
-  const [icon, setIcon] = React.useState<string>(initialIcon);
-  const [color, setColor] = React.useState<ProjectColorId>(initialColor);
+  const [icon, setIcon] = React.useState<string>(initialIcon)
+  const [color, setColor] = React.useState<ProjectColorId>(initialColor)
 
-  return { icon, color, setIcon, setColor };
+  return { icon, color, setIcon, setColor }
 }

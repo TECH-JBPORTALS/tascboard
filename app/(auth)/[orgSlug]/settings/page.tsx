@@ -1,5 +1,5 @@
-import { OrganizationSettingsForm } from "@/components/organization/OrganizationSettingsForm";
-import { DeleteOrganizationSection } from "@/components/organization/DeleteOrganizationSection";
+import { DeleteOrganizationSection } from '@/components/organization/DeleteOrganizationSection'
+import { OrganizationSettingsForm } from '@/components/organization/OrganizationSettingsForm'
 
 export default function SettingsPage() {
   return (
@@ -13,5 +13,5 @@ export default function SettingsPage() {
       <OrganizationSettingsForm />
       <DeleteOrganizationSection />
     </div>
-  );
+  )
 }

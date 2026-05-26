@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import type { PermissionRequest } from "@/lib/permissions";
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission } from '@/hooks/use-permission'
+import type { PermissionRequest } from '@/lib/permissions'
 
 export function PermissionGate({
   permissions,
@@ -9,14 +9,14 @@ export function PermissionGate({
   children,
   fallback = null,
 }: {
-  permissions: PermissionRequest;
-  organizationId?: string;
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  permissions: PermissionRequest
+  organizationId?: string
+  children: React.ReactNode
+  fallback?: React.ReactNode
 }) {
-  const { allowed, isLoading } = usePermission(permissions, organizationId);
+  const { allowed, isLoading } = usePermission(permissions, organizationId)
 
-  if (isLoading) return null;
-  if (!allowed) return <>{fallback}</>;
-  return <>{children}</>;
+  if (isLoading) return null
+  if (!allowed) return <>{fallback}</>
+  return <>{children}</>
 }
