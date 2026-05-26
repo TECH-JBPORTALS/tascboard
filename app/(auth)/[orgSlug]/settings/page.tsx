@@ -1,5 +1,6 @@
 import { DeleteOrganizationSection } from '@/components/organization/DeleteOrganizationSection'
 import { OrganizationSettingsForm } from '@/components/organization/OrganizationSettingsForm'
+import { SessionSettingsSection } from '@/components/organization/SessionSettingsSection'
 
 export default function SettingsPage() {
   return (
@@ -11,6 +12,7 @@ export default function SettingsPage() {
         </p>
       </div>
       <OrganizationSettingsForm />
+      <SessionSettingsSection />
       <DeleteOrganizationSection />
     </div>
   )
