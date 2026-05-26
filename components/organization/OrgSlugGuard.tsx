@@ -1,21 +1,23 @@
 'use client'
 
+import { usePreloadedAuthQuery } from '@convex-dev/better-auth/nextjs/client'
+import { RiTBoxLine } from '@remixicon/react'
+import { type Preloaded } from 'convex/react'
 import { useParams, useRouter } from 'next/navigation'
 import { type ReactNode, useEffect, useMemo } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { authClient } from '@/lib/auth-client'
-import {
-  findOrganizationBySlug,
-  type OrganizationListItem,
-  organizationPath,
-  resolveOrganizationDestination,
-} from '@/lib/organization-membership'
+import { api } from '@/convex/_generated/api'
+import { findOrganizationBySlug } from '@/lib/organization-membership'
 
 function OrganizationRouteSkeleton() {
   return (
     <div className="flex h-svh flex-col items-center justify-center gap-3 p-6">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-4 w-64" />
+      <RiTBoxLine className="size-16 text-primary dark:text-muted-foreground" />
+      <div className="flex">
+        <span className="text-muted-foreground text-sm">
+          Loading workspace...
+        </span>
+        <span className="animate-caret-blink h-4 mx-1 w-1 bg-primary dark:bg-foreground" />
+      </div>
     </div>
   )
 }
@@ -23,6 +25,10 @@ function OrganizationRouteSkeleton() {
 type OrgSlugGuardProps = {
   /** Omit on `/` (home); provide under `/[orgSlug]/*` layouts. */
   children?: ReactNode
+  preloadedOrganizationsQuery: Preloaded<typeof api.auth.listOrganizations>
+  preloadedActiveOrganizationQuery: Preloaded<
+    typeof api.auth.getActiveOrganization
+  >
 }
 
 /**
@@ -30,97 +36,53 @@ type OrgSlugGuardProps = {
  * - `/` — resolve destination (create / select / active org) and redirect
  * - `/[orgSlug]/*` — ensure slug is valid, sync active org, then render children
  */
-export function OrgSlugGuard({ children }: OrgSlugGuardProps) {
+export function OrgSlugGuard({
+  children,
+  preloadedOrganizationsQuery,
+  preloadedActiveOrganizationQuery,
+}: OrgSlugGuardProps) {
+  console.log(
+    'preloadedOrganizationsQuery._argsJSON',
+    preloadedOrganizationsQuery,
+  )
   const router = useRouter()
   const params = useParams<{ orgSlug?: string }>()
   const orgSlug = params.orgSlug
   const isHomeRoute = orgSlug === undefined
 
-  const { data: organizations, isPending: orgsPending } =
-    authClient.useListOrganizations()
-  const { data: session, isPending: sessionPending } = authClient.useSession()
-
-  const activeOrganizationId = session?.session.activeOrganizationId
-  const isLoading = orgsPending || sessionPending
-
-  const orgList = useMemo(
-    () => (organizations ?? []) as OrganizationListItem[],
-    [organizations],
+  const organizations = usePreloadedAuthQuery(preloadedOrganizationsQuery)
+  const activeOrganization = usePreloadedAuthQuery(
+    preloadedActiveOrganizationQuery,
   )
+
+  const orgList = useMemo(() => organizations ?? [], [organizations])
 
   const org = useMemo(
-    () =>
-      isHomeRoute || isLoading
-        ? undefined
-        : findOrganizationBySlug(orgList, orgSlug),
-    [isHomeRoute, isLoading, orgList, orgSlug],
+    () => (isHomeRoute ? undefined : findOrganizationBySlug(orgList, orgSlug)),
+    [isHomeRoute, orgList, orgSlug],
   )
 
-  const isActive =
-    !isHomeRoute && org !== undefined && activeOrganizationId === org.id
-
   useEffect(() => {
-    if (isLoading) {
-      return
-    }
-
     if (isHomeRoute) {
-      const destination = resolveOrganizationDestination(
-        orgList,
-        activeOrganizationId,
-      )
-
-      if (destination.type === 'organization') {
-        const { id, slug } = destination.organization
-
-        if (activeOrganizationId === id) {
-          router.replace(`/${slug}`)
-          return
-        }
-
-        void authClient.organization
-          .setActive({ organizationId: id })
-          .then(() => {
-            router.replace(`/${slug}`)
-          })
+      if (!activeOrganization?.slug) {
+        router.replace('/select-organization')
         return
       }
+      router.replace(`/${activeOrganization?.slug}`)
+    }
 
-      router.replace(organizationPath(destination))
+    if (org) {
       return
     }
 
-    if (!org) {
-      const destination = resolveOrganizationDestination(
-        orgList,
-        activeOrganizationId,
-      )
-      router.replace(organizationPath(destination))
-      return
-    }
-
-    if (activeOrganizationId === org.id) {
-      return
-    }
-
-    void authClient.organization.setActive({
-      organizationSlug: orgSlug,
-    })
-  }, [
-    activeOrganizationId,
-    isHomeRoute,
-    isLoading,
-    org,
-    orgList,
-    orgSlug,
-    router,
-  ])
+    router.replace(`/${activeOrganization?.slug}`)
+  }, [activeOrganization?.slug, isHomeRoute, org, router])
 
   if (isHomeRoute) {
     return <OrganizationRouteSkeleton />
   }
 
-  if (isLoading || !org || !isActive) {
+  if (!org) {
     return <OrganizationRouteSkeleton />
   }
 
