@@ -35,6 +35,51 @@ export const employeeProfileSchema = v.object({
 })
 
 /*********************************************
+ * Project VALIDATORS
+ ********************************************/
+export const ProjectStatusValidator = v.union(
+  v.literal('active'),
+  v.literal('inactive'),
+  v.literal('terminated'),
+)
+
+export const ProjectKindValidator = v.union(
+  v.literal('created'),
+  v.literal('name_changed'),
+  v.literal('summary_changed'),
+  v.literal('status_changed'),
+  v.literal('start_date_changed'),
+  v.literal('end_date_changed'),
+  v.literal('icon_changed'),
+  v.literal('color_changed'),
+)
+
+export const ProjectValidator = v.object({
+  organizationId: v.string(),
+  name: v.string(),
+  summary: v.optional(v.string()),
+  description: v.optional(v.any()),
+  icon: v.optional(v.string()),
+  color: v.optional(projectColorValidator),
+  startDate: v.number(),
+  endDate: v.number(),
+  status: ProjectStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const ProjectActivityValidator = v.object({
+  projectId: v.id('projects'),
+  organizationId: v.string(),
+  actorUserId: v.string(),
+  actorName: v.string(),
+  kind: ProjectKindValidator,
+  fromValue: v.optional(v.string()),
+  toValue: v.optional(v.string()),
+  createdAt: v.number(),
+})
+
+/*********************************************
  * TASK VALIDATORS
  ********************************************/
 export const TaskStatusValidator = v.union(
@@ -150,43 +195,12 @@ export default defineSchema({
     fileName: v.string(),
     contentType: v.string(),
   }).index('by_profile', ['employeeProfileId']),
-  projects: defineTable({
-    organizationId: v.string(),
-    name: v.string(),
-    summary: v.optional(v.string()),
-    description: v.optional(v.any()),
-    icon: v.optional(v.string()),
-    color: v.optional(projectColorValidator),
-    startDate: v.number(),
-    endDate: v.number(),
-    status: v.union(
-      v.literal('active'),
-      v.literal('inactive'),
-      v.literal('terminated'),
-    ),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }).index('by_organization', ['organizationId']),
 
-  projectActivities: defineTable({
-    projectId: v.id('projects'),
-    organizationId: v.string(),
-    actorUserId: v.string(),
-    actorName: v.string(),
-    kind: v.union(
-      v.literal('created'),
-      v.literal('name_changed'),
-      v.literal('summary_changed'),
-      v.literal('status_changed'),
-      v.literal('start_date_changed'),
-      v.literal('end_date_changed'),
-      v.literal('icon_changed'),
-      v.literal('color_changed'),
-    ),
-    fromValue: v.optional(v.string()),
-    toValue: v.optional(v.string()),
-    createdAt: v.number(),
-  })
+  projects: defineTable(ProjectValidator).index('by_organization', [
+    'organizationId',
+  ]),
+
+  projectActivities: defineTable(ProjectActivityValidator)
     .index('by_project', ['projectId'])
     .index('by_project_actor', ['projectId', 'actorUserId']),
 

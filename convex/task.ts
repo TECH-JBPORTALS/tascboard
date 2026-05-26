@@ -61,10 +61,10 @@ export const get = query({
   args: {
     taskId: v.id('tasks'),
   },
-  handler: async (ctx, { taskId }) => {
+  handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    const task = await ctx.db.get(taskId)
+    const task = await ctx.db.get(args.taskId)
     if (!task) return null
 
     const track = await ctx.db.get(task.trackId)
@@ -72,7 +72,7 @@ export const get = query({
 
     const taskLabelLinks = await ctx.db
       .query('taskLabels')
-      .withIndex('by_task', (q) => q.eq('taskId', taskId))
+      .withIndex('by_task', (q) => q.eq('taskId', args.taskId))
       .collect()
 
     const labels = (
@@ -150,10 +150,10 @@ export const update = mutation({
       'updatedAt',
     ).partial(),
   },
-  handler: async (ctx, { taskId, body }) => {
+  handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx)
 
-    const task = await ctx.db.get(taskId)
+    const task = await ctx.db.get(args.taskId)
 
     if (!task) {
       throw new Error('Task not found')
@@ -163,13 +163,13 @@ export const update = mutation({
     const actorName = actorDisplayName(identity)
     const patch: Partial<Doc<'tasks'>> = {}
 
-    if (body.title !== undefined) {
-      const trimmed = body.title.trim()
+    if (args.body.title !== undefined) {
+      const trimmed = args.body.title.trim()
       if (!trimmed) throw new Error('Task title cannot be empty')
       if (trimmed !== task.title) {
         patch.title = trimmed
         await logTaskActivity(ctx, {
-          taskId,
+          taskId: args.taskId,
           actorUserId,
           actorName,
           kind: 'title_changed',
@@ -179,50 +179,56 @@ export const update = mutation({
       }
     }
 
-    if (body.description !== undefined) {
-      patch.description = body.description
+    if (args.body.description !== undefined) {
+      patch.description = args.body.description
     }
 
-    if (body.status !== undefined && body.status !== task.status) {
-      patch.status = body.status
+    if (args.body.status !== undefined && args.body.status !== task.status) {
+      patch.status = args.body.status
       await logTaskActivity(ctx, {
-        taskId,
+        taskId: args.taskId,
         actorUserId,
         actorName,
         kind: 'status_changed',
         fromValue: taskStatusLabels[task.status] ?? task.status,
-        toValue: taskStatusLabels[body.status] ?? body.status,
+        toValue: taskStatusLabels[args.body.status] ?? args.body.status,
       })
     }
 
-    if (body.priority !== undefined && body.priority !== task.priority) {
-      patch.priority = body.priority
+    if (
+      args.body.priority !== undefined &&
+      args.body.priority !== task.priority
+    ) {
+      patch.priority = args.body.priority
       await logTaskActivity(ctx, {
-        taskId,
+        taskId: args.taskId,
         actorUserId,
         actorName,
         kind: 'priority_changed',
         fromValue: taskPriorityLabels[task.priority] ?? task.priority,
-        toValue: taskPriorityLabels[body.priority] ?? body.priority,
+        toValue: taskPriorityLabels[args.body.priority] ?? args.body.priority,
       })
     }
 
-    if (body.complexity !== undefined) patch.complexity = body.complexity
+    if (args.body.complexity !== undefined)
+      patch.complexity = args.body.complexity
 
-    if (body.dueDate !== task.dueDate) {
-      patch.dueDate = body.dueDate
+    if (args.body.dueDate !== task.dueDate) {
+      patch.dueDate = args.body.dueDate
       await logTaskActivity(ctx, {
-        taskId,
+        taskId: args.taskId,
         actorUserId,
         actorName,
         kind: 'due_date_changed',
         fromValue: task.dueDate ? formatTaskDate(task.dueDate) : '',
-        toValue: body.dueDate ? formatTaskDate(body.dueDate) : 'Unset',
+        toValue: args.body.dueDate
+          ? formatTaskDate(args.body.dueDate)
+          : 'Unset',
       })
     }
 
-    if (body.sprintId !== undefined) {
-      patch.sprintId = body.sprintId ?? undefined
+    if (args.body.sprintId !== undefined) {
+      patch.sprintId = args.body.sprintId ?? undefined
     }
 
     if (Object.keys(patch).length === 0) {
@@ -230,7 +236,7 @@ export const update = mutation({
     }
 
     patch.updatedAt = Date.now()
-    await ctx.db.patch(taskId, patch)
+    await ctx.db.patch(args.taskId, patch)
 
     return null
   },
@@ -242,16 +248,16 @@ export const updateDescription = mutation({
     description: v.any(),
   },
   returns: v.null(),
-  handler: async (ctx, { taskId, description }) => {
+  handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    const task = await ctx.db.get(taskId)
+    const task = await ctx.db.get(args.taskId)
     if (!task) {
       throw new Error('Task not found')
     }
 
-    await ctx.db.patch(taskId, {
-      description,
+    await ctx.db.patch(args.taskId, {
+      description: args.description,
       updatedAt: Date.now(),
     })
 
