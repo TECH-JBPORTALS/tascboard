@@ -28,11 +28,39 @@ function runAction(
     organizationName: string
     inviterName: string
   },
+): Promise<unknown>
+
+function runAction(
+  ctx: GenericCtx<DataModel>,
+  action: typeof internal.emails.processVerificationEmail,
+  args: {
+    email: string
+    verificationUrl: string
+  },
+): Promise<unknown>
+
+function runAction(
+  ctx: GenericCtx<DataModel>,
+  action:
+    | typeof internal.emails.processInvitationEmail
+    | typeof internal.emails.processVerificationEmail,
+  args:
+    | {
+        organizationId: string
+        email: string
+        invitationId: string
+        organizationName: string
+        inviterName: string
+      }
+    | {
+        email: string
+        verificationUrl: string
+      },
 ) {
   if ('runAction' in ctx && typeof ctx.runAction === 'function') {
     return ctx.runAction(action, args)
   }
-  throw new Error('Cannot send invitation email in this context.')
+  throw new Error('Cannot run action in this context.')
 }
 
 function runMutation(
@@ -67,8 +95,20 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     baseURL: process.env.SITE_URL,
     secret: process.env.BETTER_AUTH_SECRET,
     database: authComponent.adapter(ctx),
+    emailVerification: {
+      sendOnSignUp: true,
+      sendOnSignIn: true,
+      autoSignInAfterVerification: true,
+      async sendVerificationEmail({ user, url }) {
+        await runAction(ctx, internal.emails.processVerificationEmail, {
+          email: user.email,
+          verificationUrl: url,
+        })
+      },
+    },
     emailAndPassword: {
       enabled: true,
+      requireEmailVerification: true,
     },
 
     plugins: [
