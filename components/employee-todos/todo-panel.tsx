@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TodoList } from "./todo-list";
 import { TodoAddForm } from "./todo-add-form";
-import { TodoFab } from "./todo-fab";
+import { TodoFab } from "./todo-toggle-state";
 import { RiTaskLine, RiCollapseDiagonalLine } from "@remixicon/react";
 import type { Todo } from "./types";
 
@@ -60,7 +60,12 @@ export function TodoPanel() {
                     )}
                   </AnimatePresence>
                 </div>
-                <Button variant="ghost" size="icon" onClick={close} title="Minimize">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={close}
+                  title="Minimize"
+                >
                   <RiCollapseDiagonalLine className="size-4" />
                 </Button>
               </div>

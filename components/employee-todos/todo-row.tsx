@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RiDeleteBinLine } from "@remixicon/react";
-import { TodoInlineEdit } from "./todo-inline-edit";
+import { TodoInlineEdit } from "./todo-inline-input";
 import type { Todo } from "./types";
 
 export function TodoRow({ todo }: { todo: Todo }) {
@@ -27,7 +27,9 @@ export function TodoRow({ todo }: { todo: Todo }) {
     >
       <Checkbox
         checked={todo.isCompleted}
-        onCheckedChange={() => update({ todoId: todo._id, body: { isCompleted: !todo.isCompleted } })}
+        onCheckedChange={() =>
+          update({ todoId: todo._id, body: { isCompleted: !todo.isCompleted } })
+        }
         className="mt-0.5 shrink-0"
       />
 
@@ -36,7 +38,10 @@ export function TodoRow({ todo }: { todo: Todo }) {
           todoId={todo._id}
           title={todo.title}
           isCompleted={todo.isCompleted}
-          onFlash={() => { setFlash(true); setTimeout(() => setFlash(false), 700); }}
+          onFlash={() => {
+            setFlash(true);
+            setTimeout(() => setFlash(false), 700);
+          }}
         />
         <Badge variant="outline" className="text-[10px] h-4 px-1.5 capitalize">
           {todo.priority}
