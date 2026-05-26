@@ -18,7 +18,7 @@ type TaskActivityFeedProps = {
   taskId: Id<'tasks'>
 }
 
-function ActivityIcon({ kind }: { kind: Doc<'activities'>['kind'] }) {
+function ActivityIcon({ kind }: { kind: Doc<'taskActivities'>['kind'] }) {
   switch (kind) {
     case 'created':
       return <RiCheckboxCircleFill className="size-3.5 text-muted-foreground" />
