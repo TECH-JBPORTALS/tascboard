@@ -1,7 +1,6 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,46 +10,47 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import type { InvitationRow } from "./invitations-columns";
+} from '@/components/ui/alert-dialog'
+import { authClient } from '@/lib/auth-client'
+import type { InvitationRow } from './invitations-columns'
 
 export function CancelInvitationDialog({
   invitation,
   onClose,
 }: {
-  invitation: InvitationRow | null;
-  onClose: () => void;
+  invitation: InvitationRow | null
+  onClose: () => void
 }) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleCancel() {
-    if (!invitation) return;
-    setError(null);
-    setPending(true);
+    if (!invitation) return
+    setError(null)
+    setPending(true)
     try {
       const result = await authClient.organization.cancelInvitation({
         invitationId: invitation.id,
-      });
+      })
 
       if (result.error) {
-        setError(result.error.message ?? "Failed to cancel invitation");
-        return;
+        setError(result.error.message ?? 'Failed to cancel invitation')
+        return
       }
 
-      onClose();
+      onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to cancel invitation");
+      setError(e instanceof Error ? e.message : 'Failed to cancel invitation')
     } finally {
-      setPending(false);
+      setPending(false)
     }
   }
 
   function handleOpenChange(open: boolean) {
     if (!open) {
-      setError(null);
-      setPending(false);
-      onClose();
+      setError(null)
+      setPending(false)
+      onClose()
     }
   }
 
@@ -67,16 +67,18 @@ export function CancelInvitationDialog({
         </AlertDialogHeader>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Keep invitation</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>
+            Keep invitation
+          </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={pending}
             onClick={() => void handleCancel()}
           >
-            {pending ? "Canceling..." : "Cancel invitation"}
+            {pending ? 'Canceling...' : 'Cancel invitation'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

@@ -1,40 +1,41 @@
-"use client";
+'use client'
 
-import { useQuery } from "convex/react";
 import {
   RiCalendarLine,
   RiCheckboxCircleFill,
   RiPriceTag3Line,
   RiRecordCircleLine,
-} from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
+} from '@remixicon/react'
+import { useQuery } from 'convex/react'
+import { api } from '@/convex/_generated/api'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
 import {
   formatActivityMessage,
   formatActivityTime,
-} from "@/lib/task-activity-message";
-type TaskActivityFeedProps = {
-  taskId: Id<"tasks">;
-};
+} from '@/lib/task-activity-message'
 
-function ActivityIcon({ kind }: { kind: Doc<"activities">["kind"] }) {
+type TaskActivityFeedProps = {
+  taskId: Id<'tasks'>
+}
+
+function ActivityIcon({ kind }: { kind: Doc<'activities'>['kind'] }) {
   switch (kind) {
-    case "created":
-      return <RiCheckboxCircleFill className="size-3.5 text-muted-foreground" />;
-    case "status_changed":
-      return <RiRecordCircleLine className="size-3.5 text-amber-500" />;
-    case "due_date_changed":
-      return <RiCalendarLine className="size-3.5 text-muted-foreground" />;
-    case "label_added":
-    case "label_removed":
-      return <RiPriceTag3Line className="size-3.5 text-muted-foreground" />;
+    case 'created':
+      return <RiCheckboxCircleFill className="size-3.5 text-muted-foreground" />
+    case 'status_changed':
+      return <RiRecordCircleLine className="size-3.5 text-amber-500" />
+    case 'due_date_changed':
+      return <RiCalendarLine className="size-3.5 text-muted-foreground" />
+    case 'label_added':
+    case 'label_removed':
+      return <RiPriceTag3Line className="size-3.5 text-muted-foreground" />
     default:
-      return <RiRecordCircleLine className="size-3.5 text-muted-foreground" />;
+      return <RiRecordCircleLine className="size-3.5 text-muted-foreground" />
   }
 }
 
 export function TaskActivityFeed({ taskId }: TaskActivityFeedProps) {
-  const activities = useQuery(api.activity.listByTask, { taskId, limit: 50 });
+  const activities = useQuery(api.activity.listByTask, { taskId, limit: 50 })
 
   return (
     <section className="space-y-3">
@@ -64,5 +65,5 @@ export function TaskActivityFeed({ taskId }: TaskActivityFeedProps) {
         </ul>
       )}
     </section>
-  );
+  )
 }

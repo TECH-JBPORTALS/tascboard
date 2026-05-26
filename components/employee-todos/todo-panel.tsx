@@ -1,33 +1,33 @@
-"use client";
+'use client'
 
-import { AnimatePresence, motion } from "motion/react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useTodoPanelStore } from "@/hooks/todo-panel-store";
-import { authClient } from "@/lib/auth-client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { TodoList } from "./todo-list";
-import { TodoAddForm } from "./todo-add-form";
-import { TodoFab } from "./todo-toggle-state";
-import { RiTaskLine, RiCollapseDiagonalLine } from "@remixicon/react";
-import type { Todo } from "./types";
+import { RiCollapseDiagonalLine, RiTaskLine } from '@remixicon/react'
+import { useQuery } from 'convex/react'
+import { AnimatePresence, motion } from 'motion/react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { api } from '@/convex/_generated/api'
+import { useTodoPanelStore } from '@/hooks/todo-panel-store'
+import { authClient } from '@/lib/auth-client'
+import { TodoAddForm } from './todo-add-form'
+import { TodoList } from './todo-list'
+import { TodoFab } from './todo-toggle-state'
+import type { Todo } from './types'
 
 export function TodoPanel() {
-  const { isOpen, toggle, close } = useTodoPanelStore();
-  const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
+  const { isOpen, toggle, close } = useTodoPanelStore()
+  const { data: session } = authClient.useSession()
+  const userId = session?.user?.id
 
   const todos = useQuery(
     api.employeeTodos.list,
-    userId ? { employeeId: userId } : "skip",
-  ) as Todo[] | undefined;
+    userId ? { employeeId: userId } : 'skip',
+  ) as Todo[] | undefined
 
-  const pendingCount = todos?.filter((t) => !t.isCompleted).length ?? 0;
+  const pendingCount = todos?.filter((t) => !t.isCompleted).length ?? 0
 
-  if (!userId) return null;
+  if (!userId) return null
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
@@ -38,7 +38,7 @@ export function TodoPanel() {
             initial={{ opacity: 0, scale: 0.93, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.91, y: 14 }}
-            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
             className="w-[380px] h-[500px] flex flex-col"
           >
             <Card className="flex flex-col h-full gap-0 py-0 overflow-hidden shadow-xl">
@@ -83,5 +83,5 @@ export function TodoPanel() {
 
       <TodoFab isOpen={isOpen} pendingCount={pendingCount} onToggle={toggle} />
     </div>
-  );
+  )
 }

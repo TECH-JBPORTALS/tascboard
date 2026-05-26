@@ -1,20 +1,16 @@
-"use client";
+'use client'
 
-import { api } from "@/convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useParams } from "next/navigation";
-import { Button } from "../ui/button";
 import {
   RiArchiveLine,
   RiDeleteBinLine,
   RiInboxUnarchiveLine,
-} from "@remixicon/react";
-import { useEffect } from "react";
-import { Spinner } from "../ui/spinner";
-import { InboxOnboardingPanel } from "./InboxOnboardingPanel";
-import { motion } from "motion/react";
-import { useInbox } from "./InboxContext";
+} from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import { motion } from 'motion/react'
+import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { api } from '@/convex/_generated/api'
+import { Doc, Id } from '@/convex/_generated/dataModel'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,44 +21,48 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../ui/alert-dialog";
+} from '../ui/alert-dialog'
+import { Button } from '../ui/button'
+import { Spinner } from '../ui/spinner'
+import { useInbox } from './InboxContext'
+import { InboxOnboardingPanel } from './InboxOnboardingPanel'
 
-function kindLabel(kind: Doc<"inboxItems">["kind"]): string {
+function kindLabel(kind: Doc<'inboxItems'>['kind']): string {
   switch (kind) {
-    case "assignment":
-      return "Assignment";
-    case "comment":
-      return "Comment";
-    case "invite":
-      return "Invite";
-    case "onboarding":
-      return "Onboarding";
+    case 'assignment':
+      return 'Assignment'
+    case 'comment':
+      return 'Comment'
+    case 'invite':
+      return 'Invite'
+    case 'onboarding':
+      return 'Onboarding'
     default:
-      return "Update";
+      return 'Update'
   }
 }
 
 export function InboxPage() {
-  const { inboxItemId } = useParams<{ inboxItemId: Id<"inboxItems"> }>();
-  const selected = useQuery(api.inbox.get, { id: inboxItemId });
+  const { inboxItemId } = useParams<{ inboxItemId: Id<'inboxItems'> }>()
+  const selected = useQuery(api.inbox.get, { id: inboxItemId })
   const onboardingStatus = useQuery(
     api.employees.profile.getMyOnboardingStatus,
     {},
-  );
-  const markReadMutation = useMutation(api.inbox.markRead);
-  const { archiveItem, unarchiveItem, permanentlyDeleteItem } = useInbox();
+  )
+  const markReadMutation = useMutation(api.inbox.markRead)
+  const { archiveItem, unarchiveItem, permanentlyDeleteItem } = useInbox()
 
-  const isOnboardingMessage = selected?.kind === "onboarding";
+  const isOnboardingMessage = selected?.kind === 'onboarding'
   const showOnboardingWizard =
-    isOnboardingMessage && onboardingStatus?.onboardingStatus === "pending";
-  const isArchived = selected?.archived === true;
+    isOnboardingMessage && onboardingStatus?.onboardingStatus === 'pending'
+  const isArchived = selected?.archived === true
 
   useEffect(() => {
     if (!selected || selected.read || showOnboardingWizard || isArchived) {
-      return;
+      return
     }
-    void markReadMutation({ itemId: selected._id });
-  }, [selected, markReadMutation, showOnboardingWizard, isArchived]);
+    void markReadMutation({ itemId: selected._id })
+  }, [selected, markReadMutation, showOnboardingWizard, isArchived])
 
   return (
     <motion.div className="hidden min-h-0 min-w-0 flex-1 flex-col bg-muted/20 md:flex">
@@ -102,8 +102,8 @@ export function InboxPage() {
                 dateTime={new Date(selected._creationTime).toISOString()}
               >
                 {new Date(selected._creationTime).toLocaleString(undefined, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
                 })}
               </time>
             </motion.div>
@@ -120,7 +120,7 @@ export function InboxPage() {
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-              {selected.body ?? selected.snippet ?? "No additional details."}
+              {selected.body ?? selected.snippet ?? 'No additional details.'}
             </p>
           </div>
           <motion.div
@@ -167,9 +167,7 @@ export function InboxPage() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         variant="destructive"
-                        onClick={() =>
-                          void permanentlyDeleteItem(selected._id)
-                        }
+                        onClick={() => void permanentlyDeleteItem(selected._id)}
                       >
                         Remove permanently
                       </AlertDialogAction>
@@ -193,5 +191,5 @@ export function InboxPage() {
         </>
       )}
     </motion.div>
-  );
+  )
 }

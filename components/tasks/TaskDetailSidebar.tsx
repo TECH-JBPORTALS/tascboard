@@ -1,50 +1,50 @@
-"use client";
+'use client'
 
-import { format, isAfter } from "date-fns";
-import Link from "next/link";
 import {
   RiAddFill,
   RiCalendarLine,
   RiCalendarTodoFill,
   RiStackLine,
-} from "@remixicon/react";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
-import { TaskLabelPicker } from "@/components/tasks/TaskLabelPicker";
+} from '@remixicon/react'
+import { format, isAfter } from 'date-fns'
+import Link from 'next/link'
+import { TaskDueDatePicker } from '@/components/tasks/TaskDueDatePicker'
+import { TaskLabelPicker } from '@/components/tasks/TaskLabelPicker'
+import { TaskMembersPicker } from '@/components/tasks/TaskMembersPicker'
 import {
   TaskPriorityIcon,
   TaskPriorityPicker,
-} from "@/components/tasks/TaskPriorityPicker";
+} from '@/components/tasks/TaskPriorityPicker'
 import {
   TaskStatusIcon,
   TaskStatusPicker,
-} from "@/components/tasks/TaskStatusPicker";
-import { taskPriorityConfig, taskStatusConfig } from "@/lib/task-utils";
-import { Button } from "@/components/ui/button";
-import { TaskMembersPicker } from "@/components/tasks/TaskMembersPicker";
-import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
+} from '@/components/tasks/TaskStatusPicker'
+import { Button } from '@/components/ui/button'
+import type { Doc } from '@/convex/_generated/dataModel'
+import { taskPriorityConfig, taskStatusConfig } from '@/lib/task-utils'
+import { cn } from '@/lib/utils'
+import { Card, CardContent, CardDescription, CardHeader } from '../ui/card'
 
 type TaskDetailSidebarProps = {
-  orgSlug: string;
-  task: Doc<"tasks">;
-  project: Doc<"projects">;
-  labels: Doc<"labels">[];
-};
+  orgSlug: string
+  task: Doc<'tasks'>
+  project: Doc<'projects'>
+  labels: Doc<'labels'>[]
+}
 
 function SidebarRow({
   label,
   children,
 }: {
-  label: string;
-  children: React.ReactNode;
+  label: string
+  children: React.ReactNode
 }) {
   return (
     <div className="flex min-h-8 items-start gap-3 text-sm">
       <span className="w-20 shrink-0 pt-1 text-muted-foreground">{label}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
-  );
+  )
 }
 
 function PropertyChip({
@@ -62,7 +62,7 @@ function PropertyChip({
     >
       {children}
     </Button>
-  );
+  )
 }
 
 export function TaskDetailSidebar({
@@ -71,8 +71,8 @@ export function TaskDetailSidebar({
   project,
   labels,
 }: TaskDetailSidebarProps) {
-  const statusLabel = taskStatusConfig[task.status].label;
-  const priorityLabel = taskPriorityConfig[task.priority].label;
+  const statusLabel = taskStatusConfig[task.status].label
+  const priorityLabel = taskPriorityConfig[task.priority].label
 
   return (
     <Card className="h-fit w-full shrink-0 lg:sticky lg:top-6 lg:ml-auto lg:mr-4 lg:w-72 lg:self-start">
@@ -121,14 +121,14 @@ export function TaskDetailSidebar({
                   <RiCalendarTodoFill
                     className={cn(
                       isAfter(task.dueDate, new Date())
-                        ? "text-muted-foreground"
-                        : "text-destructive",
+                        ? 'text-muted-foreground'
+                        : 'text-destructive',
                     )}
                   />
                 ) : (
                   <RiAddFill />
                 )}
-                {task.dueDate ? format(task.dueDate, "MMM d, yyyy") : "Set due"}
+                {task.dueDate ? format(task.dueDate, 'MMM d, yyyy') : 'Set due'}
               </PropertyChip>
             }
           />
@@ -161,5 +161,5 @@ export function TaskDetailSidebar({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

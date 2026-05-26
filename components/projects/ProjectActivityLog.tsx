@@ -1,70 +1,70 @@
-"use client";
+'use client'
 
-import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "../ui/scroll-area";
+import { useQuery } from 'convex/react'
+import { formatDistanceToNow } from 'date-fns'
+import { api } from '@/convex/_generated/api'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { ScrollArea } from '../ui/scroll-area'
 
-type Activity = Doc<"projectActivities">;
+type Activity = Doc<'projectActivities'>
 
-const kindLabels: Record<Activity["kind"], string> = {
-  created: "created the project",
-  name_changed: "renamed the project",
-  summary_changed: "updated the summary",
-  status_changed: "changed status",
-  start_date_changed: "changed start date",
-  end_date_changed: "changed end date",
-  icon_changed: "changed the icon",
-  color_changed: "changed the color",
-};
+const kindLabels: Record<Activity['kind'], string> = {
+  created: 'created the project',
+  name_changed: 'renamed the project',
+  summary_changed: 'updated the summary',
+  status_changed: 'changed status',
+  start_date_changed: 'changed start date',
+  end_date_changed: 'changed end date',
+  icon_changed: 'changed the icon',
+  color_changed: 'changed the color',
+}
 
 function formatActivityDetail(activity: Activity) {
   switch (activity.kind) {
-    case "created":
-      return activity.toValue ? `"${activity.toValue}"` : null;
-    case "name_changed":
-    case "summary_changed":
+    case 'created':
+      return activity.toValue ? `"${activity.toValue}"` : null
+    case 'name_changed':
+    case 'summary_changed':
       if (activity.fromValue && activity.toValue) {
-        return `"${activity.fromValue}" → "${activity.toValue}"`;
+        return `"${activity.fromValue}" → "${activity.toValue}"`
       }
       if (activity.toValue) {
-        return `"${activity.toValue}"`;
+        return `"${activity.toValue}"`
       }
-      return activity.fromValue ? `cleared "${activity.fromValue}"` : null;
-    case "status_changed":
+      return activity.fromValue ? `cleared "${activity.fromValue}"` : null
+    case 'status_changed':
       if (activity.fromValue && activity.toValue) {
-        return `${activity.fromValue} → ${activity.toValue}`;
+        return `${activity.fromValue} → ${activity.toValue}`
       }
-      return activity.toValue ?? null;
-    case "start_date_changed":
-    case "end_date_changed":
+      return activity.toValue ?? null
+    case 'start_date_changed':
+    case 'end_date_changed':
       if (activity.fromValue && activity.toValue) {
-        return `${activity.fromValue} → ${activity.toValue}`;
+        return `${activity.fromValue} → ${activity.toValue}`
       }
-      return activity.toValue ?? null;
-    case "icon_changed":
+      return activity.toValue ?? null
+    case 'icon_changed':
       if (activity.fromValue && activity.toValue) {
-        return `${activity.fromValue} → ${activity.toValue}`;
+        return `${activity.fromValue} → ${activity.toValue}`
       }
-      return activity.toValue ?? null;
-    case "color_changed":
+      return activity.toValue ?? null
+    case 'color_changed':
       if (activity.fromValue && activity.toValue) {
-        return `${activity.fromValue} → ${activity.toValue}`;
+        return `${activity.fromValue} → ${activity.toValue}`
       }
-      return activity.toValue ?? null;
+      return activity.toValue ?? null
     default:
-      return null;
+      return null
   }
 }
 
 type ProjectActivityLogProps = {
-  projectId: Id<"projects">;
-  className?: string;
-  hideTitle?: boolean;
-  scrollable?: boolean;
-};
+  projectId: Id<'projects'>
+  className?: string
+  hideTitle?: boolean
+  scrollable?: boolean
+}
 
 export function ProjectActivityLog({
   projectId,
@@ -75,7 +75,7 @@ export function ProjectActivityLog({
   const activities = useQuery(api.projectActivity.list, {
     projectId,
     limit: 50,
-  });
+  })
 
   const content = (
     <div className="px-2">
@@ -88,11 +88,11 @@ export function ProjectActivityLog({
       ) : (
         <ul className="space-y-3 px-2 pb-4">
           {activities.map((activity) => {
-            const detail = formatActivityDetail(activity);
+            const detail = formatActivityDetail(activity)
             return (
               <li key={activity._id} className="text-sm">
                 <p className="leading-snug">
-                  <span className="font-medium">{activity.actorName}</span>{" "}
+                  <span className="font-medium">{activity.actorName}</span>{' '}
                   <span className="text-muted-foreground">
                     {kindLabels[activity.kind]}
                   </span>
@@ -108,15 +108,15 @@ export function ProjectActivityLog({
                   })}
                 </p>
               </li>
-            );
+            )
           })}
         </ul>
       )}
     </div>
-  );
+  )
 
   return (
-    <div className={cn("flex min-h-0 flex-col overflow-hidden", className)}>
+    <div className={cn('flex min-h-0 flex-col overflow-hidden', className)}>
       {!hideTitle ? (
         <h3 className="shrink-0 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Activity
@@ -128,5 +128,5 @@ export function ProjectActivityLog({
         content
       )}
     </div>
-  );
+  )
 }

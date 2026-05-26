@@ -1,14 +1,13 @@
-import { query } from "./_generated/server";
-
-import { createClient, GenericCtx } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
-import { DataModel } from "./_generated/dataModel";
-import { betterAuth, BetterAuthOptions } from "better-auth/minimal";
-import authConfig from "../auth.config";
-import { organization } from "better-auth/plugins";
-import authSchema from "./schema";
-import { components, internal } from "../_generated/api";
-import { ac, admin, employee, owner } from "../../lib/permissions";
+import { createClient, GenericCtx } from '@convex-dev/better-auth'
+import { convex } from '@convex-dev/better-auth/plugins'
+import { BetterAuthOptions, betterAuth } from 'better-auth/minimal'
+import { organization } from 'better-auth/plugins'
+import { ac, admin, employee, owner } from '../../lib/permissions'
+import { components, internal } from '../_generated/api'
+import authConfig from '../auth.config'
+import { DataModel } from './_generated/dataModel'
+import { query } from './_generated/server'
+import authSchema from './schema'
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
@@ -17,36 +16,36 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
     local: { schema: authSchema },
     verbose: false,
   },
-);
+)
 
 function runAction(
   ctx: GenericCtx<DataModel>,
   action: typeof internal.emails.processInvitationEmail,
   args: {
-    organizationId: string;
-    email: string;
-    invitationId: string;
-    organizationName: string;
-    inviterName: string;
+    organizationId: string
+    email: string
+    invitationId: string
+    organizationName: string
+    inviterName: string
   },
 ) {
-  if ("runAction" in ctx && typeof ctx.runAction === "function") {
-    return ctx.runAction(action, args);
+  if ('runAction' in ctx && typeof ctx.runAction === 'function') {
+    return ctx.runAction(action, args)
   }
-  throw new Error("Cannot send invitation email in this context.");
+  throw new Error('Cannot send invitation email in this context.')
 }
 
 function runMutation(
   ctx: GenericCtx<DataModel>,
   mutation: typeof internal.employeeProfiles.ensureProfileAfterInvite,
   args: { organizationId: string; userId: string },
-): Promise<unknown>;
+): Promise<unknown>
 
 function runMutation(
   ctx: GenericCtx<DataModel>,
   mutation: typeof internal.employees.auth.deleteInvitationRecord,
   args: { invitationId: string },
-): Promise<unknown>;
+): Promise<unknown>
 
 function runMutation(
   ctx: GenericCtx<DataModel>,
@@ -55,16 +54,16 @@ function runMutation(
     | typeof internal.employees.auth.deleteInvitationRecord,
   args: { organizationId: string; userId: string } | { invitationId: string },
 ) {
-  if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
-    return ctx.runMutation(mutation, args);
+  if ('runMutation' in ctx && typeof ctx.runMutation === 'function') {
+    return ctx.runMutation(mutation, args)
   }
-  throw new Error("Cannot run mutation in this context.");
+  throw new Error('Cannot run mutation in this context.')
 }
 
 // Better Auth Options
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
-    appName: "Tascboard",
+    appName: 'Tascboard',
     baseURL: process.env.SITE_URL,
     secret: process.env.BETTER_AUTH_SECRET,
     database: authComponent.adapter(ctx),
@@ -83,7 +82,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
             invitationId: data.id,
             organizationName: data.organization.name,
             inviterName: data.inviter.user.name,
-          });
+          })
         },
         organizationHooks: {
           afterAcceptInvitation: async ({ invitation, user }) => {
@@ -94,18 +93,18 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
                 organizationId: invitation.organizationId,
                 userId: user.id,
               },
-            );
+            )
 
-            if ("runMutation" in ctx && typeof ctx.runMutation === "function") {
+            if ('runMutation' in ctx && typeof ctx.runMutation === 'function') {
               await ctx.runMutation(internal.inbox.createInboxItem, {
                 organizationId: invitation.organizationId,
                 recipientUserId: user.id,
-                kind: "onboarding",
-                title: "Complete your employee profile",
+                kind: 'onboarding',
+                title: 'Complete your employee profile',
                 snippet:
-                  "A few details to get you started — takes about 5 minutes",
-                body: "Welcome aboard. Complete your profile below so payroll, compliance, and your team have what they need.",
-              });
+                  'A few details to get you started — takes about 5 minutes',
+                body: 'Welcome aboard. Complete your profile below so payroll, compliance, and your team have what they need.',
+              })
             }
           },
           afterCancelInvitation: async ({ invitation }) => {
@@ -115,15 +114,15 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
               {
                 invitationId: invitation.id,
               },
-            );
+            )
           },
         },
         schema: {
           member: {
-            modelName: "employee",
+            modelName: 'employee',
             additionalFields: {
               active: {
-                type: "boolean",
+                type: 'boolean',
                 defaultValue: true,
                 required: true,
                 index: true,
@@ -145,20 +144,20 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         },
       }),
     ],
-  } satisfies BetterAuthOptions;
-};
+  } satisfies BetterAuthOptions
+}
 
 // For `auth` CLI
-export const options = createAuthOptions({} as GenericCtx<DataModel>);
+export const options = createAuthOptions({} as GenericCtx<DataModel>)
 
 // Better Auth Instance
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  return betterAuth(createAuthOptions(ctx));
-};
+  return betterAuth(createAuthOptions(ctx))
+}
 
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    return authComponent.getAuthUser(ctx);
+    return authComponent.getAuthUser(ctx)
   },
-});
+})

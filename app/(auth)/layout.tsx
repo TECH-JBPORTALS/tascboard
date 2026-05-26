@@ -1,11 +1,11 @@
-import { isAuthenticated } from "@/lib/auth-server";
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation'
+import { isAuthenticated } from '@/lib/auth-server'
 
 export default async function Layout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  if (!(await isAuthenticated())) redirect("/sign-in");
-  return children;
+  if (!(await isAuthenticated())) redirect('/sign-in')
+  return children
 }

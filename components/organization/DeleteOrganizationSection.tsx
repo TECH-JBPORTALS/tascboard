@@ -1,66 +1,64 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { DELETE_ORGANIZATION_PLEDGE } from "@/lib/organization";
-import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Field, FieldError } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/card'
+import { Field, FieldError } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { authClient } from '@/lib/auth-client'
+import { DELETE_ORGANIZATION_PLEDGE } from '@/lib/organization'
 
 type Organization = {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 export function DeleteOrganizationSection() {
-  const router = useRouter();
-  const { data: organization } = authClient.useActiveOrganization();
-  const org = organization as Organization | null | undefined;
+  const router = useRouter()
+  const { data: organization } = authClient.useActiveOrganization()
+  const org = organization as Organization | null | undefined
 
-  const [confirmName, setConfirmName] = useState("");
-  const [pledge, setPledge] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmName, setConfirmName] = useState('')
+  const [pledge, setPledge] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const canDelete =
-    org &&
-    confirmName === org.name &&
-    pledge === DELETE_ORGANIZATION_PLEDGE;
+    org && confirmName === org.name && pledge === DELETE_ORGANIZATION_PLEDGE
 
   async function handleDelete() {
     if (!org || !canDelete) {
-      return;
+      return
     }
 
-    setError(null);
-    setIsDeleting(true);
+    setError(null)
+    setIsDeleting(true)
 
     const result = await authClient.organization.delete({
       organizationId: org.id,
-    });
+    })
 
-    setIsDeleting(false);
+    setIsDeleting(false)
 
     if (result.error) {
-      setError(result.error.message ?? "Failed to delete organization");
-      return;
+      setError(result.error.message ?? 'Failed to delete organization')
+      return
     }
 
-    router.replace("/select-organization");
-    router.refresh();
+    router.replace('/select-organization')
+    router.refresh()
   }
 
   if (!org) {
-    return null;
+    return null
   }
 
   return (
@@ -74,7 +72,7 @@ export function DeleteOrganizationSection() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          To confirm, type the organization name{" "}
+          To confirm, type the organization name{' '}
           <span className="font-medium text-foreground">{org.name}</span> and
           enter the pledge exactly as shown.
         </p>
@@ -110,9 +108,9 @@ export function DeleteOrganizationSection() {
           disabled={!canDelete || isDeleting}
           onClick={() => void handleDelete()}
         >
-          {isDeleting ? "Deleting..." : "Delete organization"}
+          {isDeleting ? 'Deleting...' : 'Delete organization'}
         </Button>
       </CardContent>
     </Card>
-  );
+  )
 }

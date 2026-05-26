@@ -1,54 +1,54 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation, useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
 import {
   RiArrowUpLine,
   RiCheckLine,
+  RiDeleteBinLine,
   RiMore2Line,
   RiPencilLine,
-  RiDeleteBinLine,
-} from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { useActor } from "@/hooks/use-actor";
-import {
-  EDITOR_DEFAULT_VALUE,
-  isEditorContentEmpty,
-  resolveEditorString,
-} from "@/lib/editor-content";
-import { Button } from "@/components/ui/button";
+} from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import { formatDistanceToNow } from 'date-fns'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { RichTextEditor } from "../editor/RichTextEditor";
+} from '@/components/ui/dropdown-menu'
+import { api } from '@/convex/_generated/api'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { useActor } from '@/hooks/use-actor'
+import {
+  EDITOR_DEFAULT_VALUE,
+  isEditorContentEmpty,
+  resolveEditorString,
+} from '@/lib/editor-content'
+import { cn } from '@/lib/utils'
+import { RichTextEditor } from '../editor/RichTextEditor'
 
 type TaskCommentsSectionProps = {
-  taskId: Id<"tasks">;
-};
+  taskId: Id<'tasks'>
+}
 
-type CommentDoc = Doc<"comments">;
+type CommentDoc = Doc<'comments'>
 
 function buildThreads(comments: CommentDoc[]) {
-  const roots = comments.filter((c) => c.parentCommentId === null);
-  const repliesByRoot = new Map<string, CommentDoc[]>();
+  const roots = comments.filter((c) => c.parentCommentId === null)
+  const repliesByRoot = new Map<string, CommentDoc[]>()
 
   for (const comment of comments) {
-    if (!comment.parentCommentId) continue;
-    const rootId = comment.parentCommentId;
-    const list = repliesByRoot.get(rootId) ?? [];
-    list.push(comment);
-    repliesByRoot.set(rootId, list);
+    if (!comment.parentCommentId) continue
+    const rootId = comment.parentCommentId
+    const list = repliesByRoot.get(rootId) ?? []
+    list.push(comment)
+    repliesByRoot.set(rootId, list)
   }
 
   for (const [, replies] of repliesByRoot) {
-    replies.sort((a, b) => a._creationTime - b._creationTime);
+    replies.sort((a, b) => a._creationTime - b._creationTime)
   }
 
   return roots
@@ -56,7 +56,7 @@ function buildThreads(comments: CommentDoc[]) {
     .map((root) => ({
       root,
       replies: repliesByRoot.get(root._id) ?? [],
-    }));
+    }))
 }
 
 function CommentMenu({
@@ -65,16 +65,16 @@ function CommentMenu({
   deviceName,
   onEdit,
 }: {
-  comment: CommentDoc;
-  isReply: boolean;
-  deviceName: string;
-  onEdit: () => void;
+  comment: CommentDoc
+  isReply: boolean
+  deviceName: string
+  onEdit: () => void
 }) {
-  const removeComment = useMutation(api.comment.remove);
-  const toggleResolution = useMutation(api.comment.toggleResolution);
-  const isOwner = comment.deviceName === deviceName;
+  const removeComment = useMutation(api.comment.remove)
+  const toggleResolution = useMutation(api.comment.toggleResolution)
+  const isOwner = comment.deviceName === deviceName
 
-  if (!isOwner) return null;
+  if (!isOwner) return null
 
   return (
     <DropdownMenu>
@@ -93,7 +93,7 @@ function CommentMenu({
           onClick={() => void toggleResolution({ commentId: comment._id })}
         >
           <RiCheckLine className="size-4" />
-          {isReply ? "Resolve thread with comment" : "Resolve thread"}
+          {isReply ? 'Resolve thread with comment' : 'Resolve thread'}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -107,7 +107,7 @@ function CommentMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
 
 function CommentItem({
@@ -116,35 +116,37 @@ function CommentItem({
   deviceName,
   displayName,
 }: {
-  comment: CommentDoc;
-  isReply: boolean;
-  deviceName: string;
-  displayName: string;
+  comment: CommentDoc
+  isReply: boolean
+  deviceName: string
+  displayName: string
 }) {
-  const editComment = useMutation(api.comment.edit);
-  const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState(() => resolveEditorString(comment.body));
+  const editComment = useMutation(api.comment.edit)
+  const [editing, setEditing] = React.useState(false)
+  const [draft, setDraft] = React.useState(() =>
+    resolveEditorString(comment.body),
+  )
 
   const authorLabel =
-    comment.deviceName === deviceName ? displayName : comment.deviceName;
+    comment.deviceName === deviceName ? displayName : comment.deviceName
 
   async function handleSave(value: string) {
-    setDraft(value);
-    if (isEditorContentEmpty(value)) return;
+    setDraft(value)
+    if (isEditorContentEmpty(value)) return
     await editComment({
       commentId: comment._id,
       body: value,
       deviceName,
-    });
-    setEditing(false);
+    })
+    setEditing(false)
   }
 
   return (
     <div
       className={cn(
-        "group rounded-lg px-2 py-2 hover:bg-muted/30",
-        comment.isResolution && "ring-1 ring-emerald-500/30",
-        isReply && "ml-8 border-l-2 border-border/60 pl-4",
+        'group rounded-lg px-2 py-2 hover:bg-muted/30',
+        comment.isResolution && 'ring-1 ring-emerald-500/30',
+        isReply && 'ml-8 border-l-2 border-border/60 pl-4',
       )}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -195,7 +197,7 @@ function CommentItem({
       ) : (
         <RichTextEditor
           value={
-            typeof comment.body === "string"
+            typeof comment.body === 'string'
               ? comment.body
               : resolveEditorString(comment.body)
           }
@@ -205,7 +207,7 @@ function CommentItem({
         />
       )}
     </div>
-  );
+  )
 }
 
 function ReplyComposer({
@@ -213,31 +215,31 @@ function ReplyComposer({
   parentCommentId,
   deviceName,
 }: {
-  taskId: Id<"tasks">;
-  parentCommentId: Id<"comments">;
-  deviceName: string;
+  taskId: Id<'tasks'>
+  parentCommentId: Id<'comments'>
+  deviceName: string
 }) {
-  const createComment = useMutation(api.comment.create);
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(EDITOR_DEFAULT_VALUE);
-  const [submitting, setSubmitting] = React.useState(false);
+  const createComment = useMutation(api.comment.create)
+  const [open, setOpen] = React.useState(false)
+  const [value, setValue] = React.useState(EDITOR_DEFAULT_VALUE)
+  const [submitting, setSubmitting] = React.useState(false)
 
   async function handleSubmit(nextValue: string = value) {
-    if (submitting) return;
-    setValue(nextValue);
-    if (isEditorContentEmpty(nextValue)) return;
-    setSubmitting(true);
+    if (submitting) return
+    setValue(nextValue)
+    if (isEditorContentEmpty(nextValue)) return
+    setSubmitting(true)
     try {
       await createComment({
         taskId,
         parentCommentId,
         deviceName,
         body: nextValue,
-      });
-      setValue(EDITOR_DEFAULT_VALUE);
-      setOpen(false);
+      })
+      setValue(EDITOR_DEFAULT_VALUE)
+      setOpen(false)
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
   }
 
@@ -250,7 +252,7 @@ function ReplyComposer({
       >
         Leave a reply…
       </button>
-    );
+    )
   }
 
   return (
@@ -280,33 +282,33 @@ function ReplyComposer({
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 export function TaskCommentsSection({ taskId }: TaskCommentsSectionProps) {
-  const comments = useQuery(api.comment.listByTask, { taskId });
-  const createComment = useMutation(api.comment.create);
-  const { deviceName, displayName } = useActor();
-  const [draft, setDraft] = React.useState(EDITOR_DEFAULT_VALUE);
-  const [submitting, setSubmitting] = React.useState(false);
+  const comments = useQuery(api.comment.listByTask, { taskId })
+  const createComment = useMutation(api.comment.create)
+  const { deviceName, displayName } = useActor()
+  const [draft, setDraft] = React.useState(EDITOR_DEFAULT_VALUE)
+  const [submitting, setSubmitting] = React.useState(false)
 
-  const threads = comments ? buildThreads(comments) : [];
+  const threads = comments ? buildThreads(comments) : []
 
   async function handleSubmit(nextDraft: string = draft) {
-    if (submitting) return;
-    setDraft(nextDraft);
-    if (isEditorContentEmpty(nextDraft)) return;
-    setSubmitting(true);
+    if (submitting) return
+    setDraft(nextDraft)
+    if (isEditorContentEmpty(nextDraft)) return
+    setSubmitting(true)
     try {
       await createComment({
         taskId,
         parentCommentId: null,
         deviceName,
         body: nextDraft,
-      });
-      setDraft(EDITOR_DEFAULT_VALUE);
+      })
+      setDraft(EDITOR_DEFAULT_VALUE)
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
   }
 
@@ -357,5 +359,5 @@ export function TaskCommentsSection({ taskId }: TaskCommentsSectionProps) {
         </div>
       </div>
     </section>
-  );
+  )
 }

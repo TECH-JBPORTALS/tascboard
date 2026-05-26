@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useQuery } from "convex/react";
-import { RiAddLine, RiFilter3Line, RiLayoutGridLine } from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
-import { TrackIssuesList } from "@/components/tracks/track-issues-list";
-import { TrackPageHeader } from "@/components/tracks/track-page-header";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { RiAddLine, RiFilter3Line, RiLayoutGridLine } from '@remixicon/react'
+import { useQuery } from 'convex/react'
+import * as React from 'react'
+import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog'
+import { TrackIssuesList } from '@/components/tracks/track-issues-list'
+import { TrackPageHeader } from '@/components/tracks/track-page-header'
+import { Button } from '@/components/ui/button'
+import { api } from '@/convex/_generated/api'
+import type { Doc } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
 
 type TrackViewProps = {
-  orgSlug: string;
-  project: Doc<"projects">;
-  track: Doc<"tracks">;
-};
+  orgSlug: string
+  project: Doc<'projects'>
+  track: Doc<'tracks'>
+}
 
 export function TrackView({ orgSlug, project, track }: TrackViewProps) {
-  const tasks = useQuery(api.task.listByTrack, { trackId: track._id });
-  const [createOpen, setCreateOpen] = React.useState(false);
+  const tasks = useQuery(api.task.listByTrack, { trackId: track._id })
+  const [createOpen, setCreateOpen] = React.useState(false)
 
-  const issueCount = tasks?.length ?? 0;
+  const issueCount = tasks?.length ?? 0
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -65,24 +65,24 @@ export function TrackView({ orgSlug, project, track }: TrackViewProps) {
         projectId={project._id}
       />
     </div>
-  );
+  )
 }
 
 function ViewTab({
   children,
   active,
 }: {
-  children: React.ReactNode;
-  active?: boolean;
+  children: React.ReactNode
+  active?: boolean
 }) {
   return (
     <span
       className={cn(
-        "rounded-md px-2.5 py-1 text-sm font-medium",
-        active ? "bg-muted text-foreground" : "text-muted-foreground",
+        'rounded-md px-2.5 py-1 text-sm font-medium',
+        active ? 'bg-muted text-foreground' : 'text-muted-foreground',
       )}
     >
       {children}
     </span>
-  );
+  )
 }

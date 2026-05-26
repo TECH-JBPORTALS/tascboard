@@ -1,44 +1,44 @@
-"use client";
+'use client'
 
-import { memo, useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
-import type { InvitationRow } from "./invitations-columns";
-import type { OrgRole } from "@/lib/permissions";
+import { memo, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { authClient } from '@/lib/auth-client'
+import type { OrgRole } from '@/lib/permissions'
+import type { InvitationRow } from './invitations-columns'
 
 type InvitationRowActionsProps = {
-  invitation: InvitationRow;
-  organizationId: string;
-  onRequestCancel: (invitation: InvitationRow) => void;
-};
+  invitation: InvitationRow
+  organizationId: string
+  onRequestCancel: (invitation: InvitationRow) => void
+}
 
 export const InvitationRowActions = memo(function InvitationRowActions({
   invitation,
   organizationId,
   onRequestCancel,
 }: InvitationRowActionsProps) {
-  const [pending, setPending] = useState<"resend" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<'resend' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleResend() {
-    setError(null);
-    setPending("resend");
+    setError(null)
+    setPending('resend')
     try {
-      const role = (invitation.role ?? "employee") as OrgRole;
+      const role = (invitation.role ?? 'employee') as OrgRole
       const result = await authClient.organization.inviteMember({
         email: invitation.email,
         role,
         organizationId,
         resend: true,
-      });
+      })
 
       if (result.error) {
-        setError(result.error.message ?? "Failed to resend invitation");
+        setError(result.error.message ?? 'Failed to resend invitation')
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to resend invitation");
+      setError(e instanceof Error ? e.message : 'Failed to resend invitation')
     } finally {
-      setPending(null);
+      setPending(null)
     }
   }
 
@@ -52,7 +52,7 @@ export const InvitationRowActions = memo(function InvitationRowActions({
           disabled={pending !== null}
           onClick={() => void handleResend()}
         >
-          {pending === "resend" ? "Sending..." : "Resend"}
+          {pending === 'resend' ? 'Sending...' : 'Resend'}
         </Button>
         <Button
           type="button"
@@ -69,5 +69,5 @@ export const InvitationRowActions = memo(function InvitationRowActions({
         <p className="max-w-48 truncate text-xs text-destructive">{error}</p>
       ) : null}
     </div>
-  );
-});
+  )
+})

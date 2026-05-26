@@ -1,8 +1,14 @@
-"use client";
+'use client'
 
-import z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { RiEyeLine, RiEyeOffLine } from '@remixicon/react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import z from 'zod'
+import { authClient } from '@/lib/auth-client'
+import { Button } from './ui/button'
 import {
   Card,
   CardContent,
@@ -10,39 +16,29 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { Field, FieldError } from "./ui/field";
-import { Button } from "./ui/button";
-import { authClient } from "@/lib/auth-client";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import {
-  InputGroup,
-  InputGroupButton,
-  InputGroupInput,
-} from "./ui/input-group";
-import { useState } from "react";
-import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+} from './ui/card'
+import { Field, FieldError } from './ui/field'
+import { Input } from './ui/input'
+import { InputGroup, InputGroupButton, InputGroupInput } from './ui/input-group'
+import { Label } from './ui/label'
 
 const signInSchema = z.object({
-  email: z.string().min(1, "Email is required!"),
-  password: z.string().min(1, "Password is required!"),
-});
+  email: z.string().min(1, 'Email is required!'),
+  password: z.string().min(1, 'Password is required!'),
+})
 
 export function SignInPage() {
-  const [show, setShow] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect");
+  const [show, setShow] = useState(false)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
-  });
+  })
 
   async function onSubmit(values: z.infer<typeof signInSchema>) {
     await authClient.signIn
@@ -52,16 +48,16 @@ export function SignInPage() {
       })
       .then((res) => {
         if (res.error) {
-          form.setError("root", res.error);
-          return;
+          form.setError('root', res.error)
+          return
         }
 
         if (redirect) {
-          router.replace(redirect);
+          router.replace(redirect)
         } else {
-          router.refresh();
+          router.refresh()
         }
-      });
+      })
   }
 
   return (
@@ -101,7 +97,7 @@ export function SignInPage() {
                   <Label>Password</Label>
                   <InputGroup>
                     <InputGroupInput
-                      type={show ? "text" : "password"}
+                      type={show ? 'text' : 'password'}
                       {...field}
                     />
                     <InputGroupButton onClick={() => setShow(!show)}>
@@ -119,9 +115,9 @@ export function SignInPage() {
                 disabled={form.formState.isSubmitting}
                 type="submit"
                 form="sign-in-form"
-                className={"w-full"}
+                className={'w-full'}
               >
-                {form.formState.isSubmitting ? "Signing in..." : "Continue"}
+                {form.formState.isSubmitting ? 'Signing in...' : 'Continue'}
               </Button>
             </Field>
           </CardContent>
@@ -129,7 +125,7 @@ export function SignInPage() {
             <p className="text-sm">
               {`Don't have an account? `}
               <Link
-                href={"/sign-up"}
+                href={'/sign-up'}
                 className="hover:underline text-primary/80 hover:text-primary"
               >
                 Create account
@@ -138,7 +134,7 @@ export function SignInPage() {
             <p className="text-sm">
               {`Forgot password? `}
               <Link
-                href={"/forgot-password"}
+                href={'/forgot-password'}
                 className="hover:underline text-primary/80 hover:text-primary"
               >
                 Reset it
@@ -148,5 +144,5 @@ export function SignInPage() {
         </Card>
       </form>
     </section>
-  );
+  )
 }

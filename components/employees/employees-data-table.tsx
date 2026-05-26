@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { useMemo } from "react";
 import {
+  type ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table'
+import { useMemo } from 'react'
 import {
   Table,
   TableBody,
@@ -14,14 +14,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
 type EmployeesDataTableProps<TData> = {
-  columns: ColumnDef<TData, unknown>[];
-  data: TData[];
-  getRowInactive?: (row: TData) => boolean;
-};
+  columns: ColumnDef<TData, unknown>[]
+  data: TData[]
+  getRowInactive?: (row: TData) => boolean
+}
 
 export function EmployeesDataTable<TData>({
   columns,
@@ -32,7 +32,7 @@ export function EmployeesDataTable<TData>({
     data,
     columns,
     getCoreRowModel: useMemo(() => getCoreRowModel(), []),
-  });
+  })
 
   return (
     <div className="rounded-lg border">
@@ -56,13 +56,10 @@ export function EmployeesDataTable<TData>({
         <TableBody>
           {table.getRowModel().rows.length > 0 ? (
             table.getRowModel().rows.map((row) => {
-              const inactive = getRowInactive?.(row.original) ?? false;
+              const inactive = getRowInactive?.(row.original) ?? false
 
               return (
-                <TableRow
-                  key={row.id}
-                  className={cn(inactive && "opacity-50")}
-                >
+                <TableRow key={row.id} className={cn(inactive && 'opacity-50')}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -72,7 +69,7 @@ export function EmployeesDataTable<TData>({
                     </TableCell>
                   ))}
                 </TableRow>
-              );
+              )
             })
           ) : (
             <TableRow>
@@ -87,5 +84,5 @@ export function EmployeesDataTable<TData>({
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

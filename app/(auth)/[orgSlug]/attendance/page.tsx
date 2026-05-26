@@ -6,5 +6,5 @@ export default function AttendancePage() {
         Track and review employee attendance here.
       </p>
     </div>
-  );
+  )
 }

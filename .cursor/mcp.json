@@ -2,19 +2,13 @@
   "mcpServers": {
     "shadcn": {
       "command": "bunx",
-      "args": [
-        "shadcn@latest",
-        "mcp"
-      ]
+      "args": ["shadcn@latest", "mcp"]
     },
     "plate": {
       "description": "Plate editors, plugins and components",
       "type": "stdio",
       "command": "bunx",
-      "args": [
-        "shadcn@latest",
-        "mcp"
-      ]
+      "args": ["shadcn@latest", "mcp"]
     }
   }
 }

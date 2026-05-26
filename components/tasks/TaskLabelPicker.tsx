@@ -1,13 +1,9 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation, useQuery } from "convex/react";
-import { RiAddFill, RiArrowGoBackLine } from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { useActor } from "@/hooks/use-actor";
-import { DEFAULT_LABEL_COLOR, LABEL_COLOR_OPTIONS } from "@/lib/label-colors";
-import { Button } from "@/components/ui/button";
+import { RiAddFill, RiArrowGoBackLine } from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Command,
   CommandEmpty,
@@ -15,28 +11,32 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/popover'
+import { api } from '@/convex/_generated/api'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { useActor } from '@/hooks/use-actor'
+import { DEFAULT_LABEL_COLOR, LABEL_COLOR_OPTIONS } from '@/lib/label-colors'
+import { cn } from '@/lib/utils'
 
 type TaskLabelPickerProps = {
-  taskId: Id<"tasks">;
-  projectId: Id<"projects">;
-  projectName: string;
-  attachedLabels: Doc<"labels">[];
-};
+  taskId: Id<'tasks'>
+  projectId: Id<'projects'>
+  projectName: string
+  attachedLabels: Doc<'labels'>[]
+}
 
 function LabelDot({ color, className }: { color: string; className?: string }) {
   return (
     <span
-      className={cn("size-2 shrink-0 rounded-full", className)}
+      className={cn('size-2 shrink-0 rounded-full', className)}
       style={{ backgroundColor: color }}
     />
-  );
+  )
 }
 
 export function TaskLabelPicker({
@@ -45,62 +45,62 @@ export function TaskLabelPicker({
   projectName,
   attachedLabels,
 }: TaskLabelPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState('')
   const [pendingCreateName, setPendingCreateName] = React.useState<
     string | null
-  >(null);
+  >(null)
   const [createColor, setCreateColor] =
-    React.useState<string>(DEFAULT_LABEL_COLOR);
-  const { deviceName } = useActor();
+    React.useState<string>(DEFAULT_LABEL_COLOR)
+  const { deviceName } = useActor()
 
-  const projectLabels = useQuery(api.label.listByProject, { projectId });
-  const createLabel = useMutation(api.label.create);
-  const attachLabel = useMutation(api.label.attachToTask);
-  const detachLabel = useMutation(api.label.detachFromTask);
+  const projectLabels = useQuery(api.label.listByProject, { projectId })
+  const createLabel = useMutation(api.label.create)
+  const attachLabel = useMutation(api.label.attachToTask)
+  const detachLabel = useMutation(api.label.detachFromTask)
 
-  const attachedIds = new Set(attachedLabels.map((l) => l._id));
-  const trimmed = query.trim();
-  const normalized = trimmed.toLowerCase();
+  const attachedIds = new Set(attachedLabels.map((l) => l._id))
+  const trimmed = query.trim()
+  const normalized = trimmed.toLowerCase()
 
   const filtered =
     projectLabels?.filter((label) =>
       label.name.toLowerCase().includes(normalized),
-    ) ?? [];
+    ) ?? []
 
   const exactMatch = projectLabels?.some(
     (label) => label.name.toLowerCase() === normalized,
-  );
+  )
 
-  async function handleToggle(label: Doc<"labels">) {
+  async function handleToggle(label: Doc<'labels'>) {
     if (attachedIds.has(label._id)) {
-      await detachLabel({ taskId, labelId: label._id, deviceName });
+      await detachLabel({ taskId, labelId: label._id, deviceName })
     } else {
-      await attachLabel({ taskId, labelId: label._id, deviceName });
+      await attachLabel({ taskId, labelId: label._id, deviceName })
     }
   }
 
   async function handleCreate(name: string, color: string) {
-    const labelId = await createLabel({ projectId, name, color });
-    await attachLabel({ taskId, labelId, deviceName });
-    setQuery("");
-    setPendingCreateName(null);
-    setCreateColor(DEFAULT_LABEL_COLOR);
-    setOpen(false);
+    const labelId = await createLabel({ projectId, name, color })
+    await attachLabel({ taskId, labelId, deviceName })
+    setQuery('')
+    setPendingCreateName(null)
+    setCreateColor(DEFAULT_LABEL_COLOR)
+    setOpen(false)
   }
 
   function handleCreateStep(name: string) {
-    setPendingCreateName(name);
+    setPendingCreateName(name)
   }
 
   async function handleSelectCreateColor(color: string) {
-    if (!pendingCreateName) return;
-    setCreateColor(color);
-    await handleCreate(pendingCreateName, color);
+    if (!pendingCreateName) return
+    setCreateColor(color)
+    await handleCreate(pendingCreateName, color)
   }
 
   function formatColorName(name: string) {
-    return name.charAt(0).toUpperCase() + name.slice(1);
+    return name.charAt(0).toUpperCase() + name.slice(1)
   }
 
   return (
@@ -110,8 +110,8 @@ export function TaskLabelPicker({
           <Button
             key={label._id}
             type="button"
-            variant={"outline"}
-            size={"xs"}
+            variant={'outline'}
+            size={'xs'}
             className="rounded-full"
             onClick={() => void handleToggle(label)}
           >
@@ -124,10 +124,10 @@ export function TaskLabelPicker({
       <Popover
         open={open}
         onOpenChange={(nextOpen) => {
-          setOpen(nextOpen);
+          setOpen(nextOpen)
           if (!nextOpen) {
-            setPendingCreateName(null);
-            setCreateColor(DEFAULT_LABEL_COLOR);
+            setPendingCreateName(null)
+            setCreateColor(DEFAULT_LABEL_COLOR)
           }
         }}
       >
@@ -136,13 +136,13 @@ export function TaskLabelPicker({
             <Button
               type="button"
               variant="outline"
-              size={attachedLabels.length > 0 ? "icon-xs" : "xs"}
+              size={attachedLabels.length > 0 ? 'icon-xs' : 'xs'}
               className="rounded-full"
             />
           }
         >
           <RiAddFill className="size-3.5" />
-          {attachedLabels.length === 0 && "Add label"}
+          {attachedLabels.length === 0 && 'Add label'}
         </PopoverTrigger>
 
         <PopoverContent className="w-fit p-0" align="end">
@@ -181,7 +181,7 @@ export function TaskLabelPicker({
                     onSelect={() => setPendingCreateName(null)}
                     className="text-xs text-muted-foreground"
                   >
-                    <RiArrowGoBackLine className={"size-2.5"} /> Back
+                    <RiArrowGoBackLine className={'size-2.5'} /> Back
                   </CommandItem>
                 </CommandGroup>
               ) : (
@@ -209,9 +209,9 @@ export function TaskLabelPicker({
                     >
                       <LabelDot color={createColor} className="size-2.5" />
                       <span className="flex-1 text-nowrap text-xs">
-                        Create new{" "}
-                        <span className="font-semibold">{projectName}</span>{" "}
-                        label:{" "}
+                        Create new{' '}
+                        <span className="font-semibold">{projectName}</span>{' '}
+                        label:{' '}
                         <span className="text-muted-foreground font-semibold">
                           &quot;{trimmed}&quot;
                         </span>
@@ -225,5 +225,5 @@ export function TaskLabelPicker({
         </PopoverContent>
       </Popover>
     </div>
-  );
+  )
 }

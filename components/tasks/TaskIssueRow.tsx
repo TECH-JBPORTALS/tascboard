@@ -1,34 +1,33 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { format } from "date-fns";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { TaskDueDatePicker } from "@/components/tasks/TaskDueDatePicker";
-import { TaskMembersPicker } from "@/components/tasks/TaskMembersPicker";
+import { RiAddFill, RiCalendarTodoFill } from '@remixicon/react'
+import { format, isAfter } from 'date-fns'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { TaskDueDatePicker } from '@/components/tasks/TaskDueDatePicker'
+import { TaskMembersPicker } from '@/components/tasks/TaskMembersPicker'
 import {
   TaskPriorityIcon,
   TaskPriorityPicker,
-} from "@/components/tasks/TaskPriorityPicker";
+} from '@/components/tasks/TaskPriorityPicker'
 import {
   TaskStatusIcon,
   TaskStatusPicker,
-} from "@/components/tasks/TaskStatusPicker";
-import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
-import { RiAddFill, RiCalendarTodoFill } from "@remixicon/react";
-import { isAfter } from "date-fns";
+} from '@/components/tasks/TaskStatusPicker'
+import type { Doc } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { Button } from '../ui/button'
 
 type TaskIssueRowProps = {
-  task: Doc<"tasks">;
-  className?: string;
-};
+  task: Doc<'tasks'>
+  className?: string
+}
 
 function RowTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<"button">) {
+}: React.ComponentProps<'button'>) {
   return (
     <Button
       type="button"
@@ -39,21 +38,21 @@ function RowTrigger({
     >
       {children}
     </Button>
-  );
+  )
 }
 
 export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
   const params = useParams<{
-    orgSlug: string;
-    projectId: string;
-    trackId: string;
-  }>();
-  const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`;
+    orgSlug: string
+    projectId: string
+    trackId: string
+  }>()
+  const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`
 
   return (
     <div
       className={cn(
-        "group flex h-9 items-center gap-2 px-3 text-sm hover:bg-muted/40",
+        'group flex h-9 items-center gap-2 px-3 text-sm hover:bg-muted/40',
         className,
       )}
     >
@@ -103,14 +102,14 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
               <RiCalendarTodoFill
                 className={cn(
                   isAfter(task.dueDate, new Date())
-                    ? "text-muted-foreground"
-                    : "text-destructive",
+                    ? 'text-muted-foreground'
+                    : 'text-destructive',
                 )}
               />
             ) : (
               <RiAddFill />
             )}
-            {task.dueDate ? format(task.dueDate, "MMM d") : "Set due"}
+            {task.dueDate ? format(task.dueDate, 'MMM d') : 'Set due'}
           </RowTrigger>
         }
       />
@@ -118,8 +117,8 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
       <TaskMembersPicker taskId={task._id} trackId={task.trackId} compact />
 
       <span className="hidden w-14 shrink-0 text-right text-xs text-muted-foreground md:inline">
-        {format(task.createdAt, "MMM d")}
+        {format(task.createdAt, 'MMM d')}
       </span>
     </div>
-  );
+  )
 }

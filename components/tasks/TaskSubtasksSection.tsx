@@ -1,50 +1,49 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation, useQuery } from "convex/react";
 import {
   RiAddLine,
   RiCheckboxBlankCircleLine,
   RiCheckboxCircleFill,
   RiDeleteBinLine,
-} from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { useActor } from "@/hooks/use-actor";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+} from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { useActor } from '@/hooks/use-actor'
+import { cn } from '@/lib/utils'
 
 type TaskSubtasksSectionProps = {
-  taskId: Id<"tasks">;
-};
+  taskId: Id<'tasks'>
+}
 
 export function TaskSubtasksSection({ taskId }: TaskSubtasksSectionProps) {
-  const subtasks = useQuery(api.subtask.listByTask, { taskId });
-  const createSubtask = useMutation(api.subtask.create);
-  const toggleSubtask = useMutation(api.subtask.toggle);
-  const removeSubtask = useMutation(api.subtask.remove);
-  const { deviceName } = useActor();
+  const subtasks = useQuery(api.subtask.listByTask, { taskId })
+  const createSubtask = useMutation(api.subtask.create)
+  const toggleSubtask = useMutation(api.subtask.toggle)
+  const removeSubtask = useMutation(api.subtask.remove)
+  const { deviceName } = useActor()
 
-  const [draft, setDraft] = React.useState("");
-  const [adding, setAdding] = React.useState(false);
-  const total = subtasks?.length ?? 0;
-  const completed =
-    subtasks?.filter((subtask) => subtask.completed).length ?? 0;
-  const progress = total === 0 ? 0 : (completed / total) * 100;
+  const [draft, setDraft] = React.useState('')
+  const [adding, setAdding] = React.useState(false)
+  const total = subtasks?.length ?? 0
+  const completed = subtasks?.filter((subtask) => subtask.completed).length ?? 0
+  const progress = total === 0 ? 0 : (completed / total) * 100
 
   async function handleAdd(event: React.FormEvent) {
-    event.preventDefault();
-    const trimmed = draft.trim();
-    if (!trimmed) return;
+    event.preventDefault()
+    const trimmed = draft.trim()
+    if (!trimmed) return
 
-    setAdding(true);
+    setAdding(true)
     try {
-      await createSubtask({ taskId, title: trimmed, deviceName });
-      setDraft("");
+      await createSubtask({ taskId, title: trimmed, deviceName })
+      setDraft('')
     } finally {
-      setAdding(false);
+      setAdding(false)
     }
   }
 
@@ -80,7 +79,7 @@ export function TaskSubtasksSection({ taskId }: TaskSubtasksSectionProps) {
                       void toggleSubtask({ subtaskId: subtask._id, deviceName })
                     }
                     aria-label={
-                      subtask.completed ? "Mark incomplete" : "Mark complete"
+                      subtask.completed ? 'Mark incomplete' : 'Mark complete'
                     }
                   >
                     {subtask.completed ? (
@@ -91,8 +90,8 @@ export function TaskSubtasksSection({ taskId }: TaskSubtasksSectionProps) {
                   </button>
                   <span
                     className={cn(
-                      "min-w-0 flex-1 truncate text-sm",
-                      subtask.completed && "text-muted-foreground line-through",
+                      'min-w-0 flex-1 truncate text-sm',
+                      subtask.completed && 'text-muted-foreground line-through',
                     )}
                   >
                     {subtask.title}
@@ -134,5 +133,5 @@ export function TaskSubtasksSection({ taskId }: TaskSubtasksSectionProps) {
         </>
       )}
     </section>
-  );
+  )
 }

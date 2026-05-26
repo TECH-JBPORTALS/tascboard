@@ -1,4 +1,4 @@
-import { RiInbox2Fill } from "@remixicon/react";
+import { RiInbox2Fill } from '@remixicon/react'
 
 export default function Page() {
   return (
@@ -8,5 +8,5 @@ export default function Page() {
         Select a notification from left side to view it here.
       </p>
     </div>
-  );
+  )
 }

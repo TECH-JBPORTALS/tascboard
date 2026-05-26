@@ -1,41 +1,41 @@
-import type { Metadata } from "next";
-import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
-import ConvexClientProvider from "@/components/ConvexClientProvider";
-import { Toaster } from "@/components/ui/sonner";
-import { getToken } from "@/lib/auth-server";
-import { cn } from "@/lib/utils";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import type { Metadata } from 'next'
+import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
+import './globals.css'
+import ConvexClientProvider from '@/components/ConvexClientProvider'
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { getToken } from '@/lib/auth-server'
+import { cn } from '@/lib/utils'
 
 const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-});
+  subsets: ['latin'],
+  variable: '--font-mono',
+})
 
 const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+  subsets: ['latin'],
+  variable: '--font-sans',
+})
 
 export const metadata: Metadata = {
-  title: "Tascboard",
-  description: "An ERP & Project Mangement App for Organization.",
+  title: 'Tascboard',
+  description: 'An ERP & Project Mangement App for Organization.',
   icons: {
-    icon: "/convex.svg",
+    icon: '/convex.svg',
   },
-};
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-  const token = await getToken();
+  const token = await getToken()
   return (
     <html
       lang="en"
       className={cn(
-        "font-sans antialiased dark",
+        'font-sans antialiased dark',
         ibmPlexSans.variable,
         jetbrainsMono.variable,
       )}
@@ -49,5 +49,5 @@ export default async function RootLayout({
         </ConvexClientProvider>
       </body>
     </html>
-  );
+  )
 }

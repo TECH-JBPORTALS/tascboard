@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { RiAccountCircle2Line } from "@remixicon/react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
-import { UserAvatar } from "../employees/UserAvatar";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { RiAccountCircle2Line } from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { UserAvatar } from '../employees/UserAvatar'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
 import {
   Command,
   CommandEmpty,
@@ -16,13 +16,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+} from '../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 interface TaskMembersPickerProps {
-  taskId: Id<"tasks">;
-  trackId: Id<"tracks">;
-  compact?: boolean;
+  taskId: Id<'tasks'>
+  trackId: Id<'tracks'>
+  compact?: boolean
 }
 
 export function TaskMembersPicker({
@@ -30,10 +30,10 @@ export function TaskMembersPicker({
   trackId,
   compact = false,
 }: TaskMembersPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const membersGroup = useTaskMemberGroups(taskId, trackId);
-  const toggleMember = useMutation(api.taskMember.toggleMember);
-  const firstMember = membersGroup.taskMembers[0];
+  const [open, setOpen] = React.useState(false)
+  const membersGroup = useTaskMemberGroups(taskId, trackId)
+  const toggleMember = useMutation(api.taskMember.toggleMember)
+  const firstMember = membersGroup.taskMembers[0]
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -44,8 +44,8 @@ export function TaskMembersPicker({
             size="sm"
             className={cn(
               compact
-                ? "size-6 rounded-full p-0 text-muted-foreground hover:text-foreground"
-                : "h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground",
+                ? 'size-6 rounded-full p-0 text-muted-foreground hover:text-foreground'
+                : 'h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground',
             )}
           />
         }
@@ -54,7 +54,7 @@ export function TaskMembersPicker({
           compact ? (
             <UserAvatar
               className="size-4"
-              name={firstMember?.employee.name ?? "Member"}
+              name={firstMember?.employee.name ?? 'Member'}
               imageUrl={firstMember?.employee.image}
             />
           ) : (
@@ -72,7 +72,7 @@ export function TaskMembersPicker({
         ) : (
           <>
             <RiAccountCircle2Line className="size-3.5 opacity-70" />
-            {!compact ? "Assign" : null}
+            {!compact ? 'Assign' : null}
           </>
         )}
       </PopoverTrigger>
@@ -80,7 +80,7 @@ export function TaskMembersPicker({
         <Command
           value={membersGroup.taskMembers
             .map((member) => member.employeeId)
-            .join(",")}
+            .join(',')}
         >
           <CommandList>
             <CommandInput placeholder="Set member..." />
@@ -116,7 +116,10 @@ export function TaskMembersPicker({
                     key={member.employeeId}
                     value={member.employeeId}
                     onSelect={() =>
-                      void toggleMember({ taskId, employeeId: member.employeeId })
+                      void toggleMember({
+                        taskId,
+                        employeeId: member.employeeId,
+                      })
                     }
                   >
                     <UserAvatar
@@ -154,34 +157,34 @@ export function TaskMembersPicker({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
-function useTaskMemberGroups(taskId: Id<"tasks">, trackId: Id<"tracks">) {
-  const taskMembers = useQuery(api.taskMember.list, { taskId });
-  const trackMembers = useQuery(api.trackMember.list, { trackId });
-  const employees = useQuery(api.employees.auth.list);
+function useTaskMemberGroups(taskId: Id<'tasks'>, trackId: Id<'tracks'>) {
+  const taskMembers = useQuery(api.taskMember.list, { taskId })
+  const trackMembers = useQuery(api.trackMember.list, { trackId })
+  const employees = useQuery(api.employees.auth.list)
 
   const taskMemberIds = new Set(
     (taskMembers ?? []).map((member) => member.employeeId),
-  );
+  )
 
   const trackMembersGroup = (trackMembers ?? []).filter(
     (member) => !taskMemberIds.has(member.employeeId),
-  );
+  )
 
   const trackMemberGroupIds = new Set(
     trackMembersGroup.map((member) => member.employeeId),
-  );
+  )
 
   const organizationMembers = (employees ?? []).filter(
     (employee) =>
       !taskMemberIds.has(employee.id) && !trackMemberGroupIds.has(employee.id),
-  );
+  )
 
   return {
     taskMembers: taskMembers ?? [],
     trackMembersGroup,
     organizationMembers,
-  };
+  }
 }

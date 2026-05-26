@@ -1,19 +1,17 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { useMutation } from "convex/react";
-import { format, startOfDay } from "date-fns";
-import type { DateRange } from "react-day-picker";
 import {
   RiCalendarLine,
   RiPauseCircleLine,
   RiPlayCircleLine,
   RiStopCircleLine,
-} from "@remixicon/react";
-import { api } from "@/convex/_generated/api";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+} from '@remixicon/react'
+import { useMutation } from 'convex/react'
+import { format, startOfDay } from 'date-fns'
+import * as React from 'react'
+import type { DateRange } from 'react-day-picker'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import {
   Command,
   CommandEmpty,
@@ -21,48 +19,50 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { ProjectMangerPicker } from "./ProjectManagerPicker";
-import { ProjectMembersPicker } from "./ProjectMembersPicker";
+} from '@/components/ui/popover'
+import { api } from '@/convex/_generated/api'
+import type { Doc } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { ProjectMangerPicker } from './ProjectManagerPicker'
+import { ProjectMembersPicker } from './ProjectMembersPicker'
 
-type ProjectStatus = Doc<"projects">["status"];
+type ProjectStatus = Doc<'projects'>['status']
 
 const statusOptions: {
-  value: ProjectStatus;
-  label: string;
-  icon: typeof RiPauseCircleLine;
-  iconColor: string;
+  value: ProjectStatus
+  label: string
+  icon: typeof RiPauseCircleLine
+  iconColor: string
 }[] = [
   {
-    value: "inactive",
-    label: "Inactive",
+    value: 'inactive',
+    label: 'Inactive',
     icon: RiPauseCircleLine,
-    iconColor: "var(--color-muted-foreground)",
+    iconColor: 'var(--color-muted-foreground)',
   },
   {
-    value: "active",
-    label: "Active",
+    value: 'active',
+    label: 'Active',
     icon: RiPlayCircleLine,
-    iconColor: "var(--color-primary)",
+    iconColor: 'var(--color-primary)',
   },
   {
-    value: "terminated",
-    label: "Terminated",
+    value: 'terminated',
+    label: 'Terminated',
     icon: RiStopCircleLine,
-    iconColor: "var(--color-destructive)",
+    iconColor: 'var(--color-destructive)',
   },
-];
+]
 
 type ProjectPropertiesProps = Pick<
   NonNullable<typeof api.project.get._returnType>,
-  "_id" | "startDate" | "endDate" | "status" | "manager" | "members"
->;
+  '_id' | 'startDate' | 'endDate' | 'status' | 'manager' | 'members'
+>
 
 function PropertyTrigger({
   className,
@@ -74,14 +74,14 @@ function PropertyTrigger({
       variant="ghost"
       size="sm"
       className={cn(
-        "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground",
+        'h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground',
         className,
       )}
       {...props}
     >
       {children}
     </Button>
-  );
+  )
 }
 
 export function ProjectProperties({
@@ -91,34 +91,34 @@ export function ProjectProperties({
   manager,
   status,
 }: ProjectPropertiesProps) {
-  const updateProject = useMutation(api.project.update);
-  const [statusOpen, setStatusOpen] = React.useState(false);
-  const [dateOpen, setDateOpen] = React.useState(false);
+  const updateProject = useMutation(api.project.update)
+  const [statusOpen, setStatusOpen] = React.useState(false)
+  const [dateOpen, setDateOpen] = React.useState(false)
 
-  const currentStatus = statusOptions.find((item) => item.value === status)!;
-  const StatusIcon = currentStatus.icon;
-  const rangeStart = new Date(startDate);
-  const rangeEnd = new Date(endDate);
+  const currentStatus = statusOptions.find((item) => item.value === status)!
+  const StatusIcon = currentStatus.icon
+  const rangeStart = new Date(startDate)
+  const rangeEnd = new Date(endDate)
   const [selectedRange, setSelectedRange] = React.useState<
     DateRange | undefined
-  >();
+  >()
 
   const handleDateOpenChange = (open: boolean) => {
-    setDateOpen(open);
+    setDateOpen(open)
     if (open) {
-      setSelectedRange({ from: rangeStart, to: rangeEnd });
+      setSelectedRange({ from: rangeStart, to: rangeEnd })
     }
-  };
+  }
 
   const calendarRange = selectedRange ?? {
     from: rangeStart,
     to: rangeEnd,
-  };
+  }
 
   const dateLabel =
-    format(rangeStart, "MMM d, yyyy") === format(rangeEnd, "MMM d, yyyy")
-      ? format(rangeStart, "MMM d, yyyy")
-      : `${format(rangeStart, "MMM d")} – ${format(rangeEnd, "MMM d, yyyy")}`;
+    format(rangeStart, 'MMM d, yyyy') === format(rangeEnd, 'MMM d, yyyy')
+      ? format(rangeStart, 'MMM d, yyyy')
+      : `${format(rangeStart, 'MMM d')} – ${format(rangeEnd, 'MMM d, yyyy')}`
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -141,7 +141,7 @@ export function ProjectProperties({
                 <CommandEmpty>No status found</CommandEmpty>
                 <CommandGroup>
                   {statusOptions.map((item) => {
-                    const Icon = item.icon;
+                    const Icon = item.icon
                     return (
                       <CommandItem
                         key={item.value}
@@ -150,8 +150,8 @@ export function ProjectProperties({
                           void updateProject({
                             projectId,
                             body: { status: item.value },
-                          });
-                          setStatusOpen(false);
+                          })
+                          setStatusOpen(false)
                         }}
                       >
                         <Icon
@@ -160,7 +160,7 @@ export function ProjectProperties({
                         />
                         {item.label}
                       </CommandItem>
-                    );
+                    )
                   })}
                 </CommandGroup>
               </CommandList>
@@ -182,12 +182,12 @@ export function ProjectProperties({
               defaultMonth={rangeStart}
               selected={calendarRange}
               onSelect={(range) => {
-                setSelectedRange(range);
+                setSelectedRange(range)
                 if (!range?.from || !range.to) {
-                  return;
+                  return
                 }
                 if (range.to < range.from) {
-                  return;
+                  return
                 }
                 void updateProject({
                   projectId,
@@ -195,8 +195,8 @@ export function ProjectProperties({
                     startDate: startOfDay(range.from).getTime(),
                     endDate: startOfDay(range.to).getTime(),
                   },
-                });
-                setDateOpen(false);
+                })
+                setDateOpen(false)
               }}
               numberOfMonths={2}
             />
@@ -204,5 +204,5 @@ export function ProjectProperties({
         </Popover>
       </div>
     </div>
-  );
+  )
 }

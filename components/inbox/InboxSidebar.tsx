@@ -1,37 +1,18 @@
-"use client";
+'use client'
 
 import {
-  RiNotification3Line,
   RiChat3Line,
   RiCheckboxCircleLine,
-  RiMailLine,
-  RiSearch2Line,
   RiInbox2Fill,
+  RiMailLine,
+  RiNotification3Line,
+  RiSearch2Line,
   RiSparklingLine,
-} from "@remixicon/react";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarHeader,
-} from "@/components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
-import { authClient } from "@/lib/auth-client";
-import { formatDistanceToNowStrict } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useParams, useRouter } from "next/navigation";
-import { useInbox } from "./InboxContext";
-import { Button } from "@/components/ui/button";
+} from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import { formatDistanceToNowStrict } from 'date-fns'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,24 +23,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import type { InboxGroupLabel } from "@/lib/inbox-utils";
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+} from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { api } from '@/convex/_generated/api'
+import { Doc, Id } from '@/convex/_generated/dataModel'
+import { authClient } from '@/lib/auth-client'
+import type { InboxGroupLabel } from '@/lib/inbox-utils'
+import { cn } from '@/lib/utils'
+import { useInbox } from './InboxContext'
 
-type InboxItem = Doc<"inboxItems">;
+type InboxItem = Doc<'inboxItems'>
 
-function kindIcon(kind: InboxItem["kind"]) {
-  const className = "size-4 shrink-0 text-muted-foreground";
+function kindIcon(kind: InboxItem['kind']) {
+  const className = 'size-4 shrink-0 text-muted-foreground'
   switch (kind) {
-    case "assignment":
-      return <RiCheckboxCircleLine className={className} />;
-    case "comment":
-      return <RiChat3Line className={className} />;
-    case "invite":
-      return <RiMailLine className={className} />;
-    case "onboarding":
-      return <RiSparklingLine className={cn(className, "text-primary")} />;
+    case 'assignment':
+      return <RiCheckboxCircleLine className={className} />
+    case 'comment':
+      return <RiChat3Line className={className} />
+    case 'invite':
+      return <RiMailLine className={className} />
+    case 'onboarding':
+      return <RiSparklingLine className={cn(className, 'text-primary')} />
     default:
-      return <RiNotification3Line className={className} />;
+      return <RiNotification3Line className={className} />
   }
 }
 
@@ -72,16 +72,16 @@ function MessageList({
   ariaLabel,
   showUnreadIndicator = true,
 }: {
-  groups: Array<{ label: InboxGroupLabel; items: InboxItem[] }>;
-  selectedId?: string;
-  onSelect: (id: Id<"inboxItems">) => void;
-  listRef?: React.RefObject<HTMLUListElement | null>;
-  listId: string;
-  ariaLabel: string;
-  showUnreadIndicator?: boolean;
+  groups: Array<{ label: InboxGroupLabel; items: InboxItem[] }>
+  selectedId?: string
+  onSelect: (id: Id<'inboxItems'>) => void
+  listRef?: React.RefObject<HTMLUListElement | null>
+  listId: string
+  ariaLabel: string
+  showUnreadIndicator?: boolean
 }) {
   if (groups.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -103,7 +103,7 @@ function MessageList({
           </div>
           <ul className="divide-y divide-border/40" role="presentation">
             {group.items.map((item) => {
-              const selected = selectedId === item._id;
+              const selected = selectedId === item._id
               return (
                 <li key={item._id} role="presentation">
                   <button
@@ -113,8 +113,8 @@ function MessageList({
                     onClick={() => onSelect(item._id)}
                     type="button"
                     className={cn(
-                      "flex w-full gap-3 px-4 py-3 text-left transition-colors",
-                      selected ? "bg-accent" : "hover:bg-muted/40",
+                      'flex w-full gap-3 px-4 py-3 text-left transition-colors',
+                      selected ? 'bg-accent' : 'hover:bg-muted/40',
                     )}
                   >
                     <div className="flex w-full items-start gap-2">
@@ -122,10 +122,10 @@ function MessageList({
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            "truncate text-sm",
+                            'truncate text-sm',
                             showUnreadIndicator && !item.read
-                              ? "font-semibold text-foreground"
-                              : "font-medium text-foreground/90",
+                              ? 'font-semibold text-foreground'
+                              : 'font-medium text-foreground/90',
                           )}
                         >
                           {item.title}
@@ -157,13 +157,13 @@ function MessageList({
                     </div>
                   </button>
                 </li>
-              );
+              )
             })}
           </ul>
         </li>
       ))}
     </ul>
-  );
+  )
 }
 
 function InboxTabPanel({
@@ -180,18 +180,18 @@ function InboxTabPanel({
   onSelect,
   children,
 }: {
-  isLoading: boolean;
-  showEmptySearch: boolean;
-  showEmptyList: boolean;
-  emptyListMessage: string;
-  groups: Array<{ label: InboxGroupLabel; items: InboxItem[] }>;
-  listId: string;
-  ariaLabel: string;
-  showUnreadIndicator: boolean;
-  listRef?: React.RefObject<HTMLUListElement | null>;
-  selectedId?: string;
-  onSelect: (id: Id<"inboxItems">) => void;
-  children?: React.ReactNode;
+  isLoading: boolean
+  showEmptySearch: boolean
+  showEmptyList: boolean
+  emptyListMessage: string
+  groups: Array<{ label: InboxGroupLabel; items: InboxItem[] }>
+  listId: string
+  ariaLabel: string
+  showUnreadIndicator: boolean
+  listRef?: React.RefObject<HTMLUListElement | null>
+  selectedId?: string
+  onSelect: (id: Id<'inboxItems'>) => void
+  children?: React.ReactNode
 }) {
   return (
     <>
@@ -225,17 +225,17 @@ function InboxTabPanel({
         />
       ) : null}
     </>
-  );
+  )
 }
 
 export function InboxSidebar() {
-  const { data: session } = authClient.useSession();
-  const organizationId = session?.session.activeOrganizationId;
+  const { data: session } = authClient.useSession()
+  const organizationId = session?.session.activeOrganizationId
   const { inboxItemId, orgSlug } = useParams<{
-    inboxItemId?: string;
-    orgSlug: string;
-  }>();
-  const router = useRouter();
+    inboxItemId?: string
+    orgSlug: string
+  }>()
+  const router = useRouter()
 
   const {
     activeTab,
@@ -252,28 +252,28 @@ export function InboxSidebar() {
     listRef,
     selectItem,
     deleteAllArchived,
-  } = useInbox();
+  } = useInbox()
 
   const onboardingInboxId = useQuery(
     api.inbox.getOnboardingInboxItemId,
-    organizationId ? {} : "skip",
-  );
+    organizationId ? {} : 'skip',
+  )
   const onboardingStatus = useQuery(
     api.employees.profile.getMyOnboardingStatus,
-    organizationId ? {} : "skip",
-  );
+    organizationId ? {} : 'skip',
+  )
 
-  const seedWelcome = useMutation(api.inbox.seedWelcomeItems);
+  const seedWelcome = useMutation(api.inbox.seedWelcomeItems)
 
-  const inboxLoading = items === undefined;
-  const archiveLoading = archivedItems === undefined;
+  const inboxLoading = items === undefined
+  const archiveLoading = archivedItems === undefined
 
   useEffect(() => {
-    if (!organizationId || !orgSlug) return;
-    if (inboxItemId) return;
-    if (onboardingStatus?.onboardingStatus !== "pending") return;
-    if (!onboardingInboxId) return;
-    router.replace(`/${orgSlug}/in/${onboardingInboxId}`);
+    if (!organizationId || !orgSlug) return
+    if (inboxItemId) return
+    if (onboardingStatus?.onboardingStatus !== 'pending') return
+    if (!onboardingInboxId) return
+    router.replace(`/${orgSlug}/in/${onboardingInboxId}`)
   }, [
     organizationId,
     orgSlug,
@@ -281,43 +281,43 @@ export function InboxSidebar() {
     onboardingInboxId,
     onboardingStatus?.onboardingStatus,
     router,
-  ]);
+  ])
 
   useEffect(() => {
     if (!organizationId) {
-      return;
+      return
     }
-    void seedWelcome();
-  }, [organizationId, seedWelcome]);
+    void seedWelcome()
+  }, [organizationId, seedWelcome])
 
   useEffect(() => {
     if (!inboxItemId) {
-      return;
+      return
     }
     document
       .getElementById(`inbox-item-${inboxItemId}`)
-      ?.scrollIntoView({ block: "nearest" });
-  }, [inboxItemId]);
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [inboxItemId])
 
-  const archiveCount = archivedItems?.length ?? 0;
+  const archiveCount = archivedItems?.length ?? 0
 
   const handleTabChange = (value: string) => {
-    if (value !== "inbox" && value !== "archive") {
-      return;
+    if (value !== 'inbox' && value !== 'archive') {
+      return
     }
-    setSidebarTab(value);
+    setSidebarTab(value)
     if (!inboxItemId) {
-      return;
+      return
     }
-    const inArchive = archivedItems?.some((item) => item._id === inboxItemId);
-    if (value === "inbox" && inArchive) {
-      router.push(`/${orgSlug}`);
-      return;
+    const inArchive = archivedItems?.some((item) => item._id === inboxItemId)
+    if (value === 'inbox' && inArchive) {
+      router.push(`/${orgSlug}`)
+      return
     }
-    if (value === "archive" && !inArchive) {
-      router.push(`/${orgSlug}`);
+    if (value === 'archive' && !inArchive) {
+      router.push(`/${orgSlug}`)
     }
-  };
+  }
 
   return (
     <Sidebar collapsible="none" className="hidden flex-1 md:flex">
@@ -381,7 +381,7 @@ export function InboxSidebar() {
               showEmptySearch={
                 !inboxLoading &&
                 flatItems.length === 0 &&
-                searchQuery.trim() !== ""
+                searchQuery.trim() !== ''
               }
               showEmptyList={false}
               emptyListMessage=""
@@ -389,7 +389,7 @@ export function InboxSidebar() {
               listId="inbox-message-list"
               ariaLabel="Inbox messages"
               showUnreadIndicator
-              listRef={activeTab === "inbox" ? listRef : undefined}
+              listRef={activeTab === 'inbox' ? listRef : undefined}
               selectedId={inboxItemId}
               onSelect={selectItem}
             />
@@ -437,8 +437,8 @@ export function InboxSidebar() {
                         Remove all archived messages?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete {archiveCount} archived{" "}
-                        {archiveCount === 1 ? "message" : "messages"}. This
+                        This will permanently delete {archiveCount} archived{' '}
+                        {archiveCount === 1 ? 'message' : 'messages'}. This
                         cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -460,19 +460,19 @@ export function InboxSidebar() {
               showEmptySearch={
                 !archiveLoading &&
                 flatArchivedItems.length === 0 &&
-                searchQuery.trim() !== ""
+                searchQuery.trim() !== ''
               }
               showEmptyList={
                 !archiveLoading &&
                 flatArchivedItems.length === 0 &&
-                searchQuery.trim() === ""
+                searchQuery.trim() === ''
               }
               emptyListMessage="No archived messages."
               groups={groupedArchivedItems}
               listId="archive-message-list"
               ariaLabel="Archived messages"
               showUnreadIndicator={false}
-              listRef={activeTab === "archive" ? listRef : undefined}
+              listRef={activeTab === 'archive' ? listRef : undefined}
               selectedId={inboxItemId}
               onSelect={selectItem}
             />
@@ -480,5 +480,5 @@ export function InboxSidebar() {
         </Tabs>
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }

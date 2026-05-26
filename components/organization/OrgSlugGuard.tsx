@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { useEffect, useMemo, type ReactNode } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { useParams, useRouter } from 'next/navigation'
+import { type ReactNode, useEffect, useMemo } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { authClient } from '@/lib/auth-client'
 import {
   findOrganizationBySlug,
+  type OrganizationListItem,
   organizationPath,
   resolveOrganizationDestination,
-  type OrganizationListItem,
-} from "@/lib/organization-membership";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/lib/organization-membership'
 
 function OrganizationRouteSkeleton() {
   return (
@@ -17,13 +17,13 @@ function OrganizationRouteSkeleton() {
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-4 w-64" />
     </div>
-  );
+  )
 }
 
 type OrgSlugGuardProps = {
   /** Omit on `/` (home); provide under `/[orgSlug]/*` layouts. */
-  children?: ReactNode;
-};
+  children?: ReactNode
+}
 
 /**
  * Organization routing for authenticated app shell:
@@ -31,22 +31,22 @@ type OrgSlugGuardProps = {
  * - `/[orgSlug]/*` — ensure slug is valid, sync active org, then render children
  */
 export function OrgSlugGuard({ children }: OrgSlugGuardProps) {
-  const router = useRouter();
-  const params = useParams<{ orgSlug?: string }>();
-  const orgSlug = params.orgSlug;
-  const isHomeRoute = orgSlug === undefined;
+  const router = useRouter()
+  const params = useParams<{ orgSlug?: string }>()
+  const orgSlug = params.orgSlug
+  const isHomeRoute = orgSlug === undefined
 
   const { data: organizations, isPending: orgsPending } =
-    authClient.useListOrganizations();
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+    authClient.useListOrganizations()
+  const { data: session, isPending: sessionPending } = authClient.useSession()
 
-  const activeOrganizationId = session?.session.activeOrganizationId;
-  const isLoading = orgsPending || sessionPending;
+  const activeOrganizationId = session?.session.activeOrganizationId
+  const isLoading = orgsPending || sessionPending
 
   const orgList = useMemo(
     () => (organizations ?? []) as OrganizationListItem[],
     [organizations],
-  );
+  )
 
   const org = useMemo(
     () =>
@@ -54,58 +54,58 @@ export function OrgSlugGuard({ children }: OrgSlugGuardProps) {
         ? undefined
         : findOrganizationBySlug(orgList, orgSlug),
     [isHomeRoute, isLoading, orgList, orgSlug],
-  );
+  )
 
   const isActive =
-    !isHomeRoute && org !== undefined && activeOrganizationId === org.id;
+    !isHomeRoute && org !== undefined && activeOrganizationId === org.id
 
   useEffect(() => {
     if (isLoading) {
-      return;
+      return
     }
 
     if (isHomeRoute) {
       const destination = resolveOrganizationDestination(
         orgList,
         activeOrganizationId,
-      );
+      )
 
-      if (destination.type === "organization") {
-        const { id, slug } = destination.organization;
+      if (destination.type === 'organization') {
+        const { id, slug } = destination.organization
 
         if (activeOrganizationId === id) {
-          router.replace(`/${slug}`);
-          return;
+          router.replace(`/${slug}`)
+          return
         }
 
         void authClient.organization
           .setActive({ organizationId: id })
           .then(() => {
-            router.replace(`/${slug}`);
-          });
-        return;
+            router.replace(`/${slug}`)
+          })
+        return
       }
 
-      router.replace(organizationPath(destination));
-      return;
+      router.replace(organizationPath(destination))
+      return
     }
 
     if (!org) {
       const destination = resolveOrganizationDestination(
         orgList,
         activeOrganizationId,
-      );
-      router.replace(organizationPath(destination));
-      return;
+      )
+      router.replace(organizationPath(destination))
+      return
     }
 
     if (activeOrganizationId === org.id) {
-      return;
+      return
     }
 
     void authClient.organization.setActive({
       organizationSlug: orgSlug,
-    });
+    })
   }, [
     activeOrganizationId,
     isHomeRoute,
@@ -114,15 +114,15 @@ export function OrgSlugGuard({ children }: OrgSlugGuardProps) {
     orgList,
     orgSlug,
     router,
-  ]);
+  ])
 
   if (isHomeRoute) {
-    return <OrganizationRouteSkeleton />;
+    return <OrganizationRouteSkeleton />
   }
 
   if (isLoading || !org || !isActive) {
-    return <OrganizationRouteSkeleton />;
+    return <OrganizationRouteSkeleton />
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

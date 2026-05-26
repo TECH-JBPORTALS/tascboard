@@ -1,5 +1,5 @@
-import { EmployeesPage } from "@/components/employees/EmployeesPage";
+import { EmployeesPage } from '@/components/employees/EmployeesPage'
 
 export default function Page() {
-  return <EmployeesPage />;
+  return <EmployeesPage />
 }

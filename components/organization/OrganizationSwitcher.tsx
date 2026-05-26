@@ -1,15 +1,12 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { parseOrganizationMetadata } from "@/lib/organization";
-import { OrganizationAvatar } from "./OrganizationAvatar";
-import { Button } from "@/components/ui/button";
-
-import { RiAddLine, RiCheckLine, RiExpandUpDownFill } from "@remixicon/react";
-import { SidebarMenuButton } from "../ui/sidebar";
+import { RiAddLine, RiCheckLine, RiExpandUpDownFill } from '@remixicon/react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { authClient } from '@/lib/auth-client'
+import { parseOrganizationMetadata } from '@/lib/organization'
 import {
   Command,
   CommandEmpty,
@@ -17,72 +14,74 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+} from '../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { SidebarMenuButton } from '../ui/sidebar'
+import { OrganizationAvatar } from './OrganizationAvatar'
 
 type OrganizationListItem = {
-  id: string;
-  name: string;
-  slug: string;
-  metadata?: string | Record<string, unknown> | null;
-};
+  id: string
+  name: string
+  slug: string
+  metadata?: string | Record<string, unknown> | null
+}
 
-type OrgComboValue = { slug: string; name: string };
+type OrgComboValue = { slug: string; name: string }
 
 export function OrganizationSwitcher() {
-  const router = useRouter();
-  const params = useParams<{ orgSlug: string }>();
-  const [isSwitching, setIsSwitching] = useState(false);
-  const { data: organizations, isPending } = authClient.useListOrganizations();
-  const { data: session } = authClient.useSession();
+  const router = useRouter()
+  const params = useParams<{ orgSlug: string }>()
+  const [isSwitching, setIsSwitching] = useState(false)
+  const { data: organizations, isPending } = authClient.useListOrganizations()
+  const { data: session } = authClient.useSession()
 
-  const orgList = (organizations ?? []) as OrganizationListItem[];
-  const activeOrganizationId = session?.session.activeOrganizationId;
+  const orgList = (organizations ?? []) as OrganizationListItem[]
+  const activeOrganizationId = session?.session.activeOrganizationId
   const current =
     orgList.find((org) => org.slug === params.orgSlug) ??
     orgList.find((org) => org.id === activeOrganizationId) ??
-    orgList[0];
+    orgList[0]
 
   const comboValue = useMemo<OrgComboValue | null>(
     () => (current ? { slug: current.slug, name: current.name } : null),
     [current],
-  );
+  )
 
   async function switchOrganization(org: OrganizationListItem) {
     if (org.slug === params.orgSlug) {
-      return;
+      return
     }
 
-    setIsSwitching(true);
+    setIsSwitching(true)
     const result = await authClient.organization.setActive({
       organizationSlug: org.slug,
-    });
-    setIsSwitching(false);
+    })
+    setIsSwitching(false)
 
     if (!result.error) {
-      router.push(`/${org.slug}`);
-      router.refresh();
+      router.push(`/${org.slug}`)
+      router.refresh()
     }
   }
 
   function handleOrganizationChange(slug: string) {
     if (!slug) {
-      return;
+      return
     }
     if (slug === params.orgSlug) {
-      return;
+      return
     }
-    const org = orgList.find((o) => o.slug === slug);
+    const org = orgList.find((o) => o.slug === slug)
 
     if (org) {
-      void switchOrganization(org);
+      void switchOrganization(org)
     }
   }
 
   if (isPending || isSwitching) {
     return (
       <div className="h-9 w-full animate-pulse rounded-lg bg-sidebar-accent" />
-    );
+    )
   }
 
   if (!current || !comboValue) {
@@ -95,14 +94,14 @@ export function OrganizationSwitcher() {
         <RiAddLine />
         Create organization
       </Button>
-    );
+    )
   }
 
-  const currentMetadata = parseOrganizationMetadata(current.metadata);
+  const currentMetadata = parseOrganizationMetadata(current.metadata)
 
   return (
     <Popover>
-      <SidebarMenuButton variant={"outline"} render={<PopoverTrigger />}>
+      <SidebarMenuButton variant={'outline'} render={<PopoverTrigger />}>
         <OrganizationAvatar
           name={current.name}
           imageStorageId={currentMetadata.imageStorageId}
@@ -114,14 +113,14 @@ export function OrganizationSwitcher() {
         <RiExpandUpDownFill className="ml-auto text-muted-foreground" />
       </SidebarMenuButton>
 
-      <PopoverContent className={"max-w-[240px]! p-0"}>
+      <PopoverContent className={'max-w-[240px]! p-0'}>
         <Command value={current.slug}>
           <CommandInput placeholder="Search..." />
           <CommandList>
             <CommandEmpty>No organization found</CommandEmpty>
-            <CommandGroup heading={"Organizations"}>
+            <CommandGroup heading={'Organizations'}>
               {orgList.map((org) => {
-                const metadata = parseOrganizationMetadata(org.metadata);
+                const metadata = parseOrganizationMetadata(org.metadata)
                 return (
                   <CommandItem
                     onSelect={() => handleOrganizationChange(org.slug)}
@@ -140,12 +139,12 @@ export function OrganizationSwitcher() {
                       <RiCheckLine className="ml-auto" />
                     )}
                   </CommandItem>
-                );
+                )
               })}
             </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

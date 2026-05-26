@@ -1,11 +1,11 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 interface TodoPanelStore {
-  isOpen: boolean;
-  open: () => void;
-  close: () => void;
-  toggle: () => void;
+  isOpen: boolean
+  open: () => void
+  close: () => void
+  toggle: () => void
 }
 
 export const useTodoPanelStore = create<TodoPanelStore>()(
@@ -17,7 +17,7 @@ export const useTodoPanelStore = create<TodoPanelStore>()(
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
     }),
     {
-      name: "todo-panel-state", // persisted in localStorage
+      name: 'todo-panel-state', // persisted in localStorage
     },
   ),
-);
+)

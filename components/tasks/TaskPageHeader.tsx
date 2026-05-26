@@ -1,19 +1,19 @@
-"use client";
+'use client'
 
-import type * as React from "react";
-import Link from "next/link";
-import { RiArrowRightSLine } from "@remixicon/react";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { ProjectIcon } from "@/components/projects/ProjectIcon";
-import { PageHeader } from "@/components/ui/page-header";
+import { RiArrowRightSLine } from '@remixicon/react'
+import Link from 'next/link'
+import type * as React from 'react'
+import { ProjectIcon } from '@/components/projects/ProjectIcon'
+import { PageHeader } from '@/components/ui/page-header'
+import type { Doc } from '@/convex/_generated/dataModel'
 
 type TaskPageHeaderProps = {
-  orgSlug: string;
-  project: Doc<"projects">;
-  track: Doc<"tracks">;
-  task: Doc<"tasks">;
-  className?: string;
-};
+  orgSlug: string
+  project: Doc<'projects'>
+  track: Doc<'tracks'>
+  task: Doc<'tasks'>
+  className?: string
+}
 
 export function TaskPageHeader({
   orgSlug,
@@ -22,8 +22,8 @@ export function TaskPageHeader({
   task,
   className,
 }: TaskPageHeaderProps) {
-  const projectHref = `/${orgSlug}/pro/${project._id}`;
-  const trackHref = `${projectHref}/track/${track._id}`;
+  const projectHref = `/${orgSlug}/pro/${project._id}`
+  const trackHref = `${projectHref}/track/${track._id}`
 
   return (
     <PageHeader
@@ -49,5 +49,5 @@ export function TaskPageHeader({
         </span>
       }
     />
-  );
+  )
 }

@@ -1,11 +1,13 @@
-"use client";
+'use client'
 
-import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { useConvex, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { authClient } from "@/lib/auth-client";
+import { RiArrowRightLine } from '@remixicon/react'
+import { useConvex, useQuery } from 'convex/react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { useMemo, useState } from 'react'
+import { OrganizationAvatar } from '@/components/organization/OrganizationAvatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -13,124 +15,120 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { OrganizationAvatar } from "@/components/organization/OrganizationAvatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { RiArrowRightLine } from "@remixicon/react";
+} from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/convex/_generated/api'
+import { authClient } from '@/lib/auth-client'
 
 type DerivedView =
-  | "loading"
-  | "not_found"
-  | "expired"
-  | "already_handled"
-  | "email_mismatch"
-  | "sign_in_required"
-  | "ready";
+  | 'loading'
+  | 'not_found'
+  | 'expired'
+  | 'already_handled'
+  | 'email_mismatch'
+  | 'sign_in_required'
+  | 'ready'
 
 type InvitationPreview = {
-  status: string;
-  email: string;
-  organizationId: string;
-  organizationName: string;
-  organizationSlug: string;
-  organizationLogo: string | null;
-  expiresAt: number;
-  role: string | null;
-};
+  status: string
+  email: string
+  organizationId: string
+  organizationName: string
+  organizationSlug: string
+  organizationLogo: string | null
+  expiresAt: number
+  role: string | null
+}
 
 function deriveView(
   preview: InvitationPreview | null | undefined,
   sessionEmail: string | undefined,
 ): DerivedView {
-  if (preview === undefined) return "loading";
-  if (preview === null) return "not_found";
+  if (preview === undefined) return 'loading'
+  if (preview === null) return 'not_found'
 
-  if (preview.status === "accepted") return "already_handled";
+  if (preview.status === 'accepted') return 'already_handled'
 
   if (
-    preview.status === "canceled" ||
-    preview.status === "cancelled" ||
-    preview.status === "rejected"
+    preview.status === 'canceled' ||
+    preview.status === 'cancelled' ||
+    preview.status === 'rejected'
   ) {
-    return "already_handled";
+    return 'already_handled'
   }
 
-  if (preview.expiresAt < Date.now()) return "expired";
+  if (preview.expiresAt < Date.now()) return 'expired'
 
-  if (preview.status !== "pending") return "already_handled";
+  if (preview.status !== 'pending') return 'already_handled'
 
-  if (!sessionEmail) return "sign_in_required";
+  if (!sessionEmail) return 'sign_in_required'
 
-  if (sessionEmail !== preview.email.toLowerCase()) return "email_mismatch";
+  if (sessionEmail !== preview.email.toLowerCase()) return 'email_mismatch'
 
-  return "ready";
+  return 'ready'
 }
 
 export function AcceptInvitationPage() {
-  const params = useParams<{ invitationId: string }>();
-  const router = useRouter();
-  const convex = useConvex();
-  const invitationId = params.invitationId;
+  const params = useParams<{ invitationId: string }>()
+  const router = useRouter()
+  const convex = useConvex()
+  const invitationId = params.invitationId
   const preview = useQuery(api.employees.auth.getInvitationPreview, {
     invitationId,
-  });
-  const { data: session } = authClient.useSession();
-  const [isAccepting, setIsAccepting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  })
+  const { data: session } = authClient.useSession()
+  const [isAccepting, setIsAccepting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const returnUrl = `/accept-invitation/${invitationId}`;
-  const sessionEmail = session?.user.email?.toLowerCase();
+  const returnUrl = `/accept-invitation/${invitationId}`
+  const sessionEmail = session?.user.email?.toLowerCase()
 
   const view = useMemo(
     () => deriveView(preview, sessionEmail),
     [preview, sessionEmail],
-  );
+  )
 
   async function handleAccept() {
-    if (!preview || view !== "ready" || isAccepting) return;
+    if (!preview || view !== 'ready' || isAccepting) return
 
-    setIsAccepting(true);
-    setError(null);
+    setIsAccepting(true)
+    setError(null)
 
     try {
       const result = await authClient.organization.acceptInvitation({
         invitationId,
-      });
+      })
 
       if (result.error) {
-        setError(result.error.message ?? "Could not accept invitation");
-        return;
+        setError(result.error.message ?? 'Could not accept invitation')
+        return
       }
 
       await authClient.organization.setActive({
         organizationId: preview.organizationId,
-      });
+      })
 
       const onboardingInboxId = await convex.query(
         api.inbox.getOnboardingInboxItemId,
         {},
-      );
+      )
 
       if (onboardingInboxId) {
-        router.replace(
-          `/${preview.organizationSlug}/in/${onboardingInboxId}`,
-        );
+        router.replace(`/${preview.organizationSlug}/in/${onboardingInboxId}`)
       } else {
-        router.replace(`/${preview.organizationSlug}`);
+        router.replace(`/${preview.organizationSlug}`)
       }
     } finally {
-      setIsAccepting(false);
+      setIsAccepting(false)
     }
   }
 
-  if (view === "loading") {
+  if (view === 'loading') {
     return (
       <div className="flex min-h-svh items-center justify-center p-6">
         <Skeleton className="h-64 w-full max-w-md" />
       </div>
-    );
+    )
   }
 
   if (preview == null) {
@@ -140,20 +138,20 @@ export function AcceptInvitationPage() {
         description="This invitation link is invalid or has been removed."
         action={<Button render={<Link href="/" />}>Go to dashboard</Button>}
       />
-    );
+    )
   }
 
-  if (view === "expired") {
+  if (view === 'expired') {
     return (
       <CenteredCard
         title="Invitation expired"
         description="Ask your administrator to send a new invitation."
         action={<Button render={<Link href="/" />}>Go to dashboard</Button>}
       />
-    );
+    )
   }
 
-  if (view === "already_handled") {
+  if (view === 'already_handled') {
     return (
       <CenteredCard
         title="Invitation unavailable"
@@ -164,10 +162,10 @@ export function AcceptInvitationPage() {
           </Button>
         }
       />
-    );
+    )
   }
 
-  if (view === "email_mismatch") {
+  if (view === 'email_mismatch') {
     return (
       <CenteredCard
         title="Wrong account"
@@ -180,7 +178,7 @@ export function AcceptInvitationPage() {
                   onSuccess: () => {
                     router.push(
                       `/sign-in?redirect=${encodeURIComponent(returnUrl)}`,
-                    );
+                    )
                   },
                 },
               })
@@ -190,11 +188,11 @@ export function AcceptInvitationPage() {
           </Button>
         }
       />
-    );
+    )
   }
 
-  if (view === "sign_in_required") {
-    const redirect = encodeURIComponent(returnUrl);
+  if (view === 'sign_in_required') {
+    const redirect = encodeURIComponent(returnUrl)
     return (
       <CenteredCard
         title={`Join ${preview.organizationName}`}
@@ -215,7 +213,7 @@ export function AcceptInvitationPage() {
           </div>
         }
       />
-    );
+    )
   }
 
   return (
@@ -231,16 +229,16 @@ export function AcceptInvitationPage() {
           </div>
           <CardTitle>You&apos;re invited</CardTitle>
           <CardDescription>
-            Join{" "}
+            Join{' '}
             <span className="font-medium text-foreground">
               {preview.organizationName}
-            </span>{" "}
+            </span>{' '}
             on Tascboard with {preview.email}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-center text-sm text-muted-foreground">
           <Badge variant="secondary" className="capitalize">
-            {preview.role ?? "employee"}
+            {preview.role ?? 'employee'}
           </Badge>
           <p>Invited email: {preview.email}</p>
           {error ? <p className="text-destructive">{error}</p> : null}
@@ -251,7 +249,7 @@ export function AcceptInvitationPage() {
             disabled={isAccepting}
             onClick={() => void handleAccept()}
           >
-            {isAccepting ? "Accepting..." : "Accept invitation"}
+            {isAccepting ? 'Accepting...' : 'Accept invitation'}
             <RiArrowRightLine />
           </Button>
           <Button variant="ghost" className="w-full" render={<Link href="/" />}>
@@ -260,7 +258,7 @@ export function AcceptInvitationPage() {
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }
 
 function CenteredCard({
@@ -270,11 +268,11 @@ function CenteredCard({
   orgName,
   badge,
 }: {
-  title: string;
-  description: string;
-  action: React.ReactNode;
-  orgName?: string;
-  badge?: string;
+  title: string
+  description: string
+  action: React.ReactNode
+  orgName?: string
+  badge?: string
 }) {
   return (
     <div className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
@@ -300,5 +298,5 @@ function CenteredCard({
         <CardFooter className="flex flex-col gap-2">{action}</CardFooter>
       </Card>
     </div>
-  );
+  )
 }

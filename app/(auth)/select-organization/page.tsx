@@ -1,5 +1,5 @@
-import { SelectOrganizationPage } from "@/components/organization/SelectOrganizationPage";
+import { SelectOrganizationPage } from '@/components/organization/SelectOrganizationPage'
 
 export default function Page() {
-  return <SelectOrganizationPage />;
+  return <SelectOrganizationPage />
 }

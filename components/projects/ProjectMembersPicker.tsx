@@ -1,9 +1,14 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { RiAccountCircle2Line } from "@remixicon/react";
-import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import { RiAccountCircle2Line } from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
+import { api } from '@/convex/_generated/api'
+import { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { UserAvatar } from '../employees/UserAvatar'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
 import {
   Command,
   CommandEmpty,
@@ -11,22 +16,17 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { UserAvatar } from "../employees/UserAvatar";
-import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
-import { Badge } from "../ui/badge";
+} from '../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 interface ProjectMembersPickerProps {
-  projectId: Id<"projects">;
+  projectId: Id<'projects'>
 }
 
 export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const membersGroup = useProjectMembers(projectId);
-  const toggleMember = useMutation(api.projectMember.toggleMember);
+  const [open, setOpen] = React.useState(false)
+  const membersGroup = useProjectMembers(projectId)
+  const toggleMember = useMutation(api.projectMember.toggleMember)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -36,7 +36,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground",
+              'h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground',
             )}
           />
         }
@@ -63,7 +63,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
         <Command
           value={membersGroup?.projectMembers
             ?.map((member) => member.employeeId)
-            .join(",")}
+            .join(',')}
         >
           <CommandList>
             <CommandInput placeholder="Set member..." />
@@ -87,7 +87,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
                   <span className="flex items-center gap-1">
                     {member.employee.name}
                   </span>
-                  {member.manager && <Badge variant={"outline"}>Manager</Badge>}
+                  {member.manager && <Badge variant={'outline'}>Manager</Badge>}
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -115,22 +115,22 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
-export function useProjectMembers(projectId: Id<"projects">) {
+export function useProjectMembers(projectId: Id<'projects'>) {
   const members = useQuery(api.projectMember.list, {
     projectId,
-  });
+  })
 
-  const employees = useQuery(api.employees.auth.list);
+  const employees = useQuery(api.employees.auth.list)
 
   const remainingEmployees = employees?.filter(
     (employee) => !members?.some((member) => member.employeeId === employee.id),
-  );
+  )
 
   return {
     projectMembers: members ?? [],
     organizationMembers: remainingEmployees ?? [],
-  };
+  }
 }

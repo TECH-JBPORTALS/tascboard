@@ -1,38 +1,38 @@
-"use client";
+'use client'
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { UserAvatar } from "./UserAvatar";
-import { cn } from "@/lib/utils";
+import type { ColumnDef } from '@tanstack/react-table'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import { UserAvatar } from './UserAvatar'
 
 export type EmployeeRow = {
-  id: string;
-  name: string;
-  email: string;
-  image: string | null;
-  role: string;
-  active: boolean;
-};
+  id: string
+  name: string
+  email: string
+  image: string | null
+  role: string
+  active: boolean
+}
 
 function StatusIndicator({ active }: { active: boolean }) {
   return (
     <div className="flex items-center gap-2">
       <span
         className={cn(
-          "size-2 shrink-0 rounded-full",
-          active ? "bg-primary" : "bg-muted-foreground/50",
+          'size-2 shrink-0 rounded-full',
+          active ? 'bg-primary' : 'bg-muted-foreground/50',
         )}
         aria-hidden
       />
-      <span className="text-sm">{active ? "Active" : "Inactive"}</span>
+      <span className="text-sm">{active ? 'Active' : 'Inactive'}</span>
     </div>
-  );
+  )
 }
 
 export const employeeColumns: ColumnDef<EmployeeRow>[] = [
   {
-    id: "employee",
-    header: "Employee",
+    id: 'employee',
+    header: 'Employee',
     cell: ({ row }) => (
       <div className="flex min-w-0 items-center gap-3 py-1">
         <UserAvatar
@@ -50,8 +50,8 @@ export const employeeColumns: ColumnDef<EmployeeRow>[] = [
     ),
   },
   {
-    accessorKey: "role",
-    header: "Role",
+    accessorKey: 'role',
+    header: 'Role',
     cell: ({ row }) => (
       <Badge variant="secondary" className="capitalize">
         {row.original.role}
@@ -59,8 +59,8 @@ export const employeeColumns: ColumnDef<EmployeeRow>[] = [
     ),
   },
   {
-    accessorKey: "active",
-    header: "Status",
+    accessorKey: 'active',
+    header: 'Status',
     cell: ({ row }) => <StatusIndicator active={row.original.active} />,
   },
-];
+]

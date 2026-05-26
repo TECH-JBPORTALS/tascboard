@@ -1,25 +1,25 @@
-import type { MutationCtx } from "../_generated/server";
-import { actorDisplayName } from "./projectActivityLog";
-import { TaskActivityValidator } from "../schema";
+import type { MutationCtx } from '../_generated/server'
+import { TaskActivityValidator } from '../schema'
+import { actorDisplayName } from './projectActivityLog'
 
 function getStartOfToday() {
-  const now = new Date();
+  const now = new Date()
 
-  now.setHours(0, 0, 0, 0);
+  now.setHours(0, 0, 0, 0)
 
-  return now.getTime();
+  return now.getTime()
 }
 
 export async function logTaskActivity(
   ctx: MutationCtx,
   args: typeof TaskActivityValidator.type,
 ) {
-  const startOfToday = getStartOfToday();
+  const startOfToday = getStartOfToday()
 
   const existingActivities = await ctx.db
-    .query("taskActivities")
-    .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
-    .collect();
+    .query('taskActivities')
+    .withIndex('by_task', (q) => q.eq('taskId', args.taskId))
+    .collect()
 
   const duplicateActivity = existingActivities.find(
     (activity) =>
@@ -28,13 +28,13 @@ export async function logTaskActivity(
       activity.fromValue === args.fromValue &&
       activity.toValue === args.toValue &&
       (activity.createdAt ?? 0) >= startOfToday,
-  );
+  )
 
   if (duplicateActivity) {
-    return;
+    return
   }
 
-  await ctx.db.insert("taskActivities", {
+  await ctx.db.insert('taskActivities', {
     taskId: args.taskId,
     actorName: args.actorName,
     kind: args.kind,
@@ -43,15 +43,15 @@ export async function logTaskActivity(
     meta: args.meta,
     actorUserId: args.actorUserId,
     createdAt: Date.now(),
-  });
+  })
 }
 
-export { actorDisplayName };
+export { actorDisplayName }
 
 export function formatTaskDate(timestamp: number) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(timestamp))
 }

@@ -1,9 +1,13 @@
-"use client";
+'use client'
 
-import * as React from "react";
-import { RiAccountCircle2Line, RiCheckFill } from "@remixicon/react";
-import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import { RiAccountCircle2Line, RiCheckFill } from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import * as React from 'react'
+import { api } from '@/convex/_generated/api'
+import { Id } from '@/convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
+import { UserAvatar } from '../employees/UserAvatar'
+import { Button } from '../ui/button'
 import {
   Command,
   CommandEmpty,
@@ -11,33 +15,27 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { UserAvatar } from "../employees/UserAvatar";
-import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
+} from '../ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
-type ProjectManager = NonNullable<
-  typeof api.project.get._returnType
->["manager"];
+type ProjectManager = NonNullable<typeof api.project.get._returnType>['manager']
 interface ProjectManagerPickerProps {
-  projectId: Id<"projects">;
-  manager: ProjectManager;
+  projectId: Id<'projects'>
+  manager: ProjectManager
 }
 
 export function ProjectMangerPicker({
   projectId,
   manager,
 }: ProjectManagerPickerProps) {
-  const [open, setOpen] = React.useState(false);
-  const membersGroup = useProjectMembers(projectId);
-  const setManager = useMutation(api.projectMember.setManager);
-  const removeManager = useMutation(api.projectMember.removeManager);
+  const [open, setOpen] = React.useState(false)
+  const membersGroup = useProjectMembers(projectId)
+  const setManager = useMutation(api.projectMember.setManager)
+  const removeManager = useMutation(api.projectMember.removeManager)
 
   const currentManager = membersGroup.projectMembers.find(
     (member) => member.employeeId === manager?.employeeId,
-  );
+  )
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -47,7 +45,7 @@ export function ProjectMangerPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full",
+              'h-7 gap-1.5 px-2 font-normal text-muted-foreground hover:text-foreground rounded-full',
             )}
           />
         }
@@ -61,7 +59,7 @@ export function ProjectMangerPicker({
         ) : (
           <RiAccountCircle2Line className="size-3.5 opacity-70" />
         )}
-        <span>{currentManager?.employee.name ?? "Manager"}</span>
+        <span>{currentManager?.employee.name ?? 'Manager'}</span>
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0 max-w-[240px]">
         <Command>
@@ -92,7 +90,7 @@ export function ProjectMangerPicker({
                       imageUrl={member.employee.image}
                       className="size-5"
                     />
-                    {member.employee.name}{" "}
+                    {member.employee.name}{' '}
                     {member.manager && (
                       <RiCheckFill className="ml-auto size-4 " />
                     )}
@@ -125,25 +123,25 @@ export function ProjectMangerPicker({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
-export function useProjectMembers(projectId: Id<"projects">) {
+export function useProjectMembers(projectId: Id<'projects'>) {
   const members = useQuery(api.projectMember.list, {
     projectId,
-  });
+  })
 
-  const employees = useQuery(api.employees.auth.list);
+  const employees = useQuery(api.employees.auth.list)
 
   const remainingEmployees = employees?.filter((employee) => {
     const existingMember = members?.find(
       (member) => member.employeeId === employee.id,
-    );
-    return !existingMember || !existingMember.manager;
-  });
+    )
+    return !existingMember || !existingMember.manager
+  })
 
   return {
     projectMembers: members?.filter((member) => member.manager) ?? [],
     organizationMembers: remainingEmployees ?? [],
-  };
+  }
 }
