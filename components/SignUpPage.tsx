@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { RiEyeLine, RiEyeOffLine } from '@remixicon/react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
@@ -31,8 +31,6 @@ const signUpSchema = z.object({
 export function SignUpPage() {
   const [show, setShow] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect')
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -43,24 +41,19 @@ export function SignUpPage() {
   })
 
   async function onSubmit(values: z.infer<typeof signUpSchema>) {
-    await authClient.signUp
-      .email({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      })
-      .then((res) => {
-        if (res.error) {
-          form.setError('root', res.error)
-          return
-        }
+    const res = await authClient.signUp.email({
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      callbackURL: '/',
+    })
 
-        if (redirect) {
-          router.replace(redirect)
-        } else {
-          router.refresh()
-        }
-      })
+    if (res.error) {
+      form.setError('root', res.error)
+      return
+    }
+
+    router.replace(`/verify-email?email=${encodeURIComponent(values.email)}`)
   }
 
   return (
