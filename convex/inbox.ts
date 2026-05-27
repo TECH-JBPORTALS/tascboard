@@ -142,6 +142,27 @@ export const unreadCount = query({
   },
 })
 
+export const archiveCount = query({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const { userId } = await requireIdentity(ctx)
+    const { orgId } = await requireOrganization(ctx)
+
+    const unread = await ctx.db
+      .query('inboxItems')
+      .withIndex('by_org_recipient_archived', (q) =>
+        q
+          .eq('organizationId', orgId)
+          .eq('recipientUserId', userId)
+          .eq('archived', true),
+      )
+      .take(101)
+
+    return unread.length
+  },
+})
+
 export const markRead = mutation({
   args: { itemId: v.id('inboxItems') },
   returns: v.null(),

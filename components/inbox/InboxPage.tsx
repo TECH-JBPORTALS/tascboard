@@ -7,6 +7,7 @@ import {
   RiMailForbidLine,
 } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
+import { isNull } from 'lodash'
 import { motion } from 'motion/react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -24,10 +25,6 @@ import {
   AlertDialogTrigger,
 } from '../ui/alert-dialog'
 import { Button } from '../ui/button'
-import { Spinner } from '../ui/spinner'
-import { InboxOnboardingPanel } from './InboxOnboardingPanel'
-import { parseAsStringEnum, useQueryState } from 'nuqs'
-import { isNull, isUndefined } from 'lodash'
 import {
   Empty,
   EmptyDescription,
@@ -35,6 +32,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '../ui/empty'
+import { Spinner } from '../ui/spinner'
+import { InboxOnboardingPanel } from './InboxOnboardingPanel'
 
 function kindLabel(kind: Doc<'inboxItems'>['kind']): string {
   switch (kind) {
@@ -62,12 +61,6 @@ export function InboxPage() {
     api.employees.profile.getMyOnboardingStatus,
     {},
   )
-  const [_, setActiveTab] = useQueryState(
-    'tab',
-    parseAsStringEnum(['inbox', 'archive'])
-      .withOptions({ clearOnDefault: true })
-      .withDefault('inbox'),
-  )
   const markReadMutation = useMutation(api.inbox.markRead)
   const archive = useMutation(api.inbox.archive)
   const unarchive = useMutation(api.inbox.unarchive)
@@ -87,12 +80,10 @@ export function InboxPage() {
 
   function handleArchive(itemId: Id<'inboxItems'>) {
     void archive({ itemId })
-    setActiveTab('archive')
   }
 
   function handleUnarchive(itemId: Id<'inboxItems'>) {
     void unarchive({ itemId })
-    setActiveTab('inbox')
   }
 
   function handlePermanentlyDelete(itemId: Id<'inboxItems'>) {

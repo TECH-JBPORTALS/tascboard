@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  RiBox3Line,
   RiChat3Line,
   RiCheckboxCircleLine,
   RiInbox2Fill,
@@ -28,6 +27,7 @@ import { api } from '@/convex/_generated/api'
 import { Doc, Id } from '@/convex/_generated/dataModel'
 import { groupInboxItems, type InboxGroupLabel } from '@/lib/inbox-utils'
 import { cn } from '@/lib/utils'
+import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import {
   Empty,
@@ -212,6 +212,7 @@ function ArchiveMessages() {
   const archivedMessages = useQuery(api.inbox.list, {
     filter: 'archive',
   })
+
   const router = useRouter()
   const { orgSlug, inboxItemId } = useParams<{
     orgSlug: string
@@ -241,7 +242,12 @@ function ArchiveMessages() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button variant={'outline'}>Go to inbox</Button>
+          <Button
+            variant={'outline'}
+            onClick={() => router.push(`/${orgSlug}`)}
+          >
+            Go to inbox
+          </Button>
         </EmptyContent>
       </Empty>
     )
@@ -266,6 +272,8 @@ export function InboxSidebar() {
     inboxItemId?: string
     orgSlug: string
   }>()
+  const archiveCount = useQuery(api.inbox.archiveCount)
+  const unreadCount = useQuery(api.inbox.unreadCount)
 
   const [activeTab, setActiveTab] = useQueryState(
     'tab',
@@ -294,15 +302,28 @@ export function InboxSidebar() {
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'inbox' | 'archive')}
-        className="flex w-full mt-1  flex-col gap-0"
+        className="flex w-full  flex-col gap-0"
       >
-        <TabsList variant="line" className="w-full px-3 border-b">
+        <TabsList
+          variant="line"
+          className="w-full h-14 px-3 border-b group-data-horizontal/tabs:h-10"
+        >
           <TabsTrigger value="inbox" className="flex-1">
-            Inbox
+            Inbox{' '}
+            {!isUndefined(unreadCount) && unreadCount !== 0 && (
+              <Badge variant={'secondary'}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
           </TabsTrigger>
 
           <TabsTrigger value="archive" className="flex-1">
-            Archive
+            Archive{' '}
+            {!isUndefined(archiveCount) && archiveCount !== 0 && (
+              <Badge variant={'secondary'} className="text-xs rounded-full">
+                {archiveCount > 99 ? '99+' : archiveCount}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
       </Tabs>
