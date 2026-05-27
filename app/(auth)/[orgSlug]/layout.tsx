@@ -2,10 +2,25 @@ import { TodoPanel } from '@/components/employee-todos/todo-panel'
 import { AppSidebar } from '@/components/organization/AppSidebar'
 import { OrgSlugGuard } from '@/components/organization/OrgSlugGuard'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { api } from '@/convex/_generated/api'
+import { preloadAuthQuery } from '@/lib/auth-server'
 
-export default function OrgLayout({ children }: { children: React.ReactNode }) {
+export default async function OrgLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const [preloadedOrganizationsQuery, preloadedActiveOrganizationQuery] =
+    await Promise.all([
+      preloadAuthQuery(api.auth.listOrganizations),
+      preloadAuthQuery(api.auth.getActiveOrganization),
+    ])
+
   return (
-    <OrgSlugGuard>
+    <OrgSlugGuard
+      preloadedOrganizationsQuery={preloadedOrganizationsQuery}
+      preloadedActiveOrganizationQuery={preloadedActiveOrganizationQuery}
+    >
       <SidebarProvider
         style={{ '--header-height': '56px' } as React.CSSProperties}
       >

@@ -1,3 +1,5 @@
+/** This page will be shown when user doesnt selected any message from inbox sidebar */
+
 import { RiInbox2Fill } from '@remixicon/react'
 
 export default function Page() {
