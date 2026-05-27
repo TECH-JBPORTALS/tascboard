@@ -92,7 +92,13 @@ function runMutation(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
     appName: 'Tascboard',
-    baseURL: process.env.SITE_URL,
+    baseURL: {
+      allowedHosts: [
+        process.env.SITE_URL!,
+        process.env.BETTER_AUTH_ALLOWED_HOSTS!,
+      ],
+      fallback: process.env.SITE_URL!,
+    },
     secret: process.env.BETTER_AUTH_SECRET,
     database: authComponent.adapter(ctx),
     emailVerification: {
