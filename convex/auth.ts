@@ -93,10 +93,10 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
     appName: 'Tascboard',
     baseURL: {
-      allowedHosts: ['*.vercel.app', '*.convex.site', process.env.SITE_URL!],
+      allowedHosts: ['*.vercel.app', '*.convex.site'],
       fallback: process.env.SITE_URL!,
     },
-    trustedOrigins: ['*.vercel.app', '*.convex.site', process.env.SITE_URL!],
+    trustedOrigins: ['*.vercel.app', '*.convex.site'],
     secret: process.env.BETTER_AUTH_SECRET,
     database: authComponent.adapter(ctx),
     emailVerification: {
