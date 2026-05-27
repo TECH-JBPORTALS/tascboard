@@ -48,23 +48,21 @@ export const createInboxItem = internalMutation({
 
 export const list = query({
   args: {
-    organizationId: v.string(),
-    filter: v.union(v.literal('all'), v.literal('unread')),
+    filter: v.union(v.literal('inbox'), v.literal('archive')),
   },
   returns: v.array(inboxItemReturn),
   handler: async (ctx, args) => {
     const { userId } = await requireIdentity(ctx)
     const { orgId } = await requireOrganization(ctx)
 
-    if (args.filter === 'unread') {
+    if (args.filter === 'inbox') {
       return await ctx.db
         .query('inboxItems')
-        .withIndex('by_org_recipient_archived_read', (q) =>
+        .withIndex('by_org_recipient_archived', (q) =>
           q
             .eq('organizationId', orgId)
             .eq('recipientUserId', userId)
-            .eq('archived', false)
-            .eq('read', false),
+            .eq('archived', false),
         )
         .order('desc')
         .take(100)
@@ -76,7 +74,7 @@ export const list = query({
         q
           .eq('organizationId', orgId)
           .eq('recipientUserId', userId)
-          .eq('archived', false),
+          .eq('archived', true),
       )
       .order('desc')
       .take(100)

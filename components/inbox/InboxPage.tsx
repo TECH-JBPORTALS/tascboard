@@ -7,7 +7,7 @@ import {
 } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import { motion } from 'motion/react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { api } from '@/convex/_generated/api'
 import { Doc, Id } from '@/convex/_generated/dataModel'
@@ -24,8 +24,8 @@ import {
 } from '../ui/alert-dialog'
 import { Button } from '../ui/button'
 import { Spinner } from '../ui/spinner'
-import { useInbox } from './InboxContext'
 import { InboxOnboardingPanel } from './InboxOnboardingPanel'
+import { parseAsStringEnum, useQueryState } from 'nuqs'
 
 function kindLabel(kind: Doc<'inboxItems'>['kind']): string {
   switch (kind) {
@@ -43,14 +43,26 @@ function kindLabel(kind: Doc<'inboxItems'>['kind']): string {
 }
 
 export function InboxPage() {
-  const { inboxItemId } = useParams<{ inboxItemId: Id<'inboxItems'> }>()
+  const { inboxItemId, orgSlug } = useParams<{
+    inboxItemId: Id<'inboxItems'>
+    orgSlug: string
+  }>()
+  const router = useRouter()
   const selected = useQuery(api.inbox.get, { id: inboxItemId })
   const onboardingStatus = useQuery(
     api.employees.profile.getMyOnboardingStatus,
     {},
   )
+  const [_, setActiveTab] = useQueryState(
+    'tab',
+    parseAsStringEnum(['inbox', 'archive'])
+      .withOptions({ clearOnDefault: true })
+      .withDefault('inbox'),
+  )
   const markReadMutation = useMutation(api.inbox.markRead)
-  const { archiveItem, unarchiveItem, permanentlyDeleteItem } = useInbox()
+  const archive = useMutation(api.inbox.archive)
+  const unarchive = useMutation(api.inbox.unarchive)
+  const paramanentlyDelete = useMutation(api.inbox.permanentlyDelete)
 
   const isOnboardingMessage = selected?.kind === 'onboarding'
   const showOnboardingWizard =
@@ -63,6 +75,21 @@ export function InboxPage() {
     }
     void markReadMutation({ itemId: selected._id })
   }, [selected, markReadMutation, showOnboardingWizard, isArchived])
+
+  function handleArchive(itemId: Id<'inboxItems'>) {
+    void archive({ itemId })
+    setActiveTab('archive')
+  }
+
+  function handleUnarchive(itemId: Id<'inboxItems'>) {
+    void unarchive({ itemId })
+    setActiveTab('inbox')
+  }
+
+  function handlePermanentlyDelete(itemId: Id<'inboxItems'>) {
+    void paramanentlyDelete({ itemId })
+    router.replace(`/${orgSlug}/?tab=archive`)
+  }
 
   return (
     <motion.div className="hidden min-h-0 min-w-0 flex-1 flex-col bg-muted/20 md:flex">
@@ -135,7 +162,7 @@ export function InboxPage() {
                   size="sm"
                   type="button"
                   className="h-8"
-                  onClick={() => void unarchiveItem(selected._id)}
+                  onClick={() => handleUnarchive(selected._id)}
                 >
                   <RiInboxUnarchiveLine className="size-4" />
                   Unarchive
@@ -167,7 +194,7 @@ export function InboxPage() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         variant="destructive"
-                        onClick={() => void permanentlyDeleteItem(selected._id)}
+                        onClick={() => handlePermanentlyDelete(selected._id)}
                       >
                         Remove permanently
                       </AlertDialogAction>
@@ -181,7 +208,7 @@ export function InboxPage() {
                 size="sm"
                 type="button"
                 className="h-8"
-                onClick={() => void archiveItem(selected._id)}
+                onClick={() => handleArchive(selected._id)}
               >
                 <RiArchiveLine className="size-4" />
                 Archive

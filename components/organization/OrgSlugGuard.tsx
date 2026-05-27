@@ -41,10 +41,6 @@ export function OrgSlugGuard({
   preloadedOrganizationsQuery,
   preloadedActiveOrganizationQuery,
 }: OrgSlugGuardProps) {
-  console.log(
-    'preloadedOrganizationsQuery._argsJSON',
-    preloadedOrganizationsQuery,
-  )
   const router = useRouter()
   const params = useParams<{ orgSlug?: string }>()
   const orgSlug = params.orgSlug
