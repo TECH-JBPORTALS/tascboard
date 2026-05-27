@@ -13,7 +13,7 @@ import {
 } from '@remixicon/react'
 import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { isEmpty } from 'lodash'
+import { isEmpty, isUndefined } from 'lodash'
 import { useParams, useRouter } from 'next/navigation'
 import { parseAsStringEnum, useQueryState } from 'nuqs'
 import { useEffect } from 'react'
@@ -37,6 +37,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '../ui/empty'
+import { Skeleton } from '../ui/skeleton'
 
 type InboxItem = Doc<'inboxItems'>
 
@@ -170,6 +171,15 @@ function InboxMessages() {
     inboxItemId: string
   }>()
 
+  if (isUndefined(inboxMessages))
+    return (
+      <div className="py-4 flex flex-col gap-1.5 overflow-hidden">
+        {Array.from({ length: 14 }).map((_, index) => (
+          <Skeleton key={index} className="h-14 rounded-none w-full" />
+        ))}
+      </div>
+    )
+
   if (isEmpty(groupedMessages))
     return (
       <Empty>
@@ -199,7 +209,7 @@ function InboxMessages() {
 }
 
 function ArchiveMessages() {
-  const inboxMessages = useQuery(api.inbox.list, {
+  const archivedMessages = useQuery(api.inbox.list, {
     filter: 'archive',
   })
   const router = useRouter()
@@ -207,7 +217,16 @@ function ArchiveMessages() {
     orgSlug: string
     inboxItemId: string
   }>()
-  const groupedMessages = groupInboxItems(inboxMessages ?? [])
+  const groupedMessages = groupInboxItems(archivedMessages ?? [])
+
+  if (isUndefined(archivedMessages))
+    return (
+      <div className="py-4 flex flex-col gap-1.5 overflow-hidden">
+        {Array.from({ length: 14 }).map((_, index) => (
+          <Skeleton key={index} className="h-14 rounded-none w-full" />
+        ))}
+      </div>
+    )
 
   if (isEmpty(groupedMessages))
     return (

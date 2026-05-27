@@ -4,6 +4,7 @@ import {
   RiArchiveLine,
   RiDeleteBinLine,
   RiInboxUnarchiveLine,
+  RiMailForbidLine,
 } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import { motion } from 'motion/react'
@@ -26,6 +27,14 @@ import { Button } from '../ui/button'
 import { Spinner } from '../ui/spinner'
 import { InboxOnboardingPanel } from './InboxOnboardingPanel'
 import { parseAsStringEnum, useQueryState } from 'nuqs'
+import { isNull, isUndefined } from 'lodash'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../ui/empty'
 
 function kindLabel(kind: Doc<'inboxItems'>['kind']): string {
   switch (kind) {
@@ -90,6 +99,23 @@ export function InboxPage() {
     void paramanentlyDelete({ itemId })
     router.replace(`/${orgSlug}/?tab=archive`)
   }
+
+  if (isNull(selected))
+    return (
+      <Empty>
+        <EmptyMedia variant="icon" className="size-14">
+          <RiMailForbidLine className="size-7 text-muted-foreground" />
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>This message not found</EmptyTitle>
+          <EmptyDescription>
+            The message your looking for not found. May it's deleted
+            paramanently or else we have some problem. Select another message
+            from inbox sidebar.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    )
 
   return (
     <motion.div className="hidden min-h-0 min-w-0 flex-1 flex-col bg-muted/20 md:flex">
