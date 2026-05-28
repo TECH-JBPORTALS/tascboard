@@ -78,6 +78,15 @@ export const ProjectActivityValidator = v.object({
   toValue: v.optional(v.string()),
   createdAt: v.number(),
 })
+
+export const ProjectMemberValidator = v.object({
+  projectId: v.id('projects'),
+  employeeId: v.string(),
+  manager: v.boolean(),
+  assignedBy: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
 /*********************************************
  * TRACK VALIDATOR
  *********************************************/
@@ -252,6 +261,13 @@ export const DailyReportValidator = v.object({
   logoutTime: v.string(),
   reviewerId: v.string(),
   remark: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const DailyReportTaskTagValidator = v.object({
+  reportId: v.id('dailyReport'),
+  taskId: v.id('tasks'),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
 })
@@ -460,35 +476,13 @@ export default defineSchema({
     .index('by_employee', ['employeeId'])
     .index('by_credited_at', ['creditedAt']),
 
-  dailyReport: defineTable({
-    employeeId: v.string(),
-    reportDate: v.number(),
-    workSummary: v.string(),
-    loginTime: v.string(),
-    logoutTime: v.string(),
-    reviewerId: v.string(),
-    remark: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  dailyReport: defineTable(DailyReportValidator),
 
-  dailyReportTaskTag: defineTable({
-    reportId: v.id('dailyReport'),
-    taskId: v.id('tasks'),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  dailyReportTaskTag: defineTable(DailyReportTaskTagValidator)
     .index('by_reportId', ['reportId'])
     .index('by_reportId_taskId', ['reportId', 'taskId']),
 
-  projectMember: defineTable({
-    projectId: v.id('projects'),
-    employeeId: v.string(),
-    manager: v.boolean(),
-    assignedBy: v.string(),
-    createAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  projectMember: defineTable(ProjectMemberValidator)
     .index('by_project', ['projectId'])
     .index('by_project_employee', ['projectId', 'employeeId'])
     .index('by_project_manager', ['projectId', 'manager'])
