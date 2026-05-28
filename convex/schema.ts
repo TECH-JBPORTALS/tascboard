@@ -272,6 +272,34 @@ export const DailyReportTaskTagValidator = v.object({
   updatedAt: v.optional(v.number()),
 })
 
+/********************************************
+ * Leave Request Validator
+ ********************************************/
+
+export const LeaveRequestTypeValidator = v.union(
+  v.literal('sick'),
+  v.literal('casual'),
+  v.literal('emergency'),
+)
+
+export const LeaveRequestStatusValidator = v.union(
+  v.literal('pending'),
+  v.literal('approved'),
+  v.literal('rejected'),
+)
+
+export const LeaveRequestValidator = v.object({
+  employeeId: v.string(),
+  leaveType: LeaveRequestTypeValidator,
+  startDate: v.number(),
+  endDate: v.number(),
+  reason: v.string(),
+  status: LeaveRequestStatusValidator,
+  approvedBy: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -340,27 +368,7 @@ export default defineSchema({
     .index('by_employee_and_date', ['employeeId', 'recordDate'])
     .index('by_employee', ['employeeId']),
 
-  leaveRequests: defineTable({
-    employeeId: v.string(),
-
-    leaveType: v.union(
-      v.literal('sick'),
-      v.literal('casual'),
-      v.literal('emergency'),
-    ),
-
-    startDate: v.number(),
-    endDate: v.number(),
-    reason: v.string(),
-    status: v.union(
-      v.literal('pending'),
-      v.literal('approved'),
-      v.literal('rejected'),
-    ),
-    approvedBy: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  leaveRequests: defineTable(LeaveRequestValidator)
     .index('by_employee', ['employeeId'])
     .index('by_status', ['status'])
     .index('by_approved_by', ['approvedBy']),
