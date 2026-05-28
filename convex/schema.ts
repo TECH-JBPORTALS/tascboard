@@ -35,6 +35,70 @@ export const employeeProfileSchema = v.object({
 })
 
 /*********************************************
+ * Project VALIDATORS
+ ********************************************/
+export const ProjectStatusValidator = v.union(
+  v.literal('active'),
+  v.literal('inactive'),
+  v.literal('terminated'),
+)
+
+export const ProjectKindValidator = v.union(
+  v.literal('created'),
+  v.literal('name_changed'),
+  v.literal('summary_changed'),
+  v.literal('status_changed'),
+  v.literal('start_date_changed'),
+  v.literal('end_date_changed'),
+  v.literal('icon_changed'),
+  v.literal('color_changed'),
+)
+
+export const ProjectValidator = v.object({
+  organizationId: v.string(),
+  name: v.string(),
+  summary: v.optional(v.string()),
+  description: v.optional(v.any()),
+  icon: v.optional(v.string()),
+  color: v.optional(projectColorValidator),
+  startDate: v.number(),
+  endDate: v.number(),
+  status: ProjectStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const ProjectActivityValidator = v.object({
+  projectId: v.id('projects'),
+  organizationId: v.string(),
+  actorUserId: v.string(),
+  actorName: v.string(),
+  kind: ProjectKindValidator,
+  fromValue: v.optional(v.string()),
+  toValue: v.optional(v.string()),
+  createdAt: v.number(),
+})
+/*********************************************
+ * TRACK VALIDATOR
+ *********************************************/
+export const TrackStatusValidator = v.union(
+  v.literal('active'),
+  v.literal('completed'),
+  v.literal('archived'),
+)
+
+export const TrackValidator = v.object({
+  name: v.string(),
+  description: v.optional(v.string()),
+  projectId: v.id('projects'),
+  trackCode: v.string(),
+  trackLeaderID: v.string(),
+  status: TrackStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+/*********************************************
  * TASK VALIDATORS
  ********************************************/
 export const TaskStatusValidator = v.union(
@@ -94,6 +158,88 @@ export const TaskActivityValidator = v.object({
   createdAt: v.optional(v.number()),
 })
 
+/**************************************
+ * Sprint Validators
+ **************************************/
+export const SprintStatusValidator = v.union(
+  v.literal('planned'),
+  v.literal('active'),
+  v.literal('completed'),
+)
+
+export const SprintValidator = v.object({
+  trackId: v.id('tracks'),
+  sprintName: v.string(),
+  goal: v.string(),
+  startDate: v.number(),
+  endDate: v.number(),
+  status: SprintStatusValidator,
+  createdBy: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+/*************************************
+ * Inbox Validators
+ *************************************/
+
+export const InboxKindValidator = v.union(
+  v.literal('assignment'),
+  v.literal('comment'),
+  v.literal('invite'),
+  v.literal('system'),
+  v.literal('onboarding'),
+)
+
+export const InboxValidator = v.object({
+  organizationId: v.string(),
+  recipientUserId: v.string(),
+  kind: InboxKindValidator,
+  title: v.string(),
+  snippet: v.optional(v.string()),
+  body: v.optional(v.string()),
+  read: v.boolean(),
+  archived: v.boolean(),
+  actorName: v.optional(v.string()),
+})
+
+/*************************************
+ * Attendance Validators
+ *************************************/
+
+export const AttendanceStatusValidator = v.union(
+  v.literal('present'),
+  v.literal('on leave'),
+  v.literal('late'),
+  v.literal('half day'),
+)
+
+export const AttendanceValidator = v.object({
+  employeeId: v.string(),
+  recordDate: v.number(),
+  loginTime: v.number(),
+  logoutTime: v.optional(v.number()),
+  status: AttendanceStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+/*****************************************
+ * Payroll Validators
+ *****************************************/
+
+export const PayrollValidator = v.object({
+  employeeId: v.string(),
+  creditedAt: v.number(),
+  basicSalary: v.float64(),
+  deduction: v.float64(),
+  overtimePay: v.float64(),
+  bonus: v.float64(),
+  netSalary: v.float64(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -110,23 +256,7 @@ tasks: defineTable(TaskValidator)
 */
 
 export default defineSchema({
-  inboxItems: defineTable({
-    organizationId: v.string(),
-    recipientUserId: v.string(),
-    kind: v.union(
-      v.literal('assignment'),
-      v.literal('comment'),
-      v.literal('invite'),
-      v.literal('system'),
-      v.literal('onboarding'),
-    ),
-    title: v.string(),
-    snippet: v.optional(v.string()),
-    body: v.optional(v.string()),
-    read: v.boolean(),
-    archived: v.boolean(),
-    actorName: v.optional(v.string()),
-  })
+  inboxItems: defineTable(InboxValidator)
     .index('by_org_recipient_archived', [
       'organizationId',
       'recipientUserId',
@@ -150,60 +280,18 @@ export default defineSchema({
     fileName: v.string(),
     contentType: v.string(),
   }).index('by_profile', ['employeeProfileId']),
-  projects: defineTable({
-    organizationId: v.string(),
-    name: v.string(),
-    summary: v.optional(v.string()),
-    description: v.optional(v.any()),
-    icon: v.optional(v.string()),
-    color: v.optional(projectColorValidator),
-    startDate: v.number(),
-    endDate: v.number(),
-    status: v.union(
-      v.literal('active'),
-      v.literal('inactive'),
-      v.literal('terminated'),
-    ),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }).index('by_organization', ['organizationId']),
 
-  projectActivities: defineTable({
-    projectId: v.id('projects'),
-    organizationId: v.string(),
-    actorUserId: v.string(),
-    actorName: v.string(),
-    kind: v.union(
-      v.literal('created'),
-      v.literal('name_changed'),
-      v.literal('summary_changed'),
-      v.literal('status_changed'),
-      v.literal('start_date_changed'),
-      v.literal('end_date_changed'),
-      v.literal('icon_changed'),
-      v.literal('color_changed'),
-    ),
-    fromValue: v.optional(v.string()),
-    toValue: v.optional(v.string()),
-    createdAt: v.number(),
-  })
+  projects: defineTable(ProjectValidator).index('by_organization', [
+    'organizationId',
+  ]),
+
+  projectActivities: defineTable(ProjectActivityValidator)
     .index('by_project', ['projectId'])
     .index('by_project_actor', ['projectId', 'actorUserId']),
 
-  tracks: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    projectId: v.id('projects'),
-    trackCode: v.string(),
-    trackLeaderID: v.string(),
-    status: v.union(
-      v.literal('active'),
-      v.literal('completed'),
-      v.literal('archived'),
-    ),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }).index('by_project', { fields: ['projectId'] }),
+  tracks: defineTable(TrackValidator).index('by_project', {
+    fields: ['projectId'],
+  }),
 
   employeePerformancePoints: defineTable({
     employeeId: v.id('employee'),
@@ -216,20 +304,7 @@ export default defineSchema({
     .index('by_employee', ['employeeId'])
     .index('by_task', ['taskId']),
 
-  attendance: defineTable({
-    employeeId: v.string(),
-    recordDate: v.number(),
-    loginTime: v.number(),
-    logoutTime: v.optional(v.number()),
-    status: v.union(
-      v.literal('present'),
-      v.literal('on leave'),
-      v.literal('late'),
-      v.literal('half day'),
-    ),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  attendance: defineTable(AttendanceValidator)
     .index('by_employee_and_date', ['employeeId', 'recordDate'])
     .index('by_employee', ['employeeId']),
 
@@ -298,21 +373,9 @@ export default defineSchema({
     isResolution: v.optional(v.boolean()),
   }).index('by_task', { fields: ['taskId'] }),
 
-  sprints: defineTable({
-    trackId: v.id('tracks'),
-    sprintName: v.string(),
-    goal: v.string(),
-    startDate: v.number(),
-    endDate: v.number(),
-    status: v.union(
-      v.literal('planned'),
-      v.literal('active'),
-      v.literal('completed'),
-    ),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }).index('by_track', { fields: ['trackId'] }),
+  sprints: defineTable(SprintValidator).index('by_track', {
+    fields: ['trackId'],
+  }),
 
   employeeTodos: defineTable({
     employeeId: v.string(),
@@ -377,17 +440,9 @@ export default defineSchema({
     updatedAt: v.number(),
   }),
 
-  payroll: defineTable({
-    employeeId: v.string(),
-    creditedAt: v.number(),
-    basicSalary: v.float64(),
-    deduction: v.float64(),
-    overtimePay: v.float64(),
-    bonus: v.float64(),
-    netSalary: v.float64(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  payroll: defineTable(PayrollValidator)
+    .index('by_employee', ['employeeId'])
+    .index('by_credited_at', ['creditedAt']),
 
   dailyReport: defineTable({
     employeeId: v.string(),
