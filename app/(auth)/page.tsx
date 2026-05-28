@@ -1,4 +1,4 @@
-import { OrgSlugGuard } from '@/components/organization/OrgSlugGuard'
+import { OrgSlugGuard } from '@/components/organization/org-slug-guard'
 import { api } from '@/convex/_generated/api'
 import { preloadAuthQuery } from '@/lib/auth-server'
 

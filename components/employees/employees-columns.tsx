@@ -3,7 +3,9 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { UserAvatar } from './UserAvatar'
+import { UserAvatar } from './user-avatar'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
 export type EmployeeRow = {
   id: string
@@ -33,21 +35,29 @@ export const employeeColumns: ColumnDef<EmployeeRow>[] = [
   {
     id: 'employee',
     header: 'Employee',
-    cell: ({ row }) => (
-      <div className="flex min-w-0 items-center gap-3 py-1">
-        <UserAvatar
-          name={row.original.name}
-          imageUrl={row.original.image}
-          className="size-9"
-        />
-        <div className="min-w-0">
-          <p className="truncate font-medium">{row.original.name}</p>
-          <p className="truncate text-sm text-muted-foreground">
-            {row.original.email}
-          </p>
+    cell: ({ row }) => {
+      const params = useParams()
+      return (
+        <div className="flex min-w-0 items-center gap-3 py-1">
+          <UserAvatar
+            name={row.original.name}
+            imageUrl={row.original.image}
+            className="size-9"
+          />
+          <div className="min-w-0">
+            <Link
+              href={`/${params.orgSlug}/employees/${row.original.id}`}
+              className="truncate font-medium"
+            >
+              {row.original.name}
+            </Link>
+            <p className="truncate text-sm text-muted-foreground">
+              {row.original.email}
+            </p>
+          </div>
         </div>
-      </div>
-    ),
+      )
+    },
   },
   {
     accessorKey: 'role',

@@ -3,7 +3,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
-import { InvitationRowActions } from './InvitationRowActions'
+import { InvitationRowActions } from './invitation-row-actions'
 
 export type InvitationRow = {
   id: string

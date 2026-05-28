@@ -1,6 +1,6 @@
 import { TodoPanel } from '@/components/employee-todos/todo-panel'
-import { AppSidebar } from '@/components/organization/AppSidebar'
-import { OrgSlugGuard } from '@/components/organization/OrgSlugGuard'
+import { AppSidebar } from '@/components/organization/app-sidebar'
+import { OrgSlugGuard } from '@/components/organization/org-slug-guard'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { api } from '@/convex/_generated/api'
 import { preloadAuthQuery } from '@/lib/auth-server'
