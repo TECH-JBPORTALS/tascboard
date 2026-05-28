@@ -41,23 +41,29 @@ export function SignInPage() {
   })
 
   async function onSubmit(values: z.infer<typeof signInSchema>) {
-    await authClient.signIn
-      .email({
-        email: values.email,
-        password: values.password,
-      })
-      .then((res) => {
-        if (res.error) {
-          form.setError('root', res.error)
-          return
-        }
+    const res = await authClient.signIn.email({
+      email: values.email,
+      password: values.password,
+      callbackURL: '/',
+    })
 
-        if (redirect) {
-          router.replace(redirect)
-        } else {
-          router.refresh()
-        }
-      })
+    if (res.error) {
+      if ('status' in res.error && res.error.status === 403) {
+        router.replace(
+          `/verify-email?email=${encodeURIComponent(values.email)}`,
+        )
+        return
+      }
+
+      form.setError('root', res.error)
+      return
+    }
+
+    if (redirect) {
+      router.replace(redirect)
+    } else {
+      router.refresh()
+    }
   }
 
   return (

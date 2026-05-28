@@ -1,5 +1,18 @@
 import { OrgSlugGuard } from '@/components/organization/OrgSlugGuard'
+import { api } from '@/convex/_generated/api'
+import { preloadAuthQuery } from '@/lib/auth-server'
 
-export default function Page() {
-  return <OrgSlugGuard />
+export default async function Page() {
+  const [preloadedOrganizatoinsQuery, preloadedActiveOrganizationQuery] =
+    await Promise.all([
+      preloadAuthQuery(api.auth.listOrganizations),
+      preloadAuthQuery(api.auth.getActiveOrganization),
+    ])
+
+  return (
+    <OrgSlugGuard
+      preloadedOrganizationsQuery={preloadedOrganizatoinsQuery}
+      preloadedActiveOrganizationQuery={preloadedActiveOrganizationQuery}
+    />
+  )
 }

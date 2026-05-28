@@ -4,46 +4,40 @@ import {
   RiChat3Line,
   RiCheckboxCircleLine,
   RiInbox2Fill,
+  RiInbox2Line,
+  RiInboxArchiveLine,
   RiMailLine,
   RiNotification3Line,
-  RiSearch2Line,
   RiSparklingLine,
 } from '@remixicon/react'
-import { useMutation, useQuery } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { formatDistanceToNowStrict } from 'date-fns'
+import { isEmpty, isUndefined } from 'lodash'
 import { useParams, useRouter } from 'next/navigation'
+import { parseAsStringEnum, useQueryState } from 'nuqs'
 import { useEffect } from 'react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
   SidebarHeader,
+  SidebarMenu,
 } from '@/components/ui/sidebar'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { api } from '@/convex/_generated/api'
 import { Doc, Id } from '@/convex/_generated/dataModel'
-import { authClient } from '@/lib/auth-client'
-import type { InboxGroupLabel } from '@/lib/inbox-utils'
+import { groupInboxItems, type InboxGroupLabel } from '@/lib/inbox-utils'
 import { cn } from '@/lib/utils'
-import { useInbox } from './InboxContext'
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../ui/empty'
+import { Skeleton } from '../ui/skeleton'
 
 type InboxItem = Doc<'inboxItems'>
 
@@ -166,129 +160,127 @@ function MessageList({
   )
 }
 
-function InboxTabPanel({
-  isLoading,
-  showEmptySearch,
-  showEmptyList,
-  emptyListMessage,
-  groups,
-  listId,
-  ariaLabel,
-  showUnreadIndicator,
-  listRef,
-  selectedId,
-  onSelect,
-  children,
-}: {
-  isLoading: boolean
-  showEmptySearch: boolean
-  showEmptyList: boolean
-  emptyListMessage: string
-  groups: Array<{ label: InboxGroupLabel; items: InboxItem[] }>
-  listId: string
-  ariaLabel: string
-  showUnreadIndicator: boolean
-  listRef?: React.RefObject<HTMLUListElement | null>
-  selectedId?: string
-  onSelect: (id: Id<'inboxItems'>) => void
-  children?: React.ReactNode
-}) {
+function InboxMessages() {
+  const inboxMessages = useQuery(api.inbox.list, {
+    filter: 'inbox',
+  })
+  const groupedMessages = groupInboxItems(inboxMessages ?? [])
+  const router = useRouter()
+  const { orgSlug, inboxItemId } = useParams<{
+    orgSlug: string
+    inboxItemId: string
+  }>()
+
+  if (isUndefined(inboxMessages))
+    return (
+      <div className="py-4 flex flex-col gap-1.5 overflow-hidden">
+        {Array.from({ length: 14 }).map((_, index) => (
+          <Skeleton key={index} className="h-14 rounded-none w-full" />
+        ))}
+      </div>
+    )
+
+  if (isEmpty(groupedMessages))
+    return (
+      <Empty>
+        <EmptyMedia variant="icon" className="size-14">
+          <RiInbox2Line className="size-7 text-muted-foreground" />
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>No messages yet</EmptyTitle>
+          <EmptyDescription>
+            As soon as you get messages, they will appear here.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    )
+
   return (
-    <>
-      {children}
-      {isLoading ? (
-        <div>
-          {Array.from({ length: 18 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-none border-b" />
-          ))}
-        </div>
-      ) : null}
-      {showEmptySearch ? (
-        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-          No messages match your search.
-        </p>
-      ) : null}
-      {showEmptyList ? (
-        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-          {emptyListMessage}
-        </p>
-      ) : null}
-      {!isLoading && groups.length > 0 ? (
-        <MessageList
-          groups={groups}
-          selectedId={selectedId}
-          onSelect={onSelect}
-          listRef={listRef}
-          listId={listId}
-          ariaLabel={ariaLabel}
-          showUnreadIndicator={showUnreadIndicator}
-        />
-      ) : null}
-    </>
+    <MessageList
+      ariaLabel="inbox-message"
+      groups={groupedMessages}
+      listId="inbox-message"
+      onSelect={(id) => {
+        router.push(`/${orgSlug}/in/${id}`)
+      }}
+      selectedId={inboxItemId}
+    />
+  )
+}
+
+function ArchiveMessages() {
+  const archivedMessages = useQuery(api.inbox.list, {
+    filter: 'archive',
+  })
+
+  const router = useRouter()
+  const { orgSlug, inboxItemId } = useParams<{
+    orgSlug: string
+    inboxItemId: string
+  }>()
+  const groupedMessages = groupInboxItems(archivedMessages ?? [])
+
+  if (isUndefined(archivedMessages))
+    return (
+      <div className="py-4 flex flex-col gap-1.5 overflow-hidden">
+        {Array.from({ length: 14 }).map((_, index) => (
+          <Skeleton key={index} className="h-14 rounded-none w-full" />
+        ))}
+      </div>
+    )
+
+  if (isEmpty(groupedMessages))
+    return (
+      <Empty>
+        <EmptyMedia variant="icon" className="size-14">
+          <RiInboxArchiveLine className="size-7 text-muted-foreground" />
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>You all catch up</EmptyTitle>
+          <EmptyDescription>
+            There is no archived messages to show here. You can check inbox now.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button
+            variant={'outline'}
+            onClick={() => router.push(`/${orgSlug}`)}
+          >
+            Go to inbox
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+
+  return (
+    <div>
+      <MessageList
+        ariaLabel="inbox-message"
+        groups={groupedMessages}
+        onSelect={(id) => {
+          router.push(`/${orgSlug}/in/${id}?tab=archive`)
+        }}
+        listId="inbox-message"
+        selectedId={inboxItemId}
+      />
+    </div>
   )
 }
 
 export function InboxSidebar() {
-  const { data: session } = authClient.useSession()
-  const organizationId = session?.session.activeOrganizationId
-  const { inboxItemId, orgSlug } = useParams<{
+  const { inboxItemId } = useParams<{
     inboxItemId?: string
     orgSlug: string
   }>()
-  const router = useRouter()
+  const archiveCount = useQuery(api.inbox.archiveCount)
+  const unreadCount = useQuery(api.inbox.unreadCount)
 
-  const {
-    activeTab,
-    setSidebarTab,
-    items,
-    archivedItems,
-    groupedItems,
-    groupedArchivedItems,
-    flatItems,
-    flatArchivedItems,
-    searchQuery,
-    setSearchQuery,
-    searchInputRef,
-    listRef,
-    selectItem,
-    deleteAllArchived,
-  } = useInbox()
-
-  const onboardingInboxId = useQuery(
-    api.inbox.getOnboardingInboxItemId,
-    organizationId ? {} : 'skip',
+  const [activeTab, setActiveTab] = useQueryState(
+    'tab',
+    parseAsStringEnum(['inbox', 'archive'])
+      .withOptions({ clearOnDefault: true })
+      .withDefault('inbox'),
   )
-  const onboardingStatus = useQuery(
-    api.employees.profile.getMyOnboardingStatus,
-    organizationId ? {} : 'skip',
-  )
-
-  const seedWelcome = useMutation(api.inbox.seedWelcomeItems)
-
-  const inboxLoading = items === undefined
-  const archiveLoading = archivedItems === undefined
-
-  useEffect(() => {
-    if (!organizationId || !orgSlug) return
-    if (inboxItemId) return
-    if (onboardingStatus?.onboardingStatus !== 'pending') return
-    if (!onboardingInboxId) return
-    router.replace(`/${orgSlug}/in/${onboardingInboxId}`)
-  }, [
-    organizationId,
-    orgSlug,
-    inboxItemId,
-    onboardingInboxId,
-    onboardingStatus?.onboardingStatus,
-    router,
-  ])
-
-  useEffect(() => {
-    if (!organizationId) {
-      return
-    }
-    void seedWelcome()
-  }, [organizationId, seedWelcome])
 
   useEffect(() => {
     if (!inboxItemId) {
@@ -299,185 +291,46 @@ export function InboxSidebar() {
       ?.scrollIntoView({ block: 'nearest' })
   }, [inboxItemId])
 
-  const archiveCount = archivedItems?.length ?? 0
-
-  const handleTabChange = (value: string) => {
-    if (value !== 'inbox' && value !== 'archive') {
-      return
-    }
-    setSidebarTab(value)
-    if (!inboxItemId) {
-      return
-    }
-    const inArchive = archivedItems?.some((item) => item._id === inboxItemId)
-    if (value === 'inbox' && inArchive) {
-      router.push(`/${orgSlug}`)
-      return
-    }
-    if (value === 'archive' && !inArchive) {
-      router.push(`/${orgSlug}`)
-    }
-  }
-
   return (
     <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-      <SidebarHeader className="h-auto border-b px-3 py-3">
+      <SidebarHeader className="h-(--header-height) border-b justify-center px-3 py-3">
         <div className="flex items-center gap-1.5 px-1">
           <RiInbox2Fill className="size-5" />
           <span className="font-medium">Inbox</span>
         </div>
       </SidebarHeader>
-      <SidebarContent className="min-h-0 h-10">
-        <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="flex min-h-0 w-full flex-1 mt-1  flex-col gap-0"
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as 'inbox' | 'archive')}
+        className="flex w-full  flex-col gap-0"
+      >
+        <TabsList
+          variant="line"
+          className="w-full h-14 px-3 border-b group-data-horizontal/tabs:h-10"
         >
-          <TabsList variant="line" className="w-full px-3 border-b">
-            <TabsTrigger value="inbox" className="flex-1">
-              Inbox
-            </TabsTrigger>
+          <TabsTrigger value="inbox" className="flex-1">
+            Inbox{' '}
+            {!isUndefined(unreadCount) && unreadCount !== 0 && (
+              <Badge variant={'secondary'}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
+          </TabsTrigger>
 
-            <TabsTrigger value="archive" className="flex-1">
-              Archive
-              {archiveCount > 0 ? (
-                <span className="ml-1.5 text-[10px] tabular-nums text-muted-foreground">
-                  {archiveCount}
-                </span>
-              ) : null}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent
-            value="inbox"
-            className="mt-0 flex min-h-0 flex-1 flex-col outline-none"
-          >
-            <SidebarGroup className="gap-2 px-0">
-              <div className="px-3">
-                <InputGroup>
-                  <InputGroupAddon>
-                    <RiSearch2Line aria-hidden />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    ref={searchInputRef}
-                    placeholder="Search messages..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    aria-label="Search inbox messages"
-                    aria-controls="inbox-message-list"
-                    aria-activedescendant={
-                      inboxItemId ? `inbox-item-${inboxItemId}` : undefined
-                    }
-                  />
-                </InputGroup>
-              </div>
-              <p className="sr-only" id="inbox-keyboard-hint">
-                Use arrow up and arrow down to move between messages. Press
-                arrow down from search to jump to the first message.
-              </p>
-            </SidebarGroup>
-            <InboxTabPanel
-              isLoading={inboxLoading}
-              showEmptySearch={
-                !inboxLoading &&
-                flatItems.length === 0 &&
-                searchQuery.trim() !== ''
-              }
-              showEmptyList={false}
-              emptyListMessage=""
-              groups={groupedItems}
-              listId="inbox-message-list"
-              ariaLabel="Inbox messages"
-              showUnreadIndicator
-              listRef={activeTab === 'inbox' ? listRef : undefined}
-              selectedId={inboxItemId}
-              onSelect={selectItem}
-            />
-          </TabsContent>
-
-          <TabsContent
-            value="archive"
-            className="mt-0 flex min-h-0 flex-1 flex-col outline-none"
-          >
-            <SidebarGroup className="gap-2 px-0">
-              <div className="px-3">
-                <InputGroup>
-                  <InputGroupAddon>
-                    <RiSearch2Line aria-hidden />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    placeholder="Search archived..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    aria-label="Search archived messages"
-                    aria-controls="archive-message-list"
-                    aria-activedescendant={
-                      inboxItemId ? `inbox-item-${inboxItemId}` : undefined
-                    }
-                  />
-                </InputGroup>
-              </div>
-              {archiveCount > 0 ? (
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    render={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mx-3 h-8 w-[calc(100%-1.5rem)] text-destructive hover:text-destructive"
-                      />
-                    }
-                  >
-                    Remove all
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Remove all archived messages?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete {archiveCount} archived{' '}
-                        {archiveCount === 1 ? 'message' : 'messages'}. This
-                        cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        variant="destructive"
-                        onClick={() => void deleteAllArchived()}
-                      >
-                        Remove all
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              ) : null}
-            </SidebarGroup>
-            <InboxTabPanel
-              isLoading={archiveLoading}
-              showEmptySearch={
-                !archiveLoading &&
-                flatArchivedItems.length === 0 &&
-                searchQuery.trim() !== ''
-              }
-              showEmptyList={
-                !archiveLoading &&
-                flatArchivedItems.length === 0 &&
-                searchQuery.trim() === ''
-              }
-              emptyListMessage="No archived messages."
-              groups={groupedArchivedItems}
-              listId="archive-message-list"
-              ariaLabel="Archived messages"
-              showUnreadIndicator={false}
-              listRef={activeTab === 'archive' ? listRef : undefined}
-              selectedId={inboxItemId}
-              onSelect={selectItem}
-            />
-          </TabsContent>
-        </Tabs>
+          <TabsTrigger value="archive" className="flex-1">
+            Archive{' '}
+            {!isUndefined(archiveCount) && archiveCount !== 0 && (
+              <Badge variant={'secondary'} className="text-xs rounded-full">
+                {archiveCount > 99 ? '99+' : archiveCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <SidebarContent>
+        <SidebarMenu className="flex-1">
+          {activeTab === 'inbox' ? <InboxMessages /> : <ArchiveMessages />}
+        </SidebarMenu>
       </SidebarContent>
     </Sidebar>
   )

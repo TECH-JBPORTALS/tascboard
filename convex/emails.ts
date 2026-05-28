@@ -48,6 +48,43 @@ export const sendInvitationEmail = internalMutation({
   },
 })
 
+export const sendVerificationEmail = internalMutation({
+  args: {
+    email: v.string(),
+    verificationUrl: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const displayName = args.email.split('@')[0] || args.email
+
+    await resend.sendEmail(ctx, {
+      from:
+        process.env.RESEND_FROM_EMAIL ?? 'Tascboard <onboarding@resend.dev>',
+      to: args.email,
+      subject: 'Verify your email address for Tascboard',
+      html: `
+        <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto;">
+          <h1 style="font-size: 20px; margin-bottom: 8px;">Verify your email address</h1>
+          <p style="color: #444; line-height: 1.5;">
+            Hi ${displayName}, please verify your email address to finish setting up your Tascboard account.
+          </p>
+          <p style="margin: 24px 0;">
+            <a href="${args.verificationUrl}" style="background: #4f46e5; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none; display: inline-block;">
+              Verify email
+            </a>
+          </p>
+          <p style="color: #666; font-size: 13px;">
+            If the button does not work, copy this link:<br />
+            <a href="${args.verificationUrl}">${args.verificationUrl}</a>
+          </p>
+        </div>
+      `,
+    })
+
+    return null
+  },
+})
+
 export const processInvitationEmail = internalAction({
   args: {
     organizationId: v.string(),
@@ -63,6 +100,22 @@ export const processInvitationEmail = internalAction({
       organizationName: args.organizationName,
       inviterName: args.inviterName,
       invitationId: args.invitationId,
+    })
+
+    return null
+  },
+})
+
+export const processVerificationEmail = internalAction({
+  args: {
+    email: v.string(),
+    verificationUrl: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.emails.sendVerificationEmail, {
+      email: args.email,
+      verificationUrl: args.verificationUrl,
     })
 
     return null

@@ -1,3 +1,6 @@
+import { api } from '@/convex/_generated/api'
+import { Doc } from '@/convex/betterAuth/_generated/dataModel'
+
 export type OrganizationListItem = {
   id: string
   name: string
@@ -19,9 +22,11 @@ export function findOrganizationById(
 }
 
 export function findOrganizationBySlug(
-  orgList: OrganizationListItem[],
+  orgList: NonNullable<typeof api.auth.listOrganizations._returnType>,
   slug: string,
-): OrganizationListItem | undefined {
+):
+  | NonNullable<typeof api.auth.listOrganizations._returnType>[number]
+  | undefined {
   return orgList.find((org) => org.slug === slug)
 }
 
