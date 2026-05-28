@@ -203,6 +203,27 @@ export const InboxValidator = v.object({
   actorName: v.optional(v.string()),
 })
 
+/*************************************
+ * Attendance Validators
+ *************************************/
+
+export const AttendanceStatusValidator = v.union(
+  v.literal('present'),
+  v.literal('on leave'),
+  v.literal('late'),
+  v.literal('half day'),
+)
+
+export const AttendanceValidator = v.object({
+  employeeId: v.string(),
+  recordDate: v.number(),
+  loginTime: v.number(),
+  logoutTime: v.optional(v.number()),
+  status: AttendanceStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -267,20 +288,7 @@ export default defineSchema({
     .index('by_employee', ['employeeId'])
     .index('by_task', ['taskId']),
 
-  attendance: defineTable({
-    employeeId: v.string(),
-    recordDate: v.number(),
-    loginTime: v.number(),
-    logoutTime: v.optional(v.number()),
-    status: v.union(
-      v.literal('present'),
-      v.literal('on leave'),
-      v.literal('late'),
-      v.literal('half day'),
-    ),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  attendance: defineTable(AttendanceValidator)
     .index('by_employee_and_date', ['employeeId', 'recordDate'])
     .index('by_employee', ['employeeId']),
 
