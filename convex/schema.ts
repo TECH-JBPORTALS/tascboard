@@ -158,6 +158,27 @@ export const TaskActivityValidator = v.object({
   createdAt: v.optional(v.number()),
 })
 
+/**************************************
+ * Sprint Validators
+ **************************************/
+export const SprintStatusValidator = v.union(
+  v.literal('planned'),
+  v.literal('active'),
+  v.literal('completed'),
+)
+
+export const SprintValidator = v.object({
+  trackId: v.id('tracks'),
+  sprintName: v.string(),
+  goal: v.string(),
+  startDate: v.number(),
+  endDate: v.number(),
+  status: SprintStatusValidator,
+  createdBy: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -320,21 +341,9 @@ export default defineSchema({
     isResolution: v.optional(v.boolean()),
   }).index('by_task', { fields: ['taskId'] }),
 
-  sprints: defineTable({
-    trackId: v.id('tracks'),
-    sprintName: v.string(),
-    goal: v.string(),
-    startDate: v.number(),
-    endDate: v.number(),
-    status: v.union(
-      v.literal('planned'),
-      v.literal('active'),
-      v.literal('completed'),
-    ),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }).index('by_track', { fields: ['trackId'] }),
+  sprints: defineTable(SprintValidator).index('by_track', {
+    fields: ['trackId'],
+  }),
 
   employeeTodos: defineTable({
     employeeId: v.string(),
