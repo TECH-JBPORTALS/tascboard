@@ -17,17 +17,17 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
-type EmployeesDataTableProps<TData> = {
+type DataTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[]
   data: TData[]
   getRowInactive?: (row: TData) => boolean
 }
 
-export function EmployeesDataTable<TData>({
+export function DataTable<TData>({
   columns,
   data,
   getRowInactive,
-}: EmployeesDataTableProps<TData>) {
+}: DataTableProps<TData>) {
   const table = useReactTable({
     data,
     columns,

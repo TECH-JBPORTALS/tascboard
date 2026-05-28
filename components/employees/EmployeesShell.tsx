@@ -6,7 +6,7 @@ import { useParams, usePathname } from 'next/navigation'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { PageHeader } from '@/components/ui/page-header'
 import { authClient } from '@/lib/auth-client'
-import { cn } from '@/lib/utils'
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { InviteEmployeeDialog } from './InviteEmployeeDialog'
 
 const subNavItems = [
@@ -36,33 +36,24 @@ export function EmployeesShell({ children }: { children: React.ReactNode }) {
         }
       />
 
-      <nav
-        className="flex gap-1 border-b border-border/60 px-4 md:px-6"
-        aria-label="Employees sections"
-      >
-        {subNavItems.map((item) => {
-          const href = `${basePath}${item.segment}`
-          const isActive =
-            item.segment === ''
-              ? pathname === basePath || pathname === `${basePath}/`
-              : pathname.startsWith(href)
+      <Tabs value={pathname} className={'w-full border-b bg-accent/40'}>
+        <TabsList variant={'line'}>
+          {subNavItems.map((item) => {
+            const href = `${basePath}${item.segment}`
 
-          return (
-            <Link
-              key={item.label}
-              href={href}
-              className={cn(
-                'relative px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'text-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
-      </nav>
+            return (
+              <TabsTrigger
+                key={item.label}
+                value={href}
+                render={<Link href={href} />}
+                nativeButton={false}
+              >
+                {item.label}
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
+      </Tabs>
 
       {children}
     </div>

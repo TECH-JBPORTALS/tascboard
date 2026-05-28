@@ -5,8 +5,8 @@ import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
 import { usePermission } from '@/hooks/use-permission'
+import { DataTable } from '../DataTable'
 import { type EmployeeRow, employeeColumns } from './employees-columns'
-import { EmployeesDataTable } from './employees-data-table'
 
 export function EmployeesPage() {
   const { allowed, isLoading: permissionLoading } = usePermission({
@@ -47,7 +47,7 @@ export function EmployeesPage() {
       ) : employees.length === 0 ? (
         <p className="text-sm text-muted-foreground">No employees yet.</p>
       ) : (
-        <EmployeesDataTable
+        <DataTable
           columns={employeeColumns}
           data={rows}
           getRowInactive={(row) => !row.active}

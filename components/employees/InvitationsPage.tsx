@@ -7,8 +7,8 @@ import { api } from '@/convex/_generated/api'
 import { usePermission } from '@/hooks/use-permission'
 import { authClient } from '@/lib/auth-client'
 import type { PermissionRequest } from '@/lib/permissions'
+import { DataTable } from '../DataTable'
 import { CancelInvitationDialog } from './CancelInvitationDialog'
-import { EmployeesDataTable } from './employees-data-table'
 import {
   createInvitationColumns,
   type InvitationRow,
@@ -81,7 +81,7 @@ export function InvitationsPage() {
       ) : invitations.length === 0 ? (
         <p className="text-sm text-muted-foreground">No pending invitations.</p>
       ) : (
-        <EmployeesDataTable columns={columns} data={rows} />
+        <DataTable columns={columns} data={rows} />
       )}
 
       {canInvite ? (

@@ -119,9 +119,9 @@ export function InviteEmployeeDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button />}>
         <RiUserAddLine />
-        Invite employee
+        Invite
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={'max-w-lg sm:max-w-lg'}>
         <DialogHeader>
           <DialogTitle>Invite employees</DialogTitle>
           <DialogDescription>
@@ -146,8 +146,11 @@ export function InviteEmployeeDialog({
                 <Label>Email addresses</Label>
                 <Textarea
                   {...field}
-                  placeholder={'jane@company.com\njohn@company.com'}
-                  rows={4}
+                  placeholder={
+                    'heisenberg@ww.com, capncook@pinkman.com, chickenman@fring.com, ...'
+                  }
+                  rows={6}
+                  className="resize-none tracking-wide leading-6"
                 />
                 <FieldError errors={[fieldState.error]} />
               </Field>

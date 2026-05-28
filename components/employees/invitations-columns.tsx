@@ -59,7 +59,7 @@ export function createInvitationColumns(options: {
     ...baseColumns,
     {
       id: 'actions',
-      header: 'Actions',
+      header: () => <div className="text-right px-3">Actions</div>,
       cell: ({ row }) => (
         <InvitationRowActions
           invitation={row.original}
