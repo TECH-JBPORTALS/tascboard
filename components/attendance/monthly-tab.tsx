@@ -1,17 +1,17 @@
-/** biome-ignore-all assist/source/organizeImports: <explanation> */
-"use client";
+'use client'
 
-import { useState } from "react";
-import { addMonths, subMonths } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { RiDownloadLine } from "@remixicon/react";
-import { MonthlyNav } from "./monthly-nav";
-import { MonthlyStats } from "./monthly-stats";
-import { MonthlyTable } from "./monthly-table";
-import { MOCK_MONTHLY } from "./mock-data";
+import { RiDownloadLine } from '@remixicon/react'
+import { addMonths, subMonths } from 'date-fns'
+import { useState } from 'react'
+
+import { Button } from '@/components/ui/button'
+import { MOCK_MONTHLY } from './mock-data'
+import { MonthlyNav } from './monthly-nav'
+import { MonthlyStats } from './monthly-stats'
+import { MonthlyTable } from './monthly-table'
 
 export function MonthlyTab() {
-  const [month, setMonth] = useState<Date>(new Date());
+  const [month, setMonth] = useState<Date>(new Date())
 
   return (
     <div className="flex flex-col gap-4 pt-4">
@@ -29,5 +29,5 @@ export function MonthlyTab() {
       <MonthlyStats records={MOCK_MONTHLY} />
       <MonthlyTable records={MOCK_MONTHLY} />
     </div>
-  );
+  )
 }

@@ -1,6 +1,7 @@
-"use client";
+'use client'
 
-import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from '@/components/employees/UserAvatar'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -8,24 +9,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { UserAvatar } from "@/components/employees/UserAvatar";
-import type { AttendanceStatus, DailyRecord } from "@/lib/attendance-types";
+} from '@/components/ui/table'
+import type { AttendanceStatus, DailyRecord } from '@/lib/attendance-types'
 
 const STATUS_VARIANT: Record<
   AttendanceStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  'default' | 'secondary' | 'destructive' | 'outline'
 > = {
-  present: "default",
-  "checked out": "secondary",
-  late: "destructive",
-  "on leave": "outline",
-  "half day": "outline",
-  absent: "destructive",
-};
+  present: 'default',
+  'checked out': 'secondary',
+  late: 'destructive',
+  'on leave': 'outline',
+  'half day': 'outline',
+  absent: 'destructive',
+}
 
 interface DailyTableProps {
-  records: DailyRecord[];
+  records: DailyRecord[]
 }
 
 export function DailyTable({ records }: DailyTableProps) {
@@ -59,14 +59,14 @@ export function DailyTable({ records }: DailyTableProps) {
               </Badge>
             </TableCell>
             <TableCell className="text-muted-foreground text-sm">
-              {r.location ?? "—"}
+              {r.location ?? '—'}
             </TableCell>
-            <TableCell className="text-sm">{r.loginTime ?? "—:—"}</TableCell>
-            <TableCell className="text-sm">{r.logoutTime ?? "—:—"}</TableCell>
-            <TableCell className="text-sm">{r.totalHours ?? "—"}</TableCell>
+            <TableCell className="text-sm">{r.loginTime ?? '—:—'}</TableCell>
+            <TableCell className="text-sm">{r.logoutTime ?? '—:—'}</TableCell>
+            <TableCell className="text-sm">{r.totalHours ?? '—'}</TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
-  );
+  )
 }

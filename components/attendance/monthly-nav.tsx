@@ -1,17 +1,18 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
 import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
   RiCalendarLine,
-} from "@remixicon/react";
-import { format } from "date-fns";
+} from '@remixicon/react'
+import { format } from 'date-fns'
+
+import { Button } from '@/components/ui/button'
 
 interface MonthlyNavProps {
-  month: Date;
-  onPrev: () => void;
-  onNext: () => void;
+  month: Date
+  onPrev: () => void
+  onNext: () => void
 }
 
 export function MonthlyNav({ month, onPrev, onNext }: MonthlyNavProps) {
@@ -22,11 +23,11 @@ export function MonthlyNav({ month, onPrev, onNext }: MonthlyNavProps) {
       </Button>
       <Button variant="outline" size="sm" className="gap-1.5 px-3">
         <RiCalendarLine />
-        {format(month, "MMMM yyyy")}
+        {format(month, 'MMMM yyyy')}
       </Button>
       <Button variant="outline" size="icon" onClick={onNext}>
         <RiArrowRightSLine />
       </Button>
     </div>
-  );
+  )
 }

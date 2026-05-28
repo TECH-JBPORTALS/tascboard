@@ -1,14 +1,14 @@
-/** biome-ignore-all assist/source/organizeImports: <explanation> */
-"use client";
+'use client'
 
-import { useState } from "react";
-import { addDays, subDays } from "date-fns";
-import { DailyDateNav } from "./daily-date-nav";
-import { DailyTable } from "./daily-table";
-import { MOCK_DAILY } from "./mock-data";
+import { addDays, subDays } from 'date-fns'
+import { useState } from 'react'
+
+import { DailyDateNav } from './daily-date-nav'
+import { DailyTable } from './daily-table'
+import { MOCK_DAILY } from './mock-data'
 
 export function DailyTab() {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date>(new Date())
 
   return (
     <div className="flex flex-col gap-4 pt-4">
@@ -24,5 +24,5 @@ export function DailyTab() {
       </div>
       <DailyTable records={MOCK_DAILY} />
     </div>
-  );
+  )
 }

@@ -1,7 +1,7 @@
-/** biome-ignore-all assist/source/organizeImports: <explanation> */
-"use client";
+'use client'
 
-import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from '@/components/employees/UserAvatar'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -9,21 +9,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { UserAvatar } from "@/components/employees/UserAvatar";
-import type { MonthlyRecord, MonthlyStatus } from "@/lib/attendance-types";
+} from '@/components/ui/table'
+import type { MonthlyRecord, MonthlyStatus } from '@/lib/attendance-types'
 
 const MONTHLY_STATUS_VARIANT: Record<
   MonthlyStatus,
-  "default" | "secondary" | "destructive" | "outline"
+  'default' | 'secondary' | 'destructive' | 'outline'
 > = {
-  "on track": "default",
-  warning: "outline",
-  critical: "destructive",
-};
+  'on track': 'default',
+  warning: 'outline',
+  critical: 'destructive',
+}
 
 interface MonthlyTableProps {
-  records: MonthlyRecord[];
+  records: MonthlyRecord[]
 }
 
 export function MonthlyTable({ records }: MonthlyTableProps) {
@@ -55,8 +54,8 @@ export function MonthlyTable({ records }: MonthlyTableProps) {
               <span
                 className={
                   r.attendanceRate < 75
-                    ? "text-destructive font-medium text-sm"
-                    : "text-sm font-medium"
+                    ? 'text-destructive font-medium text-sm'
+                    : 'text-sm font-medium'
                 }
               >
                 {r.attendanceRate}%
@@ -77,5 +76,5 @@ export function MonthlyTable({ records }: MonthlyTableProps) {
         ))}
       </TableBody>
     </Table>
-  );
+  )
 }

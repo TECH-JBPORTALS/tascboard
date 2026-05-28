@@ -1,10 +1,11 @@
-"use client";
+'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/ui/page-header";
-import { RiCalendarCheckLine } from "@remixicon/react";
-import { DailyTab } from "@/components/attendance/daily-tab";
-import { MonthlyTab } from "@/components/attendance/monthly-tab";
+import { RiCalendarCheckLine } from '@remixicon/react'
+
+import { DailyTab } from '@/components/attendance/daily-tab'
+import { MonthlyTab } from '@/components/attendance/monthly-tab'
+import { PageHeader } from '@/components/ui/page-header'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function AttendancePage() {
   return (
@@ -29,5 +30,5 @@ export default function AttendancePage() {
         </Tabs>
       </div>
     </div>
-  );
+  )
 }
