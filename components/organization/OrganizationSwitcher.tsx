@@ -17,7 +17,7 @@ import {
 } from '../ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { SidebarMenuButton } from '../ui/sidebar'
-import { OrganizationAvatar } from './OrganizationAvatar'
+import { OrganizationAvatar } from './organizatoin-avatar'
 
 type OrganizationListItem = {
   id: string

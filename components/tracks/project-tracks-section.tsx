@@ -40,16 +40,16 @@ import { api } from '@/convex/_generated/api'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
 import { nextTrackCode, type TrackStatus } from '@/lib/track-utils'
-import { RichTextEditor } from '../editor/RichTextEditor'
-import { TitleInput } from '../TitleInput'
+import { RichTextEditor } from '../editor/rich-text-editor'
+import { TitleInput } from '../title-input'
 import { Card, CardContent, CardFooter, CardHeader } from '../ui/card'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '../ui/collapsible'
-import { TrackLeadDraftPicker, TrackLeadPicker } from './TrackLeadPicker'
-import { TrackMembersPicker } from './TrackMembersPicker'
+import { TrackLeadDraftPicker, TrackLeadPicker } from './track-lead-picker'
+import { TrackMembersPicker } from './track-members-picker'
 
 type ProjectTracksSectionProps = {
   projectId: Id<'projects'>

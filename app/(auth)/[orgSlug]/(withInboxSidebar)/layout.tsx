@@ -1,5 +1,5 @@
-import { InboxSidebar } from '@/components/inbox/InboxSidebar'
-import { AppSidebar } from '@/components/organization/AppSidebar'
+import { InboxSidebar } from '@/components/inbox/inbox-sidebar'
+import { AppSidebar } from '@/components/organization/app-sidebar'
 import { Sidebar, SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export default function Layout({ children }: { children: React.ReactNode }) {

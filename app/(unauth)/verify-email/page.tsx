@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { VerifyEmailPage } from '@/components/VerifyEmailPage'
+import { VerifyEmailPage } from '@/components/verify-email-page'
 
 export default function Page() {
   return (

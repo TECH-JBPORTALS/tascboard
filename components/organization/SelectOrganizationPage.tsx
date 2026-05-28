@@ -19,7 +19,7 @@ import {
   type OrganizationListItem,
   resolveOrganizationDestination,
 } from '@/lib/organization-membership'
-import { OrganizationAvatar } from './OrganizationAvatar'
+import { OrganizationAvatar } from './organizatoin-avatar'
 
 export function SelectOrganizationPage() {
   const router = useRouter()

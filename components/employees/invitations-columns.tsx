@@ -3,7 +3,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
-import { InvitationRowActions } from './InvitationRowActions'
+import { InvitationRowActions } from './invitation-row-actions'
 
 export type InvitationRow = {
   id: string
@@ -59,7 +59,7 @@ export function createInvitationColumns(options: {
     ...baseColumns,
     {
       id: 'actions',
-      header: 'Actions',
+      header: () => <div className="text-right px-3">Actions</div>,
       cell: ({ row }) => (
         <InvitationRowActions
           invitation={row.original}
