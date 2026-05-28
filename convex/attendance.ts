@@ -1,37 +1,11 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
-
-const attendanceStatusValidator = v.union(
-  v.literal('present'),
-  v.literal('on leave'),
-  v.literal('late'),
-  v.literal('half day'),
-)
-
-const attendanceReturn = v.object({
-  _id: v.id('attendance'),
-  _creationTime: v.number(),
-  employeeId: v.string(),
-  recordDate: v.number(),
-  loginTime: v.number(),
-  logoutTime: v.optional(v.number()),
-  status: attendanceStatusValidator,
-  createdAt: v.number(),
-  updatedAt: v.optional(v.number()),
-})
+import { AttendanceValidator } from './schema'
 
 export const createAttendance = mutation({
-  args: {
-    employeeId: v.string(),
-    recordDate: v.number(),
-    loginTime: v.number(),
-    logoutTime: v.optional(v.number()),
-    status: attendanceStatusValidator,
-  },
-
+  args: AttendanceValidator.omit('createdAt', 'updatedAt'),
   returns: v.id('attendance'),
-
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -62,8 +36,6 @@ export const listByEmployee = query({
     employeeId: v.string(),
   },
 
-  returns: v.array(attendanceReturn),
-
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -81,8 +53,6 @@ export const getAttendanceByDate = query({
     recordDate: v.number(),
   },
 
-  returns: v.union(attendanceReturn, v.null()),
-
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -98,13 +68,13 @@ export const getAttendanceByDate = query({
 export const updateAttendance = mutation({
   args: {
     attendanceId: v.id('attendance'),
-    loginTime: v.optional(v.number()),
-    logoutTime: v.optional(v.number()),
-    status: v.optional(attendanceStatusValidator),
+    body: AttendanceValidator.omit(
+      'employeeId',
+      'recordDate',
+      'createdAt',
+      'updatedAt',
+    ).partial(),
   },
-
-  returns: v.null(),
-
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -114,21 +84,23 @@ export const updateAttendance = mutation({
       throw new Error('Attendance record not found')
     }
 
-    await ctx.db.patch(args.attendanceId, {
-      ...(args.loginTime !== undefined && {
-        loginTime: args.loginTime,
-      }),
+    const patch: Record<string, unknown> = {}
 
-      ...(args.logoutTime !== undefined && {
-        logoutTime: args.logoutTime,
-      }),
+    if (args.body.loginTime !== undefined) {
+      patch.loginTime = args.body.loginTime
+    }
 
-      ...(args.status !== undefined && {
-        status: args.status,
-      }),
+    if (args.body.logoutTime !== undefined) {
+      patch.logoutTime = args.body.logoutTime
+    }
 
-      updatedAt: Date.now(),
-    })
+    if (args.body.status !== undefined) {
+      patch.status = args.body.status
+    }
+
+    patch.updatedAt = Date.now()
+
+    await ctx.db.patch(args.attendanceId, patch)
 
     return null
   },
@@ -138,8 +110,6 @@ export const deleteAttendance = mutation({
   args: {
     attendanceId: v.id('attendance'),
   },
-
-  returns: v.null(),
 
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
@@ -161,9 +131,6 @@ export const markLogout = mutation({
     attendanceId: v.id('attendance'),
     logoutTime: v.number(),
   },
-
-  returns: v.null(),
-
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -187,9 +154,6 @@ export const listTodayAttendance = query({
     startOfDay: v.number(),
     endOfDay: v.number(),
   },
-
-  returns: v.array(attendanceReturn),
-
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 

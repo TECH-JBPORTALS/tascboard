@@ -1,28 +1,7 @@
 import type { Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
+import { ProjectActivityValidator } from '../schema'
 
-export const projectActivityKindValidator = [
-  'created',
-  'name_changed',
-  'summary_changed',
-  'status_changed',
-  'start_date_changed',
-  'end_date_changed',
-  'icon_changed',
-  'color_changed',
-] as const
-
-export type ProjectActivityKind = (typeof projectActivityKindValidator)[number]
-
-type LogProjectActivityArgs = {
-  projectId: Id<'projects'>
-  organizationId: string
-  actorUserId: string
-  actorName: string
-  kind: ProjectActivityKind
-  fromValue?: string
-  toValue?: string
-}
 function getStartOfToday() {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
@@ -30,7 +9,7 @@ function getStartOfToday() {
 }
 export async function logProjectActivity(
   ctx: MutationCtx,
-  args: LogProjectActivityArgs,
+  args: Omit<typeof ProjectActivityValidator.type, 'createdAt'>,
 ) {
   const startOfToday = getStartOfToday()
 

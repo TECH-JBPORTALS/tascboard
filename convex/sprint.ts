@@ -1,25 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
-
-const sprintReturn = v.object({
-  _id: v.id('sprints'),
-  _creationTime: v.number(),
-  trackId: v.id('tracks'),
-  sprintName: v.string(),
-  goal: v.string(),
-  startDate: v.number(),
-  endDate: v.number(),
-  status: v.union(
-    v.literal('planned'),
-    v.literal('active'),
-    v.literal('completed'),
-  ),
-  createdBy: v.string(),
-  createdAt: v.number(),
-  updatedAt: v.optional(v.number()),
-})
-
+import { SprintStatusValidator } from './schema'
 export const create = mutation({
   args: {
     trackId: v.id('tracks'),
@@ -61,7 +43,6 @@ export const listByTrack = query({
   args: {
     trackId: v.id('tracks'),
   },
-  returns: v.array(sprintReturn),
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -97,8 +78,6 @@ export const addTask = mutation({
     if (!sprint) {
       throw new Error('Sprint not found')
     }
-
-    // Ensure task belongs to same track
     if (task.trackId !== sprint.trackId) {
       throw new Error('Task and sprint must belong to the same track')
     }
@@ -142,13 +121,8 @@ export const edit = mutation({
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
-    status: v.union(
-      v.literal('planned'),
-      v.literal('active'),
-      v.literal('completed'),
-    ),
+    status: SprintStatusValidator,
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const sprint = await ctx.db.get(args.sprintId)
     if (!sprint) throw new Error('Sprint not found')
