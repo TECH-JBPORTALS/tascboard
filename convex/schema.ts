@@ -78,6 +78,25 @@ export const ProjectActivityValidator = v.object({
   toValue: v.optional(v.string()),
   createdAt: v.number(),
 })
+/*********************************************
+ * TRACK VALIDATOR
+ *********************************************/
+export const TrackStatusValidator = v.union(
+  v.literal('active'),
+  v.literal('completed'),
+  v.literal('archived'),
+)
+
+export const TrackValidator = v.object({
+  name: v.string(),
+  description: v.optional(v.string()),
+  projectId: v.id('projects'),
+  trackCode: v.string(),
+  trackLeaderID: v.string(),
+  status: TrackStatusValidator,
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
 
 /*********************************************
  * TASK VALIDATORS
@@ -204,20 +223,9 @@ export default defineSchema({
     .index('by_project', ['projectId'])
     .index('by_project_actor', ['projectId', 'actorUserId']),
 
-  tracks: defineTable({
-    name: v.string(),
-    description: v.optional(v.string()),
-    projectId: v.id('projects'),
-    trackCode: v.string(),
-    trackLeaderID: v.string(),
-    status: v.union(
-      v.literal('active'),
-      v.literal('completed'),
-      v.literal('archived'),
-    ),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }).index('by_project', { fields: ['projectId'] }),
+  tracks: defineTable(TrackValidator).index('by_project', {
+    fields: ['projectId'],
+  }),
 
   employeePerformancePoints: defineTable({
     employeeId: v.id('employee'),
