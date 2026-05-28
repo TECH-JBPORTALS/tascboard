@@ -224,6 +224,22 @@ export const AttendanceValidator = v.object({
   updatedAt: v.optional(v.number()),
 })
 
+/*****************************************
+ * Payroll Validators
+ *****************************************/
+
+export const PayrollValidator = v.object({
+  employeeId: v.string(),
+  creditedAt: v.number(),
+  basicSalary: v.float64(),
+  deduction: v.float64(),
+  overtimePay: v.float64(),
+  bonus: v.float64(),
+  netSalary: v.float64(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -424,17 +440,9 @@ export default defineSchema({
     updatedAt: v.number(),
   }),
 
-  payroll: defineTable({
-    employeeId: v.string(),
-    creditedAt: v.number(),
-    basicSalary: v.float64(),
-    deduction: v.float64(),
-    overtimePay: v.float64(),
-    bonus: v.float64(),
-    netSalary: v.float64(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  payroll: defineTable(PayrollValidator)
+    .index('by_employee', ['employeeId'])
+    .index('by_credited_at', ['creditedAt']),
 
   dailyReport: defineTable({
     employeeId: v.string(),
