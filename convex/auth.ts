@@ -2,13 +2,13 @@ import { createClient, GenericCtx } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
 import { BetterAuthOptions, betterAuth } from 'better-auth/minimal'
 import { organization } from 'better-auth/plugins'
+import { v } from 'convex/values'
 import { ac, admin, employee, owner } from '../lib/permissions'
 import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
 import { query } from './_generated/server'
 import authConfig from './auth.config'
 import authSchema from './schema'
-import { v } from 'convex/values'
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(

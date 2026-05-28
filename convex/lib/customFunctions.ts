@@ -6,8 +6,6 @@ import {
 import { DataModel } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'
 import { authComponent, createAuth } from '../auth'
-import { checkRolePermission } from './permissions'
-import { v } from 'convex/values'
 
 async function validateSession(ctx: GenericCtx<DataModel>) {
   const { auth, headers } = await authComponent.getAuth(createAuth, ctx)

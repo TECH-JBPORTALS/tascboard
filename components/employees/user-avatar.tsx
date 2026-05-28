@@ -16,9 +16,9 @@ export function UserAvatar({
   const initials = name.charAt(0).toUpperCase()
 
   return (
-    <Avatar className={cn(className)}>
-      <AvatarImage src={imageUrl ?? ''} alt={name} />
-      <AvatarFallback>
+    <Avatar className={cn(className, 'after:overflow-hidden overflow-hidden')}>
+      <AvatarImage src={imageUrl ?? ''} className={'rounded-none'} alt={name} />
+      <AvatarFallback className={'rounded-none'}>
         {initials || <RiUser3Fill className="size-4" />}
       </AvatarFallback>
     </Avatar>

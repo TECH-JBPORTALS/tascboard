@@ -1,11 +1,11 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from './user-avatar'
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
 
 export type EmployeeRow = {
   id: string

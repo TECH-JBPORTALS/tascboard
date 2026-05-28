@@ -13,12 +13,12 @@ import {
 import { cn } from '@/lib/utils'
 import { TitleInput } from '../title-input'
 import { ProjectTracksSection } from '../tracks/project-tracks-section'
+import { ProjectDescription } from './project-description'
 import { ProjectIconPicker } from './project-icon-picker'
 import { ProjectPageHeader } from './project-page-header'
 import { ProjectProperties } from './project-properties'
 import { ProjectRightBar, ProjectRightBarToggle } from './project-right-bar'
 import { ProjectSummary } from './project-summary'
-import { ProjectDescription } from './project-description'
 
 export function ProjectDetailsPage() {
   const { projectId, orgSlug } = useParams<{

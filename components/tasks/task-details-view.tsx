@@ -2,10 +2,10 @@
 
 import { useMutation } from 'convex/react'
 import * as React from 'react'
-import { TaskPageHeader } from '@/components/tasks/task-page-header'
-import { TaskSubtasksSection } from '@/components/tasks/task-subtask-section'
 import { TaskActivityFeed } from '@/components/tasks/task-activity-feed'
 import { TaskDetailSidebar } from '@/components/tasks/task-detail-sidebar'
+import { TaskPageHeader } from '@/components/tasks/task-page-header'
+import { TaskSubtasksSection } from '@/components/tasks/task-subtask-section'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { RichTextEditor } from '../editor/rich-text-editor'
