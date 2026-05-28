@@ -111,7 +111,7 @@ describe('Attendance', () => {
 
     await t.mutation(api.attendance.updateAttendance, {
       attendanceId,
-      status: 'half day',
+      body: { status: 'half day' },
     })
 
     const attendance = await t.query(api.attendance.getAttendanceByDate, {
@@ -204,7 +204,7 @@ describe('Attendance', () => {
     await expect(
       t.mutation(api.attendance.updateAttendance, {
         attendanceId,
-        status: 'present',
+        body: { status: 'present' },
       }),
     ).rejects.toThrow('Attendance record not found')
   })
