@@ -240,6 +240,22 @@ export const PayrollValidator = v.object({
   updatedAt: v.optional(v.number()),
 })
 
+/***************************************
+ * DailyReport Validator
+ */
+
+export const DailyReportValidator = v.object({
+  employeeId: v.string(),
+  reportDate: v.number(),
+  workSummary: v.string(),
+  loginTime: v.string(),
+  logoutTime: v.string(),
+  reviewerId: v.string(),
+  remark: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
