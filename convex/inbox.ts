@@ -2,56 +2,24 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { internalMutation, mutation, query } from './_generated/server'
 import { requireIdentity, requireOrganization } from './lib/auth'
-
-const inboxKindValidator = v.union(
-  v.literal('assignment'),
-  v.literal('comment'),
-  v.literal('invite'),
-  v.literal('system'),
-  v.literal('onboarding'),
-)
-
-const inboxItemReturn = v.object({
-  _id: v.id('inboxItems'),
-  _creationTime: v.number(),
-  organizationId: v.string(),
-  recipientUserId: v.string(),
-  kind: inboxKindValidator,
-  title: v.string(),
-  snippet: v.optional(v.string()),
-  body: v.optional(v.string()),
-  read: v.boolean(),
-  archived: v.boolean(),
-  actorName: v.optional(v.string()),
-})
+import { InboxValidator } from './schema'
 
 export const createInboxItem = internalMutation({
-  args: {
-    organizationId: v.string(),
-    recipientUserId: v.string(),
-    kind: inboxKindValidator,
-    title: v.string(),
-    snippet: v.optional(v.string()),
-    body: v.optional(v.string()),
-    actorName: v.optional(v.string()),
-  },
+  args: InboxValidator.omit('read', 'archived'),
   handler: async (ctx, args) => {
     const insertedItemId = await ctx.db.insert('inboxItems', {
       ...args,
       archived: false,
       read: false,
     })
-
     return insertedItemId
   },
 })
 
 export const list = query({
   args: {
-    organizationId: v.string(),
     filter: v.union(v.literal('all'), v.literal('unread')),
   },
-  returns: v.array(inboxItemReturn),
   handler: async (ctx, args) => {
     const { userId } = await requireIdentity(ctx)
     const { orgId } = await requireOrganization(ctx)
@@ -85,7 +53,6 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id('inboxItems') },
-  returns: v.union(inboxItemReturn, v.null()),
   handler: async (ctx, args) => {
     const { userId } = await requireIdentity(ctx)
 
@@ -176,7 +143,6 @@ export const markUnread = mutation({
 
 export const listArchived = query({
   args: {},
-  returns: v.array(inboxItemReturn),
   handler: async (ctx) => {
     const { userId } = await requireIdentity(ctx)
     const { orgId } = await requireOrganization(ctx)

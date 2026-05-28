@@ -179,6 +179,30 @@ export const SprintValidator = v.object({
   updatedAt: v.optional(v.number()),
 })
 
+/*************************************
+ * Inbox Validators
+ *************************************/
+
+export const InboxKindValidator = v.union(
+  v.literal('assignment'),
+  v.literal('comment'),
+  v.literal('invite'),
+  v.literal('system'),
+  v.literal('onboarding'),
+)
+
+export const InboxValidator = v.object({
+  organizationId: v.string(),
+  recipientUserId: v.string(),
+  kind: InboxKindValidator,
+  title: v.string(),
+  snippet: v.optional(v.string()),
+  body: v.optional(v.string()),
+  read: v.boolean(),
+  archived: v.boolean(),
+  actorName: v.optional(v.string()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -195,23 +219,7 @@ tasks: defineTable(TaskValidator)
 */
 
 export default defineSchema({
-  inboxItems: defineTable({
-    organizationId: v.string(),
-    recipientUserId: v.string(),
-    kind: v.union(
-      v.literal('assignment'),
-      v.literal('comment'),
-      v.literal('invite'),
-      v.literal('system'),
-      v.literal('onboarding'),
-    ),
-    title: v.string(),
-    snippet: v.optional(v.string()),
-    body: v.optional(v.string()),
-    read: v.boolean(),
-    archived: v.boolean(),
-    actorName: v.optional(v.string()),
-  })
+  inboxItems: defineTable(InboxValidator)
     .index('by_org_recipient_archived', [
       'organizationId',
       'recipientUserId',

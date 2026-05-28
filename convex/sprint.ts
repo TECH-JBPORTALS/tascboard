@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
-
+import { SprintStatusValidator } from './schema'
 export const create = mutation({
   args: {
     trackId: v.id('tracks'),
@@ -121,11 +121,7 @@ export const edit = mutation({
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
-    status: v.union(
-      v.literal('planned'),
-      v.literal('active'),
-      v.literal('completed'),
-    ),
+    status: SprintStatusValidator,
   },
   handler: async (ctx, args) => {
     const sprint = await ctx.db.get(args.sprintId)
