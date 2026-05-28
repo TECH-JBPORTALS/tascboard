@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { RiEyeLine, RiEyeOffLine } from '@remixicon/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
@@ -31,6 +31,11 @@ const signUpSchema = z.object({
 export function SignUpPage() {
   const [show, setShow] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
+  const signInHref = searchParams.toString()
+    ? `/sign-in?${searchParams.toString()}`
+    : '/sign-in'
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -45,7 +50,7 @@ export function SignUpPage() {
       name: values.name,
       email: values.email,
       password: values.password,
-      callbackURL: '/',
+      callbackURL: redirect ?? '/',
     })
 
     if (res.error) {
@@ -136,7 +141,7 @@ export function SignUpPage() {
             <p className="text-sm">
               {`Already have an account? `}
               <Link
-                href={'/sign-in'}
+                href={signInHref}
                 className="hover:underline text-primary/80 hover:text-primary"
               >
                 Sign in

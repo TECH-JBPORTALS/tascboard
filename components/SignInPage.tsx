@@ -32,6 +32,9 @@ export function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect')
+  const signUpHref = searchParams.toString()
+    ? `/sign-up?${searchParams.toString()}`
+    : '/sign-up'
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -44,7 +47,7 @@ export function SignInPage() {
     const res = await authClient.signIn.email({
       email: values.email,
       password: values.password,
-      callbackURL: '/',
+      callbackURL: redirect ?? '/',
     })
 
     if (res.error) {
@@ -59,11 +62,7 @@ export function SignInPage() {
       return
     }
 
-    if (redirect) {
-      router.replace(redirect)
-    } else {
-      router.refresh()
-    }
+    router.replace(redirect ?? '/')
   }
 
   return (
@@ -131,7 +130,7 @@ export function SignInPage() {
             <p className="text-sm">
               {`Don't have an account? `}
               <Link
-                href={'/sign-up'}
+                href={signUpHref}
                 className="hover:underline text-primary/80 hover:text-primary"
               >
                 Create account

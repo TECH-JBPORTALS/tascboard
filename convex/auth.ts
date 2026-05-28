@@ -8,6 +8,7 @@ import { DataModel } from './_generated/dataModel'
 import { query } from './_generated/server'
 import authConfig from './auth.config'
 import authSchema from './schema'
+import { v } from 'convex/values'
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
