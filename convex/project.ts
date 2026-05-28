@@ -9,43 +9,18 @@ import {
   formatProjectDate,
   logProjectActivity,
 } from './lib/projectActivityLog'
-import { projectColorValidator } from './lib/projectAppearance'
+import { ProjectValidator } from './schema'
 import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from './syncEditor'
 import { removeTrackCascade } from './track'
 
-const projectStatusValidator = v.union(
-  v.literal('active'),
-  v.literal('inactive'),
-  v.literal('terminated'),
-)
-
-const projectReturn = v.object({
-  _id: v.id('projects'),
-  _creationTime: v.number(),
-  organizationId: v.string(),
-  name: v.string(),
-  summary: v.optional(v.string()),
-  description: v.optional(v.any()),
-  icon: v.optional(v.string()),
-  color: v.optional(projectColorValidator),
-  startDate: v.number(),
-  endDate: v.number(),
-  status: projectStatusValidator,
-  createdAt: v.number(),
-  updatedAt: v.optional(v.number()),
-})
-
 export const create = mutation({
-  args: {
-    name: v.string(),
-    summary: v.optional(v.string()),
-    icon: v.string(),
-    color: projectColorValidator,
-    startDate: v.number(),
-    endDate: v.number(),
-    status: projectStatusValidator,
-  },
-  returns: v.id('projects'),
+  args: ProjectValidator.omit(
+    'organizationId',
+    'description',
+    'createdAt',
+    'updatedAt',
+  ),
+
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx)
     const { orgId, userId } = await requireOrganization(ctx)
@@ -66,7 +41,6 @@ export const create = mutation({
       endDate: args.endDate,
       status: args.status,
       createdAt: now,
-      updatedAt: undefined,
     })
 
     await ctx.runMutation(internal.syncEditor.createEditor, {
@@ -89,12 +63,6 @@ export const create = mutation({
 
 export const list = query({
   args: {},
-  returns: v.array(
-    v.object({
-      ...projectReturn.fields,
-      tracks: v.array(v.any()),
-    }),
-  ),
   handler: async (ctx) => {
     await requireIdentity(ctx)
     const { orgId } = await requireOrganization(ctx)
@@ -120,27 +88,6 @@ export const get = query({
   args: {
     projectId: v.id('projects'),
   },
-  returns: v.union(
-    v.object({
-      ...projectReturn.fields,
-
-      members: v.array(
-        v.object({
-          _id: v.id('projectMember'),
-          employeeId: v.string(),
-        }),
-      ),
-
-      manager: v.union(
-        v.object({
-          _id: v.id('projectMember'),
-          employeeId: v.string(),
-        }),
-        v.null(),
-      ),
-    }),
-    v.null(),
-  ),
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
     const { orgId } = await requireOrganization(ctx)
@@ -148,14 +95,11 @@ export const get = query({
     if (!project || project.organizationId !== orgId) {
       return null
     }
-
     const content = await ctx.runQuery(
       components.prosemirrorSync.lib.getSnapshot,
       { id: getProjectEditorId(args.projectId) },
     )
-
     const { members, manager } = await getProjectMembers(ctx, project._id)
-
     return {
       ...{ ...project, description: content },
       members,
@@ -167,15 +111,12 @@ export const get = query({
 export const update = mutation({
   args: {
     projectId: v.id('projects'),
-    body: v.object({
-      name: v.optional(v.string()),
-      summary: v.optional(v.string()),
-      icon: v.optional(v.string()),
-      color: v.optional(projectColorValidator),
-      startDate: v.optional(v.number()),
-      endDate: v.optional(v.number()),
-      status: v.optional(projectStatusValidator),
-    }),
+    body: ProjectValidator.omit(
+      'organizationId',
+      'description',
+      'createdAt',
+      'updatedAt',
+    ).partial(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -204,7 +145,6 @@ export const update = mutation({
       if (trimmed.length === 0) {
         throw new Error('Project name cannot be empty')
       }
-
       if (trimmed !== project.name) {
         await logProjectActivity(ctx, {
           projectId: args.projectId,

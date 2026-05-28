@@ -2,8 +2,8 @@
 
 import { RiAddLine, RiPlayFill } from '@remixicon/react'
 import * as React from 'react'
-import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog'
-import { TaskIssueRow } from '@/components/tasks/TaskIssueRow'
+import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
+import { TaskIssueRow } from '@/components/tasks/task-issue-row'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/collapsible'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { type TaskStatus, taskStatusLabels } from '@/lib/task-utils'
-import { TaskStatusIcon } from '../tasks/TaskStatusPicker'
+import { TaskStatusIcon } from '../tasks/task-status-picker'
 
 type TrackStatusGroupProps = {
   status: TaskStatus

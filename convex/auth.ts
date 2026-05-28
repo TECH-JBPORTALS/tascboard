@@ -2,6 +2,7 @@ import { createClient, GenericCtx } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
 import { BetterAuthOptions, betterAuth } from 'better-auth/minimal'
 import { organization } from 'better-auth/plugins'
+import { v } from 'convex/values'
 import { ac, admin, employee, owner } from '../lib/permissions'
 import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
@@ -92,7 +93,11 @@ function runMutation(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
     appName: 'Tascboard',
-    baseURL: process.env.SITE_URL,
+    baseURL: {
+      allowedHosts: ['*.vercel.app', '*.convex.site'],
+      fallback: process.env.SITE_URL!,
+    },
+    trustedOrigins: ['*.vercel.app', '*.convex.site'],
     secret: process.env.BETTER_AUTH_SECRET,
     database: authComponent.adapter(ctx),
     emailVerification: {

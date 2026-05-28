@@ -3,7 +3,7 @@
 import { RiAddLine, RiFilter3Line, RiLayoutGridLine } from '@remixicon/react'
 import { useQuery } from 'convex/react'
 import * as React from 'react'
-import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog'
+import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
 import { TrackIssuesList } from '@/components/tracks/track-issues-list'
 import { TrackPageHeader } from '@/components/tracks/track-page-header'
 import { Button } from '@/components/ui/button'

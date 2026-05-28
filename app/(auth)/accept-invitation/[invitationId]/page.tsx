@@ -1,5 +1,5 @@
-import { AcceptInvitationPage } from '@/components/employees/AcceptInvitationPage'
+import { AcceptInvitationPage } from './page.client'
 
-export default function Page() {
+export default async function Page() {
   return <AcceptInvitationPage />
 }

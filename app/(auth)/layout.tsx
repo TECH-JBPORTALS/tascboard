@@ -1,12 +1,16 @@
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { api } from '@/convex/_generated/api'
-import { isAuthenticated, preloadAuthQuery } from '@/lib/auth-server'
+import { isAuthenticated } from '@/lib/auth-server'
 
 export default async function Layout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  if (!(await isAuthenticated())) redirect('/sign-in')
+  if (!(await isAuthenticated())) {
+    const headerStore = await headers()
+    const currentPath = headerStore.get('x-current-path') ?? '/'
+    redirect(`/sign-in?redirect=${encodeURIComponent(currentPath)}`)
+  }
   return children
 }

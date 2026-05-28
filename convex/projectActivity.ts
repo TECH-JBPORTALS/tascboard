@@ -4,34 +4,6 @@ import type { Doc, Id } from './_generated/dataModel'
 import { type QueryCtx, query } from './_generated/server'
 import { requireIdentity, requireOrganization } from './lib/auth'
 
-const activityReturn = v.object({
-  _id: v.id('projectActivities'),
-  _creationTime: v.number(),
-  projectId: v.id('projects'),
-  organizationId: v.string(),
-  actorUserId: v.string(),
-  actorName: v.string(),
-  kind: v.union(
-    v.literal('created'),
-    v.literal('name_changed'),
-    v.literal('summary_changed'),
-    v.literal('status_changed'),
-    v.literal('start_date_changed'),
-    v.literal('end_date_changed'),
-    v.literal('icon_changed'),
-    v.literal('color_changed'),
-  ),
-  fromValue: v.optional(v.string()),
-  toValue: v.optional(v.string()),
-  createdAt: v.number(),
-})
-
-const topPerformerReturn = v.object({
-  employeeId: v.string(),
-  displayName: v.string(),
-  points: v.number(),
-})
-
 async function assertProjectAccess(
   ctx: QueryCtx,
   projectId: Id<'projects'>,
@@ -50,7 +22,6 @@ export const list = query({
     projectId: v.id('projects'),
     limit: v.optional(v.number()),
   },
-  returns: v.array(activityReturn),
   handler: async (ctx, args) => {
     const { project } = await assertProjectAccess(ctx, args.projectId)
     const limit = Math.min(args.limit ?? 50, 100)
@@ -70,7 +41,6 @@ export const topPerformers = query({
     projectId: v.id('projects'),
     limit: v.optional(v.number()),
   },
-  returns: v.array(topPerformerReturn),
   handler: async (ctx, args) => {
     const { project } = await assertProjectAccess(ctx, args.projectId)
     const limit = Math.min(args.limit ?? 5, 10)
@@ -150,7 +120,6 @@ export const topPerformers = query({
             },
           ],
         })
-
         if (user && typeof user === 'object' && 'name' in user) {
           const name = (user as { name?: string }).name?.trim()
           if (name) {
@@ -158,7 +127,6 @@ export const topPerformers = query({
           }
         }
       }
-
       results.push({ employeeId, displayName, points })
     }
 

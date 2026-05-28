@@ -13,7 +13,8 @@ const schema = defineSchema({
   // Spread the generated schema and add a custom index
   employee: tables.employee
     .index('by_organization_user', ['organizationId', 'userId'])
-    .index('by_organization_active', ['organizationId', 'active']),
+    .index('by_organization_active', ['organizationId', 'active'])
+    .index('by_organization_role', ['organizationId', 'role']),
   invitation: tables.invitation.index('by_organization_status_email', [
     'organizationId',
     'status',

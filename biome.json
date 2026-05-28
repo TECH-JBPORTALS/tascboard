@@ -63,7 +63,8 @@
         "noUnsafeDeclarationMerging": "error",
         "noUnusedExpressions": "off",
         "useGoogleFontDisplay": "warn",
-        "useNamespaceKeyword": "error"
+        "useNamespaceKeyword": "error",
+        "noDeprecatedImports": "error"
       }
     }
   },
