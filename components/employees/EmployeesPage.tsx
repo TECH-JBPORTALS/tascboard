@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache'
 import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
@@ -12,15 +12,15 @@ export function EmployeesPage() {
   const { allowed, isLoading: permissionLoading } = usePermission({
     employee: ['list'],
   })
-  const employees = useQuery(api.employees.auth.list, allowed ? {} : 'skip')
+  const employees = useQuery(api.employees.listEmployees, allowed ? {} : 'skip')
 
   const rows = useMemo<EmployeeRow[]>(() => {
     if (!employees) return []
     return employees.map((employee) => ({
       id: employee.id,
-      name: employee.name,
-      email: employee.email,
-      image: employee.image,
+      name: employee.user.name,
+      email: employee.user.email,
+      image: employee.user.image ?? '',
       role: employee.role,
       active: employee.active,
     }))
