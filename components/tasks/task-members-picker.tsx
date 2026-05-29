@@ -53,7 +53,7 @@ export function TaskMembersPicker({
         {membersGroup.taskMembers.length > 0 ? (
           compact ? (
             <UserAvatar
-              className="size-4"
+              className="size-5"
               name={firstMember?.employee.name ?? 'Member'}
               imageUrl={firstMember?.employee.image}
             />

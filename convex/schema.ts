@@ -165,6 +165,7 @@ export const TaskValidator = v.object({
   priority: TaskPriorityValidator,
   complexity: TaskComplexityValidator,
   dueDate: v.optional(v.union(v.number(), v.null())),
+  statusOrder: v.optional(v.number()),
   createdAt: v.number(),
   startedAt: v.optional(v.number()),
   completedAt: v.optional(v.number()),
@@ -471,6 +472,7 @@ export default defineSchema({
     .index('by_track', ['trackId'])
     .index('by_project', ['projectId'])
     .index('by_sprint', ['sprintId'])
+    .index('by_track_status_order', ['trackId', 'status', 'statusOrder'])
     .index('by_track_status', ['trackId', 'status'])
     .index('by_track_priority', ['trackId', 'priority'])
     .index('by_track_sprint', ['trackId', 'sprintId'])

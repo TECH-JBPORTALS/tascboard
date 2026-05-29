@@ -1,14 +1,8 @@
 'use client'
 
-import {
-  RiAddFill,
-  RiCalendarTodoFill,
-  RiCheckboxBlankCircleLine,
-  RiCheckboxCircleFill,
-} from '@remixicon/react'
+import { RiAddFill, RiCalendarTodoFill } from '@remixicon/react'
 import { format, isAfter } from 'date-fns'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import { TaskDueDatePicker } from '@/components/tasks/task-due-date-picker'
 import { TaskMembersPicker } from '@/components/tasks/task-members-picker'
 import {
@@ -19,8 +13,8 @@ import {
   TaskStatusIcon,
   TaskStatusPicker,
 } from '@/components/tasks/task-status-picker'
-import type { Doc, Id } from '@/convex/_generated/dataModel'
-import { formatSprintLabel, sprintStatusConfig } from '@/lib/track-utils'
+import type { Doc } from '@/convex/_generated/dataModel'
+import { useTaskHref } from '@/hooks/use-task-href'
 import { cn } from '@/lib/utils'
 import {
   TaskSprintIcon,
@@ -60,14 +54,8 @@ export function TaskRow({
   showMembers = true,
   showSprint,
 }: TaskRowProps) {
-  const params = useParams<{
-    orgSlug: string
-    projectId: string
-    trackId: string
-  }>()
-
+  const href = useTaskHref(task._id)
   const sprintLabel = useSprintDisplayLabel(task.trackId, task.sprintId)
-  const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`
 
   return (
     <div

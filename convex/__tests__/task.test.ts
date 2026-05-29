@@ -163,7 +163,7 @@ describe('Task', () => {
     )
   })
   test('list returns tasks', async () => {
-    const tasks = await t.query(api.task.list, {})
+    const tasks = await t.query(api.task.list, { trackId })
 
     expect(tasks.length).toBeGreaterThan(0)
 
@@ -176,7 +176,26 @@ describe('Task', () => {
       orgId: 'org-2',
     })
 
-    const tasks = await isolated.query(api.task.list, {})
+    const emptyProjectId = await isolated.mutation(api.project.create, {
+      name: 'Empty Project',
+      summary: 'No tasks',
+      icon: '📁',
+      color: 'purple',
+      startDate: 1700000000000,
+      endDate: 1800000000000,
+      status: 'active',
+    })
+
+    const emptyTrackId = await isolated.mutation(api.track.create, {
+      name: 'Empty Track',
+      description: 'No tasks',
+      projectId: emptyProjectId,
+      trackCode: 'TR-002',
+      trackLeaderID: 'emp-1',
+      status: 'active',
+    })
+
+    const tasks = await isolated.query(api.task.list, { trackId: emptyTrackId })
 
     expect(tasks).toEqual([])
   })
@@ -290,5 +309,49 @@ describe('Task', () => {
     })
 
     expect(task?.title).toBe('Trimmed Task')
+  })
+
+  test('create sets statusOrder', async () => {
+    const task = await t.query(api.task.get, { taskId })
+    expect(task?.statusOrder).toBe(0)
+  })
+
+  test('list returns tasks sorted by statusOrder for kanban', async () => {
+    const tasks = await t.query(api.task.list, { trackId })
+    expect(tasks.length).toBeGreaterThan(0)
+    expect(tasks[0]?.title).toBe('Initial Task')
+  })
+
+  test('reorderKanban moves task within column', async () => {
+    const secondId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      title: 'Second Task',
+      status: 'todo',
+      priority: 'medium',
+      complexity: 'easy',
+    })
+
+    await t.mutation(api.task.reorderKanban, {
+      taskId: secondId,
+      status: 'todo',
+      statusOrder: 0,
+    })
+
+    const tasks = await t.query(api.task.list, { trackId })
+    const todoTasks = tasks.filter((task) => task.status === 'todo')
+    expect(todoTasks[0]?._id).toBe(secondId)
+  })
+
+  test('reorderKanban moves task between columns', async () => {
+    await t.mutation(api.task.reorderKanban, {
+      taskId,
+      status: 'in_progress',
+      statusOrder: 0,
+    })
+
+    const task = await t.query(api.task.get, { taskId })
+    expect(task?.status).toBe('in_progress')
+    expect(task?.statusOrder).toBe(0)
   })
 })
