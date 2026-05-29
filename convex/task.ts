@@ -340,7 +340,10 @@ export const update = mutation({
     if (args.body.complexity !== undefined)
       patch.complexity = args.body.complexity
 
-    if (args.body.dueDate !== task.dueDate) {
+    if (
+      Object.hasOwn(args.body, 'dueDate') &&
+      args.body.dueDate !== task.dueDate
+    ) {
       patch.dueDate = args.body.dueDate
       await logTaskActivity(ctx, {
         taskId: args.taskId,
@@ -354,8 +357,12 @@ export const update = mutation({
       })
     }
 
-    if (args.body.sprintId !== undefined) {
-      patch.sprintId = args.body.sprintId ?? undefined
+    if (Object.hasOwn(args.body, 'sprintId')) {
+      const nextSprintId = args.body.sprintId ?? undefined
+      const currentSprintId = task.sprintId ?? undefined
+      if (nextSprintId !== currentSprintId) {
+        patch.sprintId = nextSprintId
+      }
     }
 
     if (Object.keys(patch).length === 0) {

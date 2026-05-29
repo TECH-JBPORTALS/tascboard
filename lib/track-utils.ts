@@ -59,6 +59,10 @@ export const sprintStatusConfig: Record<SprintStatus, SprintStatusConfig> = {
   },
 }
 
+export function formatSprintLabel(sprintNumber: number) {
+  return `Sprint ${sprintNumber}`
+}
+
 export function initialsFromId(id: string) {
   const cleaned = id.replace(/[^a-zA-Z0-9]/g, '')
   if (cleaned.length >= 2) {

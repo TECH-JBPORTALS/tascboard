@@ -63,7 +63,7 @@ export function TrackStatusGroup({
 
       <CollapsibleContent>
         {tasks.map((task) => (
-          <TaskRow key={task._id} task={task} />
+          <TaskRow key={task._id} task={task} showSprint />
         ))}
       </CollapsibleContent>
 

@@ -19,21 +19,28 @@ import {
   TaskStatusIcon,
   TaskStatusPicker,
 } from '@/components/tasks/task-status-picker'
-import type { Doc } from '@/convex/_generated/dataModel'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { formatSprintLabel, sprintStatusConfig } from '@/lib/track-utils'
 import { cn } from '@/lib/utils'
+import {
+  TaskSprintIcon,
+  TaskSprintPicker,
+  useSprintDisplayLabel,
+} from '../tasks/task-sprint-picker'
 import { Button } from '../ui/button'
 
 export type TaskRowProps = {
   task: Doc<'tasks'>
   className?: string
   showMembers?: boolean
+  showSprint?: boolean
 }
 
 function RowTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<'button'>) {
+}: React.ComponentProps<typeof Button>) {
   return (
     <Button
       type="button"
@@ -47,13 +54,19 @@ function RowTrigger({
   )
 }
 
-export function TaskRow({ task, className, showMembers = true }: TaskRowProps) {
+export function TaskRow({
+  task,
+  className,
+  showMembers = true,
+  showSprint,
+}: TaskRowProps) {
   const params = useParams<{
     orgSlug: string
     projectId: string
     trackId: string
   }>()
 
+  const sprintLabel = useSprintDisplayLabel(task.trackId, task.sprintId)
   const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`
 
   return (
@@ -96,6 +109,24 @@ export function TaskRow({ task, className, showMembers = true }: TaskRowProps) {
       >
         {task.title}
       </Link>
+
+      {showSprint && (
+        <TaskSprintPicker
+          taskId={task._id}
+          value={task.sprintId}
+          trigger={
+            <RowTrigger
+              className="text-xs text-muted-foreground"
+              size={'sm'}
+              aria-label="Change sprint"
+            >
+              <TaskSprintIcon className={cn('size-4')} />{' '}
+              {task.sprintId ? sprintLabel : 'No sprint'}
+            </RowTrigger>
+          }
+          trackId={task.trackId}
+        />
+      )}
 
       <TaskDueDatePicker
         taskId={task._id}

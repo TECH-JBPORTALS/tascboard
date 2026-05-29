@@ -17,6 +17,11 @@ import {
   TaskPriorityPicker,
 } from '@/components/tasks/task-priority-picker'
 import {
+  TaskSprintIcon,
+  TaskSprintPicker,
+  useSprintDisplayLabel,
+} from '@/components/tasks/task-sprint-picker'
+import {
   TaskStatusIcon,
   TaskStatusPicker,
 } from '@/components/tasks/task-status-picker'
@@ -103,6 +108,7 @@ function TaskPropertiesContent({
 }: Omit<TaskRightBarProps, 'open' | 'className'>) {
   const statusLabel = taskStatusConfig[task.status].label
   const priorityLabel = taskPriorityConfig[task.priority].label
+  const sprintLabel = useSprintDisplayLabel(task.trackId, task.sprintId)
 
   return (
     <CardContent className="space-y-6">
@@ -127,6 +133,21 @@ function TaskPropertiesContent({
             <PropertyChip>
               <TaskPriorityIcon priority={task.priority} />
               <span>{priorityLabel}</span>
+            </PropertyChip>
+          }
+        />
+      </SidebarRow>
+
+      <SidebarRow label="Sprint">
+        <TaskSprintPicker
+          trackId={task.trackId}
+          taskId={task._id}
+          value={task.sprintId}
+          align="end"
+          trigger={
+            <PropertyChip>
+              <TaskSprintIcon />
+              <span>{sprintLabel ?? 'No sprint'}</span>
             </PropertyChip>
           }
         />

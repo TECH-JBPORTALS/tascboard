@@ -17,6 +17,12 @@ import {
   TaskPriorityPicker,
 } from '@/components/tasks/task-priority-picker'
 import {
+  type SprintPickerValue,
+  TaskSprintIcon,
+  TaskSprintPicker,
+  useSprintDisplayLabel,
+} from '@/components/tasks/task-sprint-picker'
+import {
   TaskStatusIcon,
   TaskStatusPicker,
 } from '@/components/tasks/task-status-picker'
@@ -78,13 +84,14 @@ export function CreateTaskDialog({
   defaultStatus = 'backlog',
 }: CreateTaskDialogProps) {
   const createTask = useMutation(api.task.create)
-  const addToSprint = useMutation(api.sprint.addTask)
 
   const [expanded, setExpanded] = React.useState(false)
   const [title, setTitle] = React.useState('')
   const [description, setDescription] = React.useState<string | JSONContent>()
   const [status, setStatus] = React.useState<TaskStatus>(defaultStatus)
   const [priority, setPriority] = React.useState<TaskPriority>('medium')
+  const [selectedSprintId, setSelectedSprintId] =
+    React.useState<SprintPickerValue>(null)
   const [dueDate, setDueDate] = React.useState<Date>(() => new Date())
   const [dueDateSet, setDueDateSet] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -99,6 +106,7 @@ export function CreateTaskDialog({
     setDescription('')
     setStatus(defaultStatus)
     setPriority('medium')
+    setSelectedSprintId(sprintId ?? null)
     setDueDate(new Date())
     setDueDateSet(false)
     setError(null)
@@ -111,9 +119,10 @@ export function CreateTaskDialog({
 
   React.useEffect(() => {
     if (!open) return
+    setSelectedSprintId(sprintId ?? null)
     const id = window.requestAnimationFrame(() => titleRef.current?.focus())
     return () => window.cancelAnimationFrame(id)
-  }, [open])
+  }, [open, sprintId])
 
   async function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault()
@@ -130,9 +139,10 @@ export function CreateTaskDialog({
     try {
       const end = dueDateSet ? startOfDay(dueDate).getTime() : startDate
 
-      const taskId = await createTask({
+      await createTask({
         trackId: track._id,
         projectId,
+        sprintId: selectedSprintId ?? undefined,
         title: trimmed,
         description,
         status,
@@ -140,10 +150,6 @@ export function CreateTaskDialog({
         complexity: 'medium',
         dueDate: end,
       })
-
-      if (sprintId) {
-        await addToSprint({ taskId, sprintId })
-      }
 
       handleOpenChange(false)
     } catch (err) {
@@ -155,6 +161,8 @@ export function CreateTaskDialog({
 
   const statusLabel = taskStatusConfig[status].label
   const priorityLabel = taskPriorityConfig[priority].label
+  const sprintLabel =
+    useSprintDisplayLabel(track._id, selectedSprintId) ?? 'No sprint'
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -235,11 +243,12 @@ export function CreateTaskDialog({
               />
               <MotionGlobalTiptapEditor
                 layout
-                animate={{ height: expanded ? '320px' : '72px' }}
+                animate={{ height: expanded ? '320px' : '80px' }}
                 mode="rich"
                 value={description}
                 onChange={(value) => setDescription(value)}
                 placeholder="Add description…"
+                className="h-20"
               />
             </motion.div>
 
@@ -274,6 +283,27 @@ export function CreateTaskDialog({
                       )}
                     >
                       {priority === 'medium' ? 'Priority' : priorityLabel}
+                    </span>
+                  </PropertyChip>
+                }
+              />
+
+              <TaskSprintPicker
+                trackId={track._id}
+                value={selectedSprintId}
+                onSelect={setSelectedSprintId}
+                placeholder="Move to sprint…"
+                trigger={
+                  <PropertyChip>
+                    <TaskSprintIcon />
+                    <span
+                      className={cn(
+                        !selectedSprintId
+                          ? 'text-muted-foreground'
+                          : 'text-foreground',
+                      )}
+                    >
+                      {selectedSprintId ? sprintLabel : 'Sprint'}
                     </span>
                   </PropertyChip>
                 }
