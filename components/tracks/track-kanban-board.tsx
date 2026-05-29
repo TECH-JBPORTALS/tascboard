@@ -1,12 +1,15 @@
 'use client'
 
 import {
+  type CollisionDetection,
   closestCorners,
   DndContext,
   type DragEndEvent,
+  type DragMoveEvent,
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
@@ -47,6 +50,22 @@ function findStatusForId(
   return null
 }
 
+const kanbanCollisionDetection: CollisionDetection = (args) => {
+  const filtered = {
+    ...args,
+    droppableContainers: args.droppableContainers.filter(
+      (container) => container.id !== args.active.id,
+    ),
+  }
+
+  const pointerCollisions = pointerWithin(filtered)
+  if (pointerCollisions.length > 0) {
+    return pointerCollisions
+  }
+
+  return closestCorners(filtered)
+}
+
 export function TrackKanbanBoard({
   track,
   projectId,
@@ -55,6 +74,8 @@ export function TrackKanbanBoard({
   const tasks = useQuery(api.task.list, { trackId: track._id })
   const reorderKanban = useMutation(api.task.reorderKanban)
   const [activeTask, setActiveTask] = React.useState<KanbanTask | null>(null)
+  const [dropTargetStatus, setDropTargetStatus] =
+    React.useState<TaskStatus | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,9 +104,16 @@ export function TrackKanbanBoard({
     return map
   }, [tasks])
 
+  function handleDragMove(event: DragMoveEvent) {
+    const { over } = event
+    const overStatus = over ? findStatusForId(over.id, tasksByStatus) : null
+    setDropTargetStatus(overStatus)
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     setActiveTask(null)
+    setDropTargetStatus(null)
 
     if (!over || !tasks) return
 
@@ -124,13 +152,18 @@ export function TrackKanbanBoard({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={kanbanCollisionDetection}
       onDragStart={(event) => {
         const task = tasksById.get(event.active.id as Id<'tasks'>)
         setActiveTask(task ?? null)
+        setDropTargetStatus(null)
       }}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => setActiveTask(null)}
+      onDragCancel={() => {
+        setActiveTask(null)
+        setDropTargetStatus(null)
+      }}
     >
       <div className="flex h-full min-h-full flex-1 gap-4 overflow-x-auto p-4">
         {taskStatusOrder.map((status) => (
@@ -141,6 +174,7 @@ export function TrackKanbanBoard({
             track={track}
             projectId={projectId}
             projectName={projectName}
+            isDropTarget={dropTargetStatus === status}
           />
         ))}
       </div>

@@ -19,6 +19,7 @@ type TrackKanbanColumnProps = {
   track: Doc<'tracks'>
   projectId: Id<'projects'>
   projectName: string
+  isDropTarget?: boolean
 }
 
 export function TrackKanbanColumn({
@@ -27,18 +28,20 @@ export function TrackKanbanColumn({
   track,
   projectId,
   projectName,
+  isDropTarget = false,
 }: TrackKanbanColumnProps) {
   const [createOpen, setCreateOpen] = React.useState(false)
   const label = taskStatusLabels[status]
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
+  const showTarget = isOver || isDropTarget
+
   return (
     <>
       <div
-        ref={setNodeRef}
         className={cn(
-          'flex h-full min-h-0 w-72 shrink-0 flex-col rounded-lg bg-muted/30 ring-1 ring-border/60',
-          isOver && 'ring-ring/40 bg-accent/60',
+          'flex h-full min-h-0 w-72 shrink-0 flex-col rounded-lg bg-muted/30 ring-1 ring-border/60 transition-colors',
+          showTarget && 'bg-accent/60 ring-2 ring-ring/50',
         )}
       >
         <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2">
@@ -64,7 +67,10 @@ export function TrackKanbanColumn({
           </Button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
+        <div
+          ref={setNodeRef}
+          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+        >
           <SortableContext
             items={tasks.map((task) => task._id)}
             strategy={verticalListSortingStrategy}

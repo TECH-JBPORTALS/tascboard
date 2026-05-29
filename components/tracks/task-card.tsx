@@ -76,6 +76,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({ id: task._id })
 
   const style = {
@@ -97,7 +98,11 @@ export function TaskCard({
       ref={setNodeRef}
       style={style}
       size="sm"
-      className={cn(isDragging && 'opacity-60', className)}
+      className={cn(
+        isDragging && 'opacity-0',
+        isOver && 'ring-2 ring-ring/40',
+        className,
+      )}
     >
       <CardContent className="pl-0! pb-3!">
         <div className="flex items-start gap-1">
