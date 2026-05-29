@@ -1,9 +1,9 @@
 'use client'
 
-import { RiAddLine, RiPlayFill } from '@remixicon/react'
+import { RiAddLine, RiTriangleFill } from '@remixicon/react'
 import * as React from 'react'
 import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
-import { TaskIssueRow } from '@/components/tasks/task-issue-row'
+import { TaskRow } from '@/components/tracks/task-row'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -36,15 +36,15 @@ export function TrackStatusGroup({
       className="border-b border-border/60 last:border-b-0"
     >
       <div className="flex h-9 items-center gap-2 bg-muted/30 px-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left text-sm">
+        <div className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1 text-left text-sm">
           <CollapsibleTrigger
             className="group"
             render={<Button variant={'ghost'} size={'icon-xs'} />}
           >
-            <RiPlayFill className="size-3 shrink-0 group-hover:text-foreground text-muted-foreground transition-transform duration-200 group-data-panel-open:rotate-90" />
+            <RiTriangleFill className="size-1.5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:text-foreground rotate-90 group-data-panel-open:rotate-180" />
           </CollapsibleTrigger>
-          <TaskStatusIcon status={status} />
-          <span className="font-medium">{label}</span>
+          <TaskStatusIcon status={status} className="size-3.5" />
+          <span className="font-medium text-xs font-mono">{label}</span>
           <span className="text-xs tabular-nums text-muted-foreground">
             {tasks.length}
           </span>
@@ -63,7 +63,7 @@ export function TrackStatusGroup({
 
       <CollapsibleContent>
         {tasks.map((task) => (
-          <TaskIssueRow key={task._id} task={task} />
+          <TaskRow key={task._id} task={task} showSprint />
         ))}
       </CollapsibleContent>
 

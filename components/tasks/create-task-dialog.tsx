@@ -6,6 +6,7 @@ import {
   RiContractLeftRightLine,
   RiExpandDiagonalLine,
 } from '@remixicon/react'
+import { JSONContent } from '@tiptap/react'
 import { useMutation } from 'convex/react'
 import { format, startOfDay } from 'date-fns'
 import { motion } from 'motion/react'
@@ -15,6 +16,12 @@ import {
   TaskPriorityIcon,
   TaskPriorityPicker,
 } from '@/components/tasks/task-priority-picker'
+import {
+  type SprintPickerValue,
+  TaskSprintIcon,
+  TaskSprintPicker,
+  useSprintDisplayLabel,
+} from '@/components/tasks/task-sprint-picker'
 import {
   TaskStatusIcon,
   TaskStatusPicker,
@@ -30,6 +37,7 @@ import {
   taskStatusConfig,
 } from '@/lib/task-utils'
 import { cn } from '@/lib/utils'
+import { GlobalTiptapEditor } from '../editor/global-tiptap-editor'
 import { TitleInput } from '../title-input'
 
 type CreateTaskDialogProps = {
@@ -65,6 +73,8 @@ function PropertyChip({
   )
 }
 
+const MotionGlobalTiptapEditor = motion.create(GlobalTiptapEditor)
+
 export function CreateTaskDialog({
   open,
   onOpenChange,
@@ -74,13 +84,14 @@ export function CreateTaskDialog({
   defaultStatus = 'backlog',
 }: CreateTaskDialogProps) {
   const createTask = useMutation(api.task.create)
-  const addToSprint = useMutation(api.sprint.addTask)
 
   const [expanded, setExpanded] = React.useState(false)
   const [title, setTitle] = React.useState('')
-  const [description, setDescription] = React.useState('')
+  const [description, setDescription] = React.useState<string | JSONContent>()
   const [status, setStatus] = React.useState<TaskStatus>(defaultStatus)
   const [priority, setPriority] = React.useState<TaskPriority>('medium')
+  const [selectedSprintId, setSelectedSprintId] =
+    React.useState<SprintPickerValue>(null)
   const [dueDate, setDueDate] = React.useState<Date>(() => new Date())
   const [dueDateSet, setDueDateSet] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -95,6 +106,7 @@ export function CreateTaskDialog({
     setDescription('')
     setStatus(defaultStatus)
     setPriority('medium')
+    setSelectedSprintId(sprintId ?? null)
     setDueDate(new Date())
     setDueDateSet(false)
     setError(null)
@@ -107,9 +119,10 @@ export function CreateTaskDialog({
 
   React.useEffect(() => {
     if (!open) return
+    setSelectedSprintId(sprintId ?? null)
     const id = window.requestAnimationFrame(() => titleRef.current?.focus())
     return () => window.cancelAnimationFrame(id)
-  }, [open])
+  }, [open, sprintId])
 
   async function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault()
@@ -126,20 +139,17 @@ export function CreateTaskDialog({
     try {
       const end = dueDateSet ? startOfDay(dueDate).getTime() : startDate
 
-      const taskId = await createTask({
+      await createTask({
         trackId: track._id,
         projectId,
+        sprintId: selectedSprintId ?? undefined,
         title: trimmed,
-        description: description.trim() || undefined,
+        description,
         status,
         priority,
         complexity: 'medium',
         dueDate: end,
       })
-
-      if (sprintId) {
-        await addToSprint({ taskId, sprintId })
-      }
 
       handleOpenChange(false)
     } catch (err) {
@@ -151,6 +161,8 @@ export function CreateTaskDialog({
 
   const statusLabel = taskStatusConfig[status].label
   const priorityLabel = taskPriorityConfig[priority].label
+  const sprintLabel =
+    useSprintDisplayLabel(track._id, selectedSprintId) ?? 'No sprint'
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -229,16 +241,14 @@ export function CreateTaskDialog({
                 placeholder="Task title"
                 className="text-lg! pb-0!"
               />
-              <motion.textarea
+              <MotionGlobalTiptapEditor
                 layout
+                animate={{ height: expanded ? '320px' : '80px' }}
+                mode="rich"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(value) => setDescription(value)}
                 placeholder="Add description…"
-                animate={{
-                  height: expanded ? '320px' : '72px',
-                }}
-                transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                className="mt-2 w-full resize-none bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/70 outline-none"
+                className="h-20"
               />
             </motion.div>
 
@@ -273,6 +283,27 @@ export function CreateTaskDialog({
                       )}
                     >
                       {priority === 'medium' ? 'Priority' : priorityLabel}
+                    </span>
+                  </PropertyChip>
+                }
+              />
+
+              <TaskSprintPicker
+                trackId={track._id}
+                value={selectedSprintId}
+                onSelect={setSelectedSprintId}
+                placeholder="Move to sprint…"
+                trigger={
+                  <PropertyChip>
+                    <TaskSprintIcon />
+                    <span
+                      className={cn(
+                        !selectedSprintId
+                          ? 'text-muted-foreground'
+                          : 'text-foreground',
+                      )}
+                    >
+                      {selectedSprintId ? sprintLabel : 'Sprint'}
                     </span>
                   </PropertyChip>
                 }
