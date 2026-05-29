@@ -149,7 +149,7 @@ export const list = query({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : 'Unknown',
+              : (user?.name ?? 'Unknown'),
             email: user?.email ?? '',
             image: image ?? '',
           },
