@@ -17,7 +17,9 @@ export function TrackView() {
   const track = useQuery(api.track.get, { trackId })
 
   if (track === undefined) {
-    return <p className="px-4 py-8 text-sm text-muted-foreground">Loading issues…</p>
+    return (
+      <p className="px-4 py-8 text-sm text-muted-foreground">Loading issues…</p>
+    )
   }
 
   if (track === null) {

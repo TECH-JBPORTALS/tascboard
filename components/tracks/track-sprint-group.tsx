@@ -9,7 +9,6 @@ import {
 } from '@remixicon/react'
 import { format } from 'date-fns'
 import * as React from 'react'
-import { TaskRow, type TaskRowProps } from '@/components/tracks/task-row'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -23,25 +22,16 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
+import { api } from '@/convex/_generated/api'
 
-export type MockSprintTask = TaskRowProps['task']
-
-export type MockSprint = {
-  id: string
-  number: number
-  goal: string
-  startDate: number
-  endDate: number
-  tasks: MockSprintTask[]
-}
+export type Sprint = (typeof api.sprint.listByTrack._returnType)[number]
 
 type SprintDatePickerProps = {
-  label: string
   date: Date
   onSelect: (date: Date) => void
 }
 
-function SprintDatePicker({ label, date, onSelect }: SprintDatePickerProps) {
+function SprintDatePicker({ date, onSelect }: SprintDatePickerProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -77,7 +67,7 @@ function SprintDatePicker({ label, date, onSelect }: SprintDatePickerProps) {
 }
 
 type TrackSprintGroupProps = {
-  sprint: MockSprint
+  sprint: Sprint
 }
 
 export function TrackSprintGroup({ sprint }: TrackSprintGroupProps) {
@@ -85,12 +75,10 @@ export function TrackSprintGroup({ sprint }: TrackSprintGroupProps) {
     () => new Date(sprint.startDate),
   )
   const [endDate, setEndDate] = React.useState(() => new Date(sprint.endDate))
-  const totalTasks = sprint.tasks.length
-  const completedTasks = sprint.tasks.filter(
-    (task) => task.status === 'done',
-  ).length
+  const totalTasks = 10
+  const completedTasks = 5
   const progressPercent =
-    totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100
+    totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
 
   return (
     <Collapsible
@@ -107,7 +95,7 @@ export function TrackSprintGroup({ sprint }: TrackSprintGroupProps) {
           </CollapsibleTrigger>
           <span className="font-semibold flex items-center gap-0.5  font-mono tracking-tighter text-xs">
             <RiRunLine className="size-4 text-muted-foreground" />
-            {`Sprint ${sprint.number}`}
+            {`Sprint ${sprint.sprintNumber}`}
           </span>
           <RiArrowRightFill className="size-2.5 text-muted-foreground" />
           <span className="min-w-0 truncate text-muted-foreground">
@@ -118,7 +106,6 @@ export function TrackSprintGroup({ sprint }: TrackSprintGroupProps) {
         <div className="flex gap-2.5 items-center">
           <div className="flex items-center gap-0.5">
             <SprintDatePicker
-              label="Starts on"
               date={startDate}
               onSelect={(nextDate) => {
                 setStartDate(nextDate)
@@ -127,7 +114,6 @@ export function TrackSprintGroup({ sprint }: TrackSprintGroupProps) {
             />
             <RiArrowRightFill className="size-2.5 text-muted-foreground" />
             <SprintDatePicker
-              label="Ends on"
               date={endDate}
               onSelect={(nextDate) => {
                 setEndDate(nextDate)
@@ -156,9 +142,9 @@ export function TrackSprintGroup({ sprint }: TrackSprintGroupProps) {
       </div>
 
       <CollapsibleContent>
-        {sprint.tasks.map((task) => (
+        {/* {sprint.tasks.map((task) => (
           <TaskRow key={task._id} task={task} showMembers={false} />
-        ))}
+        ))} */}
       </CollapsibleContent>
     </Collapsible>
   )

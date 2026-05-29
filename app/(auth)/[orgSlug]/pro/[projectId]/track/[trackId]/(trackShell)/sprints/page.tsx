@@ -1,5 +1,5 @@
-import { TrackSprintsView } from '@/components/tracks/track-sprints-view'
+import { TrackSprintsViewPage } from './page.client'
 
 export default function Page() {
-  return <TrackSprintsView />
+  return <TrackSprintsViewPage />
 }

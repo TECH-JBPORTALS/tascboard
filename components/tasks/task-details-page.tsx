@@ -71,9 +71,7 @@ export function TaskDetailsPage({ orgSlug, task }: TaskDetailsPageProps) {
         track={track}
         task={task}
         className="top-0 z-20"
-        actions={
-          <TaskRightBarToggle open={isRightBarOpen} onToggle={toggle} />
-        }
+        actions={<TaskRightBarToggle open={isRightBarOpen} onToggle={toggle} />}
       />
       <div className="flex h-full max-h-[calc(100vh-var(--header-height))] min-h-0 flex-1 overflow-hidden">
         <div className="flex h-full min-h-0 flex-1 flex-col @container/main overflow-hidden">

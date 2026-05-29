@@ -104,7 +104,9 @@ function comparableValue(
   contentType: EditorContentType,
 ): string {
   if (contentType === 'json') {
-    return JSON.stringify(value && typeof value === 'object' ? value : EMPTY_DOC)
+    return JSON.stringify(
+      value && typeof value === 'object' ? value : EMPTY_DOC,
+    )
   }
 
   if (contentType === 'text') {
