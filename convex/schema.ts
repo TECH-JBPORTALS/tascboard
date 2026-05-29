@@ -562,5 +562,6 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index('by_task', ['taskId'])
+    .index('by_employee', ['employeeId'])
     .index('by_task_employee', ['taskId', 'employeeId']),
 })

@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
 import { SprintStatusValidator } from './schema'
+
 export const create = mutation({
   args: {
     trackId: v.id('tracks'),
@@ -12,6 +13,11 @@ export const create = mutation({
   },
   returns: v.id('sprints'),
   handler: async (ctx, args) => {
+    const lastSprint = await ctx.db
+      .query('sprints')
+      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+      .order('desc')
+      .first()
     const { userId } = await requireIdentity(ctx)
 
     const track = await ctx.db.get(args.trackId)
@@ -28,7 +34,10 @@ export const create = mutation({
 
     return await ctx.db.insert('sprints', {
       trackId: args.trackId,
-      sprintName: name,
+      sprintName: (lastSprint
+        ? parseInt(lastSprint.sprintName) + 1
+        : 1
+      ).toString(),
       goal,
       startDate: args.startDate,
       endDate: args.endDate,
@@ -127,6 +136,9 @@ export const edit = mutation({
     const sprint = await ctx.db.get(args.sprintId)
     if (!sprint) throw new Error('Sprint not found')
 
+    if (args.sprintName !== sprint.sprintName) {
+      throw new Error('Sprint name cannot be changed')
+    }
     const name = args.sprintName.trim()
     const goal = args.goal.trim()
 
@@ -137,7 +149,6 @@ export const edit = mutation({
     }
 
     await ctx.db.patch(args.sprintId, {
-      sprintName: name,
       goal,
       startDate: args.startDate,
       endDate: args.endDate,
