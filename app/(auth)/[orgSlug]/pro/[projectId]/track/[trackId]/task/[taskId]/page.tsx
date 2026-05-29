@@ -3,7 +3,7 @@
 import { useQuery } from 'convex/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { TaskDetailView } from '@/components/tasks/TaskDetailsView'
+import { TaskDetailView } from '@/components/tasks/task-details-view'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'

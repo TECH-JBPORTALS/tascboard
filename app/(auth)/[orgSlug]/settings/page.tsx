@@ -1,6 +1,6 @@
-import { DeleteOrganizationSection } from '@/components/organization/DeleteOrganizationSection'
-import { OrganizationSettingsForm } from '@/components/organization/OrganizationSettingsForm'
-import { SessionSettingsSection } from '@/components/organization/SessionSettingsSection'
+import { DeleteOrganizationSection } from '@/components/organization/delete-organizatoin-section'
+import { OrganizationSettingsForm } from '@/components/organization/organization-settings-form'
+import { SessionSettingsSection } from '@/components/organization/session-settings-section'
 
 export default function SettingsPage() {
   return (

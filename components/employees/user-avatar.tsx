@@ -1,0 +1,26 @@
+'use client'
+
+import { RiUser3Fill } from '@remixicon/react'
+import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+
+export function UserAvatar({
+  name,
+  imageUrl,
+  className,
+}: {
+  name: string
+  imageUrl?: string | null
+  className?: string
+}) {
+  const initials = name.charAt(0).toUpperCase()
+
+  return (
+    <Avatar className={cn(className, 'after:overflow-hidden overflow-hidden')}>
+      <AvatarImage src={imageUrl ?? ''} className={'rounded-none'} alt={name} />
+      <AvatarFallback className={'rounded-none'}>
+        {initials || <RiUser3Fill className="size-4" />}
+      </AvatarFallback>
+    </Avatar>
+  )
+}
