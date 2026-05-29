@@ -5,10 +5,7 @@ import { addDays, startOfDay } from 'date-fns'
 import * as React from 'react'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
-import {
-  type SprintStatus,
-  SPRINT_GOAL_MAX_LENGTH,
-} from '@/lib/track-utils'
+import { SPRINT_GOAL_MAX_LENGTH, type SprintStatus } from '@/lib/track-utils'
 
 type SprintSnapshot = {
   _id: Id<'sprints'>

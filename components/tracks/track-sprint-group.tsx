@@ -6,6 +6,7 @@ import {
   RiRunLine,
   RiTriangleFill,
 } from '@remixicon/react'
+import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { startOfDay } from 'date-fns'
 import * as React from 'react'
 import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
@@ -25,7 +26,6 @@ import { Progress } from '@/components/ui/progress'
 import { api } from '@/convex/_generated/api'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { useSprintUpdate } from '@/hooks/use-sprint-update'
-import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { TaskRow } from './task-row'
 
 export type Sprint = (typeof api.sprint.listByTrack._returnType)[number]

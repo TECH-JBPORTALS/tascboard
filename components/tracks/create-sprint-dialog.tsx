@@ -22,8 +22,8 @@ import { Label } from '@/components/ui/label'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import {
-  type SprintStatus,
   SPRINT_GOAL_MAX_LENGTH,
+  type SprintStatus,
   sprintStatusConfig,
 } from '@/lib/track-utils'
 import { cn } from '@/lib/utils'
