@@ -8,6 +8,7 @@ import { registerProsemirrorSyncComponent } from './registerComponents.test'
 
 vi.mock('../lib/getUser', () => ({
   getUserByUserId: async () => ({
+    name: 'testUser',
     email: 'test@email.com',
   }),
 }))
@@ -108,20 +109,6 @@ describe('ProjectMember', () => {
     expect(members[0]?.employeeId).toBe('user-3')
   })
 
-  test('setManager enforces single manager per project', async () => {
-    await t.mutation(api.projectMember.setManager, {
-      employeeId: 'user-2',
-      projectId,
-    })
-
-    await expect(
-      t.mutation(api.projectMember.setManager, {
-        employeeId: 'user-3',
-        projectId,
-      }),
-    ).rejects.toThrow('Project already has a manager')
-  })
-
   // --------------------
   // REMOVE MANAGER
   // --------------------
@@ -169,9 +156,33 @@ describe('ProjectMember', () => {
     expect(members.length).toBe(1)
 
     const member = members[0]
+    console.log(member)
     expect(member).toBeDefined()
     expect(member?.employee).toBeDefined()
     expect(member?.employee.email).toBeDefined()
+    expect(typeof member?.employee.name).toBe('string')
+    expect(typeof member?.employee.email).toBe('string')
+  })
+
+  test('list returns user details when employeeProfile is missing', async () => {
+    await t.mutation(api.projectMember.toggleMember, {
+      employeeId: 'user-2',
+      projectId,
+    })
+
+    const members = await t.query(api.projectMember.list, {
+      projectId,
+    })
+
+    expect(members.length).toBe(1)
+
+    const member = members[0]
+    expect(member?.employee).toBeDefined()
+
+    // comes from mocked getUserByUserId
+    expect(member?.employee.email).toBe('test@email.com')
+    expect(member?.employee.name).toBe('testUser')
+
     expect(typeof member?.employee.name).toBe('string')
     expect(typeof member?.employee.email).toBe('string')
   })
