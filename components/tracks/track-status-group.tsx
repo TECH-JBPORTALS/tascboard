@@ -3,7 +3,7 @@
 import { RiAddLine, RiPlayFill } from '@remixicon/react'
 import * as React from 'react'
 import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
-import { TaskIssueRow } from '@/components/tasks/task-issue-row'
+import { TaskRow } from '@/components/tracks/task-row'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -63,7 +63,7 @@ export function TrackStatusGroup({
 
       <CollapsibleContent>
         {tasks.map((task) => (
-          <TaskIssueRow key={task._id} task={task} />
+          <TaskRow key={task._id} task={task} />
         ))}
       </CollapsibleContent>
 

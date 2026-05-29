@@ -1,88 +1,28 @@
 'use client'
 
-import { RiAddLine, RiFilter3Line, RiLayoutGridLine } from '@remixicon/react'
 import { useQuery } from 'convex/react'
-import * as React from 'react'
-import { CreateTaskDialog } from '@/components/tasks/create-task-dialog'
+import { useParams } from 'next/navigation'
 import { TrackIssuesList } from '@/components/tracks/track-issues-list'
-import { TrackPageHeader } from '@/components/tracks/track-page-header'
-import { Button } from '@/components/ui/button'
 import { api } from '@/convex/_generated/api'
-import type { Doc } from '@/convex/_generated/dataModel'
-import { cn } from '@/lib/utils'
+import type { Id } from '@/convex/_generated/dataModel'
 
-type TrackViewProps = {
-  orgSlug: string
-  project: Doc<'projects'>
-  track: Doc<'tracks'>
-}
+export function TrackView() {
+  const params = useParams<{
+    projectId: string
+    trackId: string
+  }>()
+  const projectId = params.projectId as Id<'projects'>
+  const trackId = params.trackId as Id<'tracks'>
 
-export function TrackView({ orgSlug, project, track }: TrackViewProps) {
-  const tasks = useQuery(api.task.listByTrack, { trackId: track._id })
-  const [createOpen, setCreateOpen] = React.useState(false)
+  const track = useQuery(api.track.get, { trackId })
 
-  const issueCount = tasks?.length ?? 0
+  if (track === undefined) {
+    return <p className="px-4 py-8 text-sm text-muted-foreground">Loading issues…</p>
+  }
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <TrackPageHeader
-        orgSlug={orgSlug}
-        project={project}
-        track={track}
-        issueCount={issueCount}
-        actions={
-          <>
-            <Button type="button" variant="outline" size="sm" disabled>
-              <RiFilter3Line className="size-4" />
-              Filter
-            </Button>
-            <Button type="button" variant="outline" size="sm" disabled>
-              <RiLayoutGridLine className="size-4" />
-              Display
-            </Button>
-            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-              <RiAddLine className="size-4" />
-              New issue
-            </Button>
-          </>
-        }
-      />
+  if (track === null) {
+    return null
+  }
 
-      <div className="shrink-0 border-b border-border/60 px-4">
-        <div className="flex h-10 items-center gap-1">
-          <ViewTab active>All issues</ViewTab>
-        </div>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <TrackIssuesList track={track} projectId={project._id} />
-      </div>
-
-      <CreateTaskDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        track={track}
-        projectId={project._id}
-      />
-    </div>
-  )
-}
-
-function ViewTab({
-  children,
-  active,
-}: {
-  children: React.ReactNode
-  active?: boolean
-}) {
-  return (
-    <span
-      className={cn(
-        'rounded-md px-2.5 py-1 text-sm font-medium',
-        active ? 'bg-muted text-foreground' : 'text-muted-foreground',
-      )}
-    >
-      {children}
-    </span>
-  )
+  return <TrackIssuesList track={track} projectId={projectId} />
 }

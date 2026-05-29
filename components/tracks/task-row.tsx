@@ -1,6 +1,11 @@
 'use client'
 
-import { RiAddFill, RiCalendarTodoFill } from '@remixicon/react'
+import {
+  RiAddFill,
+  RiCalendarTodoFill,
+  RiCheckboxBlankCircleLine,
+  RiCheckboxCircleFill,
+} from '@remixicon/react'
 import { format, isAfter } from 'date-fns'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -18,9 +23,10 @@ import type { Doc } from '@/convex/_generated/dataModel'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
 
-type TaskIssueRowProps = {
+export type TaskRowProps = {
   task: Doc<'tasks'>
   className?: string
+  showMembers?: boolean
 }
 
 function RowTrigger({
@@ -41,12 +47,13 @@ function RowTrigger({
   )
 }
 
-export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
+export function TaskRow({ task, className, showMembers = true }: TaskRowProps) {
   const params = useParams<{
     orgSlug: string
     projectId: string
     trackId: string
   }>()
+
   const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`
 
   return (
@@ -114,7 +121,9 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
         }
       />
 
-      <TaskMembersPicker taskId={task._id} trackId={task.trackId} compact />
+      {showMembers && (
+        <TaskMembersPicker taskId={task._id} trackId={task.trackId} compact />
+      )}
 
       <span className="hidden w-14 shrink-0 text-right text-xs text-muted-foreground md:inline">
         {format(task.createdAt, 'MMM d')}
