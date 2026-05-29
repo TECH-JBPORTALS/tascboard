@@ -40,7 +40,7 @@ export function TrackKanbanColumn({
     <>
       <div
         className={cn(
-          'flex h-full min-h-0 w-72 shrink-0 flex-col rounded-lg bg-muted/30 ring-1 ring-border/60 transition-colors',
+          'flex w-72 shrink-0 flex-col self-stretch rounded-lg bg-muted/30 ring-1 ring-border/60 transition-colors',
           showTarget && 'bg-accent/60 ring-2 ring-ring/50',
         )}
       >
@@ -69,7 +69,7 @@ export function TrackKanbanColumn({
 
         <div
           ref={setNodeRef}
-          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+          className="flex min-h-0 flex-1 flex-col gap-2 p-2"
         >
           <SortableContext
             items={tasks.map((task) => task._id)}

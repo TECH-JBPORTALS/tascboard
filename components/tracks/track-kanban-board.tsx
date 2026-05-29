@@ -165,18 +165,20 @@ export function TrackKanbanBoard({
         setDropTargetStatus(null)
       }}
     >
-      <div className="flex h-full min-h-full flex-1 gap-4 overflow-x-auto p-4">
-        {taskStatusOrder.map((status) => (
-          <TrackKanbanColumn
-            key={status}
-            status={status}
-            tasks={tasksByStatus[status]}
-            track={track}
-            projectId={projectId}
-            projectName={projectName}
-            isDropTarget={dropTargetStatus === status}
-          />
-        ))}
+      <div className="h-full min-h-0 overflow-auto">
+        <div className="flex min-h-full items-stretch gap-4 p-4">
+          {taskStatusOrder.map((status) => (
+            <TrackKanbanColumn
+              key={status}
+              status={status}
+              tasks={tasksByStatus[status]}
+              track={track}
+              projectId={projectId}
+              projectName={projectName}
+              isDropTarget={dropTargetStatus === status}
+            />
+          ))}
+        </div>
       </div>
 
       <DragOverlay dropAnimation={null}>

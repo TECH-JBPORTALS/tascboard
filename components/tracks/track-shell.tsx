@@ -77,48 +77,51 @@ export function TrackShell({
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <TrackPageHeader
-        orgSlug={orgSlug}
-        project={project}
-        track={track}
-        issueCount={issueCount}
-        actions={
-          <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-            <RiAddLine className="size-4" />
-            New task
-          </Button>
-        }
-      />
-
-      <div className="shrink-0 flex justify-between items-center border-b px-2">
-        <Tabs value={pathname}>
-          <TabsList variant="line">
-            {items.map((item) => (
-              <TabsTrigger
-                key={item.id}
-                value={item.href}
-                render={<Link href={item.href} />}
-                nativeButton={false}
-              >
-                <item.icon />
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <Button
-          size={'sm'}
-          onClick={() => setSprintOpen(true)}
-          variant={'ghost'}
-        >
-          <RiAddLine /> New sprint
-        </Button>
-        <CreateSprintDialog
-          open={createSprintOpen}
-          onOpenChange={setSprintOpen}
-          trackId={track._id}
+    <div className="flex max-h-svh min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="sticky top-0 z-20 shrink-0 bg-sidebar backdrop-blur supports-backdrop-filter:bg-sidebar/80">
+        <TrackPageHeader
+          orgSlug={orgSlug}
+          project={project}
+          track={track}
+          issueCount={issueCount}
+          className="static z-auto"
+          actions={
+            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+              <RiAddLine className="size-4" />
+              New task
+            </Button>
+          }
         />
+
+        <div className="flex shrink-0 items-center justify-between border-b px-2">
+          <Tabs value={pathname}>
+            <TabsList variant="line">
+              {items.map((item) => (
+                <TabsTrigger
+                  key={item.id}
+                  value={item.href}
+                  render={<Link href={item.href} />}
+                  nativeButton={false}
+                >
+                  <item.icon />
+                  {item.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Button
+            size={'sm'}
+            onClick={() => setSprintOpen(true)}
+            variant={'ghost'}
+          >
+            <RiAddLine /> New sprint
+          </Button>
+          <CreateSprintDialog
+            open={createSprintOpen}
+            onOpenChange={setSprintOpen}
+            trackId={track._id}
+          />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
