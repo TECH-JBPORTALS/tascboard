@@ -45,14 +45,14 @@ export const create = mutation({
     deviceName: v.string(),
     body: v.any(),
   },
-  handler: async (ctx, { taskId, parentCommentId, deviceName, body }) => {
+  handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    if (isEmptyEditorBody(body)) {
+    if (isEmptyEditorBody(args.body)) {
       throw new Error('Comment body cannot be empty')
     }
-    if (parentCommentId) {
-      const parent = await ctx.db.get(parentCommentId)
+    if (args.parentCommentId) {
+      const parent = await ctx.db.get(args.parentCommentId)
       if (!parent) {
         throw new Error('Parent comment not found')
       }
@@ -62,10 +62,10 @@ export const create = mutation({
       }
     }
     return await ctx.db.insert('comments', {
-      taskId,
-      parentCommentId,
-      deviceName,
-      body,
+      taskId: args.taskId,
+      parentCommentId: args.parentCommentId,
+      deviceName: args.deviceName,
+      body: args.body,
     })
   },
 })
@@ -76,19 +76,22 @@ export const edit = mutation({
     body: v.any(),
     deviceName: v.string(),
   },
-  handler: async (ctx, { commentId, body, deviceName }) => {
+  handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    const comment = await ctx.db.get(commentId)
+    const comment = await ctx.db.get(args.commentId)
     if (!comment) throw new Error('Comment not found')
-    if (comment.deviceName !== deviceName) {
+    if (comment.deviceName !== args.deviceName) {
       throw new Error('You can only edit your own comments')
     }
-    if (isEmptyEditorBody(body)) {
+    if (isEmptyEditorBody(args.body)) {
       throw new Error('Comment body cannot be empty')
     }
-    if (JSON.stringify(body) === JSON.stringify(comment.body)) return
-    await ctx.db.patch(commentId, { body, editedAt: Date.now() })
+    if (JSON.stringify(args.body) === JSON.stringify(comment.body)) return
+    await ctx.db.patch(args.commentId, {
+      body: args.body,
+      editedAt: Date.now(),
+    })
   },
 })
 
@@ -97,12 +100,12 @@ export const remove = mutation({
     commentId: v.id('comments'),
     deviceName: v.string(),
   },
-  handler: async (ctx, { commentId, deviceName }) => {
+  handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    const comment = await ctx.db.get(commentId)
+    const comment = await ctx.db.get(args.commentId)
     if (!comment) return
-    if (comment.deviceName !== deviceName) {
+    if (comment.deviceName !== args.deviceName) {
       throw new Error('You can only delete your own comments')
     }
     // If the root is removed, drop its replies as well.
@@ -112,11 +115,11 @@ export const remove = mutation({
         .withIndex('by_task', (q) => q.eq('taskId', comment.taskId))
         .collect()
       const replies = taskComments.filter(
-        (c) => c.parentCommentId === commentId,
+        (c) => c.parentCommentId === comment._id,
       )
       await Promise.all(replies.map((r) => ctx.db.delete(r._id)))
     }
-    await ctx.db.delete(commentId)
+    await ctx.db.delete(args.commentId)
   },
 })
 
@@ -124,10 +127,10 @@ export const toggleResolution = mutation({
   args: {
     commentId: v.id('comments'),
   },
-  handler: async (ctx, { commentId }) => {
+  handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    const comment = await ctx.db.get(commentId)
+    const comment = await ctx.db.get(args.commentId)
     if (!comment) throw new Error('Comment not found')
 
     const rootId = comment.parentCommentId ?? comment._id
@@ -144,10 +147,10 @@ export const toggleResolution = mutation({
     // Only one comment per thread can be the resolution; clear any others first.
     await Promise.all(
       inThread
-        .filter((c) => c._id !== commentId && c.isResolution)
+        .filter((c) => c._id !== args.commentId && c.isResolution)
         .map((c) => ctx.db.patch(c._id, { isResolution: false })),
     )
 
-    await ctx.db.patch(commentId, { isResolution: willResolve })
+    await ctx.db.patch(args.commentId, { isResolution: willResolve })
   },
 })

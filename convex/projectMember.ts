@@ -19,7 +19,6 @@ export const toggleMember = mutation({
         q.eq('projectId', args.projectId).eq('employeeId', args.employeeId),
       )
       .unique()
-
     if (existing) {
       await ctx.db.delete(existing._id)
       return null
@@ -30,7 +29,7 @@ export const toggleMember = mutation({
       employeeId: args.employeeId,
       manager: false,
       assignedBy: userId,
-      createAt: Date.now(),
+      createdAt: Date.now(),
     })
 
     return null
@@ -44,8 +43,7 @@ export const setManager = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
+    const { userId } = await requireIdentity(ctx)
     const existingMember = await ctx.db
       .query('projectMember')
       .withIndex('by_project_employee', (q) =>
@@ -74,13 +72,12 @@ export const setManager = mutation({
       })
       return null
     }
-    const { userId } = await requireIdentity(ctx)
     await ctx.db.insert('projectMember', {
       projectId: args.projectId,
       employeeId: args.employeeId,
       manager: true,
       assignedBy: userId,
-      createAt: Date.now(),
+      createdAt: Date.now(),
     })
 
     return null

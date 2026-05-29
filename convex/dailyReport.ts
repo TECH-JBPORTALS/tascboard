@@ -2,40 +2,10 @@ import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireIdentity, requireOrganization } from './lib/auth'
-
-const dailyReportReturn = v.object({
-  _id: v.id('dailyReport'),
-  _creationTime: v.number(),
-  employeeId: v.string(),
-  reportDate: v.number(),
-  workSummary: v.string(),
-  loginTime: v.string(),
-  logoutTime: v.string(),
-  reviewerId: v.string(),
-  remark: v.string(),
-  createdAt: v.number(),
-  updatedAt: v.optional(v.number()),
-})
-
-const dailyReportTaskTagReturn = v.object({
-  _id: v.id('dailyReportTaskTag'),
-  _creationTime: v.number(),
-  reportId: v.id('dailyReport'),
-  taskId: v.id('tasks'),
-  createdAt: v.number(),
-  updatedAt: v.optional(v.number()),
-})
+import { DailyReportValidator } from './schema'
 
 export const create = mutation({
-  args: {
-    employeeId: v.string(),
-    reportDate: v.number(),
-    workSummary: v.string(),
-    loginTime: v.string(),
-    logoutTime: v.string(),
-    reviewerId: v.string(),
-    remark: v.string(),
-  },
+  args: DailyReportValidator.omit('createdAt', 'updatedAt'),
 
   returns: v.id('dailyReport'),
 
@@ -54,9 +24,6 @@ export const create = mutation({
 
 export const list = query({
   args: {},
-
-  returns: v.array(dailyReportReturn),
-
   handler: async (ctx) => {
     await requireIdentity(ctx)
     await requireOrganization(ctx)
@@ -69,8 +36,6 @@ export const get = query({
   args: {
     reportId: v.id('dailyReport'),
   },
-
-  returns: v.union(dailyReportReturn, v.null()),
 
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
@@ -88,19 +53,17 @@ export const get = query({
 export const update = mutation({
   args: {
     reportId: v.id('dailyReport'),
-    workSummary: v.optional(v.string()),
-    loginTime: v.optional(v.string()),
-    logoutTime: v.optional(v.string()),
-    reviewerId: v.optional(v.string()),
-    remark: v.optional(v.string()),
+    body: DailyReportValidator.omit(
+      'employeeId',
+      'createdAt',
+      'updatedAt',
+    ).partial(),
   },
-
-  returns: v.null(),
 
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    const { reportId, ...rest } = args
+    const { reportId, body } = args
 
     const report = await ctx.db.get(reportId)
 
@@ -108,11 +71,20 @@ export const update = mutation({
       throw new Error('Daily report not found')
     }
 
+    const patch: Partial<Doc<'dailyReport'>> = {}
+
+    if (body.workSummary !== undefined) patch.workSummary = body.workSummary
+    if (body.loginTime !== undefined) patch.loginTime = body.loginTime
+    if (body.logoutTime !== undefined) patch.logoutTime = body.logoutTime
+    if (body.reviewerId !== undefined) patch.reviewerId = body.reviewerId
+    if (body.remark !== undefined) patch.remark = body.remark
+
+    if (Object.keys(patch).length === 0) return null
+
     await ctx.db.patch(reportId, {
-      ...rest,
+      ...patch,
       updatedAt: Date.now(),
     })
-
     return null
   },
 })
@@ -121,8 +93,6 @@ export const remove = mutation({
   args: {
     reportId: v.id('dailyReport'),
   },
-
-  returns: v.null(),
 
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
@@ -184,9 +154,16 @@ export const listTaskTags = query({
   args: {
     reportId: v.id('dailyReport'),
   },
-
-  returns: v.array(dailyReportTaskTagReturn),
-
+  returns: v.array(
+    v.object({
+      _id: v.id('dailyReportTaskTag'),
+      _creationTime: v.number(),
+      reportId: v.id('dailyReport'),
+      taskId: v.id('tasks'),
+      createdAt: v.number(),
+      updatedAt: v.optional(v.number()),
+    }),
+  ),
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
@@ -286,7 +263,7 @@ export const seedDailyReports = mutation({
   returns: v.null(),
 
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
+    const identity = await requireIdentity(ctx)
 
     const existing = await ctx.db.query('dailyReport').collect()
 
@@ -296,23 +273,23 @@ export const seedDailyReports = mutation({
 
     const samples: Omit<Doc<'dailyReport'>, '_id' | '_creationTime'>[] = [
       {
-        employeeId: userId,
+        employeeId: identity.userId,
         reportDate: Date.now(),
         workSummary:
           'Completed dashboard UI implementation and fixed authentication bugs.',
         loginTime: '09:00 AM',
         logoutTime: '06:00 PM',
-        reviewerId: userId,
+        reviewerId: identity.userId,
         remark: 'Good progress',
         createdAt: Date.now(),
       },
       {
-        employeeId: userId,
+        employeeId: identity.userId,
         reportDate: Date.now(),
         workSummary: 'Worked on Convex backend APIs and optimized queries.',
         loginTime: '09:30 AM',
         logoutTime: '06:30 PM',
-        reviewerId: userId,
+        reviewerId: identity.userId,
         remark: 'Need query review',
         createdAt: Date.now(),
       },

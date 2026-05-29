@@ -2,25 +2,27 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
 import { SprintStatusValidator } from './schema'
+
 export const create = mutation({
   args: {
     trackId: v.id('tracks'),
-    sprintName: v.string(),
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
   },
   returns: v.id('sprints'),
   handler: async (ctx, args) => {
+    const lastSprint = await ctx.db
+      .query('sprints')
+      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+      .order('desc')
+      .first()
     const { userId } = await requireIdentity(ctx)
 
     const track = await ctx.db.get(args.trackId)
     if (!track) throw new Error('Track not found')
-
-    const name = args.sprintName.trim()
     const goal = args.goal.trim()
 
-    if (!name) throw new Error('Sprint name cannot be empty')
     if (!goal) throw new Error('Goal cannot be empty')
     if (args.startDate > args.endDate) {
       throw new Error('Start date cannot be after end date')
@@ -28,7 +30,7 @@ export const create = mutation({
 
     return await ctx.db.insert('sprints', {
       trackId: args.trackId,
-      sprintName: name,
+      sprintNumber: lastSprint ? lastSprint.sprintNumber + 1 : 1,
       goal,
       startDate: args.startDate,
       endDate: args.endDate,
@@ -117,7 +119,6 @@ export const listTasksBySprint = query({
 export const edit = mutation({
   args: {
     sprintId: v.id('sprints'),
-    sprintName: v.string(),
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
@@ -127,17 +128,14 @@ export const edit = mutation({
     const sprint = await ctx.db.get(args.sprintId)
     if (!sprint) throw new Error('Sprint not found')
 
-    const name = args.sprintName.trim()
     const goal = args.goal.trim()
 
-    if (!name) throw new Error('Sprint name cannot be empty')
     if (!goal) throw new Error('Goal cannot be empty')
     if (args.startDate > args.endDate) {
       throw new Error('Start date cannot be after end date')
     }
 
     await ctx.db.patch(args.sprintId, {
-      sprintName: name,
       goal,
       startDate: args.startDate,
       endDate: args.endDate,

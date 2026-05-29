@@ -2,7 +2,7 @@ import { v } from 'convex/values'
 import { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
-
+import { EmployeeTodoPriorityValidator } from './schema'
 // GET ALL
 export const list = query({
   args: {
@@ -35,7 +35,7 @@ export const create = mutation({
     employeeId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    priority: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
+    priority: EmployeeTodoPriorityValidator,
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
