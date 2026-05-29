@@ -3,6 +3,7 @@ import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import { MutationCtx, mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
+import { getUserByUserId } from './lib/getUser'
 import { getTrackMembers } from './lib/memberHelper'
 import {
   actorDisplayName,
@@ -10,7 +11,11 @@ import {
   logTaskActivity,
 } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
-import { TaskValidator } from './schema'
+import {
+  TaskPriorityValidator,
+  TaskStatusValidator,
+  TaskValidator,
+} from './schema'
 
 /**
  * Create Task
@@ -28,6 +33,7 @@ export const create = mutation({
     const taskId = await ctx.db.insert('tasks', {
       trackId: args.trackId,
       projectId: args.projectId,
+      sprintId: args.sprintId,
       // Find the next task number based on the previous task count in the track.
       taskCode: (lastTask ? parseInt(lastTask.taskCode) + 1 : 1).toString(),
       title: args.title.trim(),
@@ -106,35 +112,156 @@ export const listByTrack = query({
   },
 })
 
-export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const tasks = await ctx.db.query('tasks').order('desc').collect()
+export const listEmployeesByTrack = query({
+  args: {
+    trackId: v.id('tracks'),
+  },
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx)
 
-    return await Promise.all(
-      tasks.map(async (task) => {
-        const track = await ctx.db.get(task.trackId)
+    // 1. Get tasks in track
+    const tasks = await ctx.db
+      .query('tasks')
+      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+      .collect()
 
-        const project = track ? await ctx.db.get(track.projectId) : null
+    const taskIds = tasks.map((t) => t._id)
 
-        const taskLabelLinks = await ctx.db
-          .query('taskLabels')
-          .withIndex('by_task', (q) => q.eq('taskId', task._id))
-          .collect()
+    if (taskIds.length === 0) return []
 
-        const labels = (
-          await Promise.all(taskLabelLinks.map((l) => ctx.db.get(l.labelId)))
-        ).filter((l): l is Doc<'labels'> => l !== null)
-        const { members } = await getTrackMembers(ctx, task.trackId)
+    // 2. Get all task members for those tasks
+    const memberLists = await Promise.all(
+      taskIds.map((taskId) =>
+        ctx.db
+          .query('taskMember')
+          .withIndex('by_task', (q) => q.eq('taskId', taskId))
+          .collect(),
+      ),
+    )
+
+    const members = memberLists.flat()
+
+    // 3. Deduplicate by employeeId
+    const uniqueMembersMap = new Map<string, (typeof members)[number]>()
+
+    for (const m of members) {
+      if (!uniqueMembersMap.has(m.employeeId)) {
+        uniqueMembersMap.set(m.employeeId, m)
+      }
+    }
+
+    const uniqueMembers = [...uniqueMembersMap.values()]
+
+    // 4. Enrich exactly like taskMembers.ts
+    const results = await Promise.all(
+      uniqueMembers.map(async (member) => {
+        const profile = await ctx.db
+          .query('employeeProfiles')
+          .withIndex('by_employee', (q) =>
+            q.eq('employeeId', member.employeeId),
+          )
+          .unique()
+
+        const user = await getUserByUserId(ctx, member.employeeId)
+
+        const image = profile?.profilePhotoStorageId
+          ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
+          : ''
+
         return {
-          ...task,
-          track,
-          project,
-          labels,
-          members,
+          _id: member.employeeId,
+          employeeId: member.employeeId,
+          lead: member.lead ?? false,
+          employee: {
+            _id: profile?.employeeId ?? member.employeeId,
+            name: profile
+              ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
+              : 'Unknown',
+            email: user?.email ?? '',
+            image: image ?? '',
+          },
         }
       }),
     )
+
+    return results
+  },
+})
+
+export const list = query({
+  args: {
+    trackId: v.id('tracks'),
+
+    // optional filters
+    sprintId: v.optional(v.id('sprints')),
+    status: v.optional(TaskStatusValidator),
+    priority: v.optional(TaskPriorityValidator),
+
+    assigneeId: v.optional(v.string()),
+    labelId: v.optional(v.id('labels')),
+
+    dueFrom: v.optional(v.number()),
+    dueTo: v.optional(v.number()),
+  },
+
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx)
+
+    // 1. base query (indexed)
+    let tasks = await ctx.db
+      .query('tasks')
+      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+      .collect()
+
+    // 2. sprint filter (light index already exists if used directly)
+    if (args.sprintId !== undefined) {
+      tasks = tasks.filter((t) => t.sprintId === args.sprintId)
+    }
+
+    // 3. status filter
+    if (args.status !== undefined) {
+      tasks = tasks.filter((t) => t.status === args.status)
+    }
+
+    // 4. priority filter
+    if (args.priority !== undefined) {
+      tasks = tasks.filter((t) => t.priority === args.priority)
+    }
+
+    // 5. due date range filter
+    if (args.dueFrom !== undefined) {
+      tasks = tasks.filter((t) => (t.dueDate ?? 0) >= args.dueFrom!)
+    }
+
+    if (args.dueTo !== undefined) {
+      tasks = tasks.filter((t) => (t.dueDate ?? 0) <= args.dueTo!)
+    }
+
+    // 6. assignee filter (via taskMember table)
+    if (args.assigneeId !== undefined) {
+      const taskLinks = await ctx.db
+        .query('taskMember')
+        .withIndex('by_employee', (q) => q.eq('employeeId', args.assigneeId!))
+        .collect()
+
+      const taskIds = new Set(taskLinks.map((t) => t.taskId))
+
+      tasks = tasks.filter((t) => taskIds.has(t._id))
+    }
+
+    // 7. label filter (via taskLabels table)
+    if (args.labelId !== undefined) {
+      const links = await ctx.db
+        .query('taskLabels')
+        .withIndex('by_label', (q) => q.eq('labelId', args.labelId!))
+        .collect()
+
+      const taskIds = new Set(links.map((l) => l.taskId))
+
+      tasks = tasks.filter((t) => taskIds.has(t._id))
+    }
+
+    return tasks
   },
 })
 
