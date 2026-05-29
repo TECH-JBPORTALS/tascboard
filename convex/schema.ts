@@ -156,7 +156,7 @@ export const TaskComplexityValidator = v.union(
 export const TaskValidator = v.object({
   trackId: v.id('tracks'),
   projectId: v.id('projects'),
-  sprintId: v.optional(v.id('sprints')),
+  sprintId: v.optional(v.union(v.id('sprints'), v.null())),
   taskCode: v.string(),
   title: v.string(),
   description: v.optional(v.any()),

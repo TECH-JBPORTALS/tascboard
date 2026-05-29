@@ -3,28 +3,32 @@
 import { useQuery } from 'convex/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { TrackView } from '@/components/tracks/track-view'
+import { TrackShell } from '@/components/tracks/track-shell'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 
-export default function TrackPage() {
+type TrackShellLayoutProps = {
+  children: React.ReactNode
+}
+
+export function TrackShellLayout({ children }: TrackShellLayoutProps) {
   const params = useParams<{
     orgSlug: string
     projectId: string
     trackId: string
   }>()
-
   const projectId = params.projectId as Id<'projects'>
   const trackId = params.trackId as Id<'tracks'>
 
   const project = useQuery(api.project.get, { projectId })
   const track = useQuery(api.track.get, { trackId })
+  const tasks = useQuery(api.task.listByTrack, { trackId })
 
-  if (project === undefined || track === undefined) {
-    return <TrackPageSkeleton />
+  if (project === undefined || track === undefined || tasks === undefined) {
+    return <TrackShellPageSkeleton />
   }
 
   if (project === null || track === null) {
@@ -51,10 +55,19 @@ export default function TrackPage() {
     )
   }
 
-  return <TrackView orgSlug={params.orgSlug} project={project} track={track} />
+  return (
+    <TrackShell
+      orgSlug={params.orgSlug}
+      project={project}
+      track={track}
+      issueCount={tasks.length}
+    >
+      {children}
+    </TrackShell>
+  )
 }
 
-function TrackPageSkeleton() {
+function TrackShellPageSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -63,7 +76,7 @@ function TrackPageSkeleton() {
           description={<Skeleton className="h-3 w-40" />}
           actions={<Skeleton className="h-8 w-32" />}
         />
-        <div className="space-y-4 px-6 py-6">
+        <div className="flex flex-col gap-4 px-6 py-6">
           <Skeleton className="h-8 w-56" />
           <Skeleton className="min-h-[40vh] w-full" />
         </div>
