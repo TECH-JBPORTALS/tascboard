@@ -3,7 +3,7 @@
 import { useQuery } from 'convex/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { TaskDetailView } from '@/components/tasks/task-details-view'
+import { TaskDetailsPage } from '@/components/tasks/task-details-page'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
@@ -63,7 +63,7 @@ export default function TaskDetailPage() {
     )
   }
 
-  return <TaskDetailView orgSlug={params.orgSlug} task={task} />
+  return <TaskDetailsPage orgSlug={params.orgSlug} task={task} />
 }
 
 function TaskDetailSkeleton() {

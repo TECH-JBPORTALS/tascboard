@@ -12,6 +12,7 @@ type TaskPageHeaderProps = {
   project: Doc<'projects'>
   track: Doc<'tracks'>
   task: Doc<'tasks'>
+  actions?: React.ReactNode
   className?: string
 }
 
@@ -20,6 +21,7 @@ export function TaskPageHeader({
   project,
   track,
   task,
+  actions,
   className,
 }: TaskPageHeaderProps) {
   const projectHref = `/${orgSlug}/pro/${project._id}`
@@ -28,6 +30,7 @@ export function TaskPageHeader({
   return (
     <PageHeader
       className={className}
+      actions={actions}
       title={
         <span className="inline-flex min-w-0 max-w-full items-center gap-2">
           <Link
