@@ -201,7 +201,7 @@ export const SprintStatusValidator = v.union(
 
 export const SprintValidator = v.object({
   trackId: v.id('tracks'),
-  sprintName: v.string(),
+  sprintNumber: v.number(),
   goal: v.string(),
   startDate: v.number(),
   endDate: v.number(),
@@ -562,5 +562,6 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index('by_task', ['taskId'])
+    .index('by_employee', ['employeeId'])
     .index('by_task_employee', ['taskId', 'employeeId']),
 })
