@@ -8,6 +8,7 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { projectColorValidator } from './lib/projectAppearance'
+import { trackMeetingAttendance } from './meeting'
 
 /*********************************************
  * EMPLOYEE PROFILE VALIDATORS
@@ -300,6 +301,64 @@ export const LeaveRequestValidator = v.object({
   updatedAt: v.optional(v.number()),
 })
 
+/**************************************
+ * Meeting Validators
+ **************************************/
+
+export const MeetingRecurenceDaysValidator = v.array(
+  v.union(
+    v.literal('monday'),
+    v.literal('tuesday'),
+    v.literal('wednesday'),
+    v.literal('thursday'),
+    v.literal('friday'),
+    v.literal('saturday'),
+    v.literal('sunday'),
+  ),
+)
+
+export const MeetingRecurrenceTypeValidator = v.union(
+  v.literal('none'),
+  v.literal('daily'),
+  v.literal('weekly'),
+)
+
+export const MeetingValidator = v.object({
+  organizationId: v.string(),
+  createdBy: v.string(),
+  title: v.string(),
+  description: v.optional(v.string()),
+  recurrenceType: MeetingRecurrenceTypeValidator,
+  recurrenceDays: MeetingRecurenceDaysValidator,
+  startTime: v.number(),
+  endTime: v.number(),
+  meetingLink: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const MeetingRecipientValidator = v.object({
+  meetingId: v.id('meeting'),
+  employeeId: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const ScheduleMeetingValidator = v.object({
+  meetingId: v.id('meeting'),
+  startTime: v.number(),
+  endTime: v.number(),
+  finalNotes: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const MeetingAttendanceValidator = v.object({
+  scheduleMeetingId: v.id('scheduleMeeting'),
+  employeeId: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
 /*
 ===========================================
               MAIN SCHEMA
@@ -429,56 +488,22 @@ export default defineSchema({
     .index('by_employee', ['employeeId'])
     .index('by_employee_and_status', ['employeeId', 'isCompleted']),
 
-  meeting: defineTable({
-    organizationId: v.string(),
-    createdBy: v.string(),
-    title: v.string(),
-    description: v.optional(v.string()),
-    recurrenceType: v.union(
-      v.literal('none'),
-      v.literal('daily'),
-      v.literal('weekly'),
-    ),
-    recurrenceDays: v.array(
-      v.union(
-        v.literal('monday'),
-        v.literal('tuesday'),
-        v.literal('wednesday'),
-        v.literal('thursday'),
-        v.literal('friday'),
-        v.literal('saturday'),
-        v.literal('sunday'),
-      ),
-    ),
-    startTime: v.number(),
-    endTime: v.number(),
-    meetingLink: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  meeting: defineTable(MeetingValidator).index('by_organization', [
+    'organizationId',
+  ]),
 
-  meetingRecipient: defineTable({
-    meetingId: v.id('meeting'),
-    employeeId: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }),
+  meetingRecipient: defineTable(MeetingRecipientValidator).index('by_meeting', [
+    'meetingId',
+  ]),
 
-  scheduleMeeting: defineTable({
-    meetingId: v.id('meeting'),
-    startTime: v.number(),
-    endTime: v.number(),
-    finalNotes: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  scheduleMeeting: defineTable(ScheduleMeetingValidator).index('by_meeting', [
+    'meetingId',
+  ]),
 
-  meetingAttendee: defineTable({
-    scheduleMeetingId: v.id('scheduleMeeting'),
-    employeeId: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }),
+  meetingAttendee: defineTable(MeetingAttendanceValidator).index(
+    'by_schedule',
+    ['scheduleMeetingId'],
+  ),
 
   payroll: defineTable(PayrollValidator)
     .index('by_employee', ['employeeId'])
