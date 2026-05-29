@@ -374,6 +374,22 @@ export const MeetingAttendanceValidator = v.object({
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
 })
+
+/********************************************
+ * Comment Validators
+ ********************************************/
+
+export const CommentValidator = v.object({
+  taskId: v.id('tasks'),
+  // `null` for top-level (root of a thread), otherwise the parent comment's id
+  parentCommentId: v.union(v.id('comments'), v.null()),
+  deviceName: v.string(),
+  body: v.any(),
+  editedAt: v.optional(v.number()),
+  // When true, marks this comment as the resolution of its thread
+  isResolution: v.optional(v.boolean()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -476,16 +492,9 @@ export default defineSchema({
     fields: ['taskId'],
   }),
 
-  comments: defineTable({
-    taskId: v.id('tasks'),
-    // `null` for top-level (root of a thread), otherwise the parent comment's id
-    parentCommentId: v.union(v.id('comments'), v.null()),
-    deviceName: v.string(),
-    body: v.any(),
-    editedAt: v.optional(v.number()),
-    // When true, marks this comment as the resolution of its thread
-    isResolution: v.optional(v.boolean()),
-  }).index('by_task', { fields: ['taskId'] }),
+  comments: defineTable(CommentValidator).index('by_task', {
+    fields: ['taskId'],
+  }),
 
   sprints: defineTable(SprintValidator).index('by_track', {
     fields: ['trackId'],
