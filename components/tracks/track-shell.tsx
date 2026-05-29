@@ -17,6 +17,7 @@ import { TrackPageHeader } from '@/components/tracks/track-page-header'
 import { Button } from '@/components/ui/button'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
+import { CreateSprintDialog } from './create-sprint-dialog'
 
 type TrackShellProps = {
   orgSlug: string
@@ -63,6 +64,7 @@ export function TrackShell({
   children,
 }: TrackShellProps) {
   const [createOpen, setCreateOpen] = React.useState(false)
+  const [createSprintOpen, setSprintOpen] = React.useState(false)
   const pathname = usePathname()
   const items = React.useMemo(
     () =>
@@ -89,7 +91,7 @@ export function TrackShell({
         }
       />
 
-      <div className="shrink-0 border-b px-2">
+      <div className="shrink-0 flex justify-between items-center border-b px-2">
         <Tabs value={pathname}>
           <TabsList variant="line">
             {items.map((item) => (
@@ -105,6 +107,18 @@ export function TrackShell({
             ))}
           </TabsList>
         </Tabs>
+        <Button
+          size={'sm'}
+          onClick={() => setSprintOpen(true)}
+          variant={'ghost'}
+        >
+          <RiAddLine /> New sprint
+        </Button>
+        <CreateSprintDialog
+          open={createSprintOpen}
+          onOpenChange={setSprintOpen}
+          trackId={track._id}
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>

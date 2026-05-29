@@ -25,6 +25,8 @@ import { Progress } from '@/components/ui/progress'
 import { api } from '@/convex/_generated/api'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { useSprintUpdate } from '@/hooks/use-sprint-update'
+import { useQuery } from 'convex-helpers/react/cache/hooks'
+import { TaskRow } from './task-row'
 
 export type Sprint = (typeof api.sprint.listByTrack._returnType)[number]
 
@@ -67,7 +69,7 @@ export function TrackSprintGroup({
           >
             <RiTriangleFill className="size-1.5 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:text-foreground rotate-90 group-data-panel-open:rotate-180" />
           </CollapsibleTrigger>
-          <span className="flex shrink-0 gap-1.5 items-center  font-mono text-xs font-semibold tracking-tighter">
+          <span className="flex shrink-0 gap-2 items-center  font-mono text-xs font-semibold tracking-tighter">
             <SprintStatusPicker
               value={sprint.status}
               onSelect={handleStatusSelect}
@@ -136,9 +138,7 @@ export function TrackSprintGroup({
       </div>
 
       <CollapsibleContent>
-        {/* {sprint.tasks.map((task) => (
-          <TaskRow key={task._id} task={task} showMembers={false} />
-        ))} */}
+        <SprintTasks sprintId={sprint._id} trackId={track._id} />
       </CollapsibleContent>
 
       <CreateTaskDialog
@@ -149,5 +149,23 @@ export function TrackSprintGroup({
         sprintId={sprint._id}
       />
     </Collapsible>
+  )
+}
+
+function SprintTasks({
+  sprintId,
+  trackId,
+}: {
+  sprintId: Id<'sprints'>
+  trackId: Id<'tracks'>
+}) {
+  const sprintTasks = useQuery(api.task.list, { trackId, sprintId })
+
+  return (
+    <div>
+      {sprintTasks?.map((task) => (
+        <TaskRow key={task._id} task={task} showSprint />
+      ))}
+    </div>
   )
 }

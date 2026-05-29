@@ -1,6 +1,6 @@
 'use client'
 
-import { RiRunLine } from '@remixicon/react'
+import { RiCloseCircleLine, RiRunLine, RiTextBlock } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import * as React from 'react'
 import { TaskCommandPopover } from '@/components/tasks/task-command-popover'
@@ -70,7 +70,7 @@ export function TaskSprintPicker({
         value: NO_SPRINT_VALUE,
         label: 'No sprint',
         keywords: 'backlog unassigned',
-        icon: <RiRunLine className="size-3.5 text-muted-foreground" />,
+        icon: <RiCloseCircleLine className="size-3.5 text-muted-foreground" />,
       },
       ...sprintOptions,
     ]

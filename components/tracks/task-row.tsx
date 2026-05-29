@@ -116,12 +116,21 @@ export function TaskRow({
           value={task.sprintId}
           trigger={
             <RowTrigger
-              className="text-xs text-muted-foreground"
-              size={'sm'}
+              variant={task.sprintId ? 'outline' : 'ghost'}
+              className="text-xs text-muted-foreground rounded-full"
+              size={'xs'}
               aria-label="Change sprint"
             >
-              <TaskSprintIcon className={cn('size-4')} />{' '}
-              {task.sprintId ? sprintLabel : 'No sprint'}
+              {task.sprintId ? (
+                <>
+                  <TaskSprintIcon className={cn('size-4')} /> {sprintLabel}
+                </>
+              ) : (
+                <>
+                  <RiAddFill />
+                  Set sprint
+                </>
+              )}
             </RowTrigger>
           }
           trackId={task.trackId}

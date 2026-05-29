@@ -1,9 +1,7 @@
 import type { RemixiconComponentType } from '@remixicon/react'
 import {
-  RiCalendarLine,
   RiCheckboxCircleFill,
-  RiCheckFill,
-  RiRoundedCorner,
+  RiLightbulbFlashLine,
   RiRunLine,
 } from '@remixicon/react'
 import type { Doc } from '@/convex/_generated/dataModel'
@@ -41,7 +39,7 @@ type SprintStatusConfig = {
 export const sprintStatusConfig: Record<SprintStatus, SprintStatusConfig> = {
   planned: {
     label: sprintStatusLabels.planned,
-    icon: RiCheckFill,
+    icon: RiLightbulbFlashLine,
     iconClassName: 'text-muted-foreground',
     shortcut: '1',
   },
@@ -54,7 +52,7 @@ export const sprintStatusConfig: Record<SprintStatus, SprintStatusConfig> = {
   completed: {
     label: sprintStatusLabels.completed,
     icon: RiCheckboxCircleFill,
-    iconClassName: 'text-blue-500',
+    iconClassName: 'text-green-500',
     shortcut: '3',
   },
 }
