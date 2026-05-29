@@ -6,6 +6,7 @@ import {
   RiContractLeftRightLine,
   RiExpandDiagonalLine,
 } from '@remixicon/react'
+import { JSONContent } from '@tiptap/react'
 import { useMutation } from 'convex/react'
 import { format, startOfDay } from 'date-fns'
 import { motion } from 'motion/react'
@@ -30,6 +31,7 @@ import {
   taskStatusConfig,
 } from '@/lib/task-utils'
 import { cn } from '@/lib/utils'
+import { GlobalTiptapEditor } from '../editor/global-tiptap-editor'
 import { TitleInput } from '../title-input'
 
 type CreateTaskDialogProps = {
@@ -65,6 +67,8 @@ function PropertyChip({
   )
 }
 
+const MotionGlobalTiptapEditor = motion.create(GlobalTiptapEditor)
+
 export function CreateTaskDialog({
   open,
   onOpenChange,
@@ -78,7 +82,7 @@ export function CreateTaskDialog({
 
   const [expanded, setExpanded] = React.useState(false)
   const [title, setTitle] = React.useState('')
-  const [description, setDescription] = React.useState('')
+  const [description, setDescription] = React.useState<string | JSONContent>()
   const [status, setStatus] = React.useState<TaskStatus>(defaultStatus)
   const [priority, setPriority] = React.useState<TaskPriority>('medium')
   const [dueDate, setDueDate] = React.useState<Date>(() => new Date())
@@ -130,7 +134,7 @@ export function CreateTaskDialog({
         trackId: track._id,
         projectId,
         title: trimmed,
-        description: description.trim() || undefined,
+        description,
         status,
         priority,
         complexity: 'medium',
@@ -229,16 +233,13 @@ export function CreateTaskDialog({
                 placeholder="Task title"
                 className="text-lg! pb-0!"
               />
-              <motion.textarea
+              <MotionGlobalTiptapEditor
                 layout
+                animate={{ height: expanded ? '320px' : '72px' }}
+                mode="rich"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(value) => setDescription(value)}
                 placeholder="Add description…"
-                animate={{
-                  height: expanded ? '320px' : '72px',
-                }}
-                transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                className="mt-2 w-full resize-none bg-transparent text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
             </motion.div>
 
