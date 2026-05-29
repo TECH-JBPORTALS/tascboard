@@ -48,18 +48,34 @@ export const listByTrack = query({
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
-    if (args.status) {
-      return await ctx.db
-        .query('sprints')
-        .withIndex('by_track_status', (q) =>
-          q.eq('trackId', args.trackId).eq('status', args.status!),
-        )
-        .collect()
-    }
-    return await ctx.db
-      .query('sprints')
-      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
-      .collect()
+    const sprints = args.status
+      ? await ctx.db
+          .query('sprints')
+          .withIndex('by_track_status', (q) =>
+            q.eq('trackId', args.trackId).eq('status', args.status!),
+          )
+          .collect()
+      : await ctx.db
+          .query('sprints')
+          .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+          .collect()
+
+    return await Promise.all(
+      sprints.map(async (sprint) => {
+        const tasks = await ctx.db
+          .query('tasks')
+          .withIndex('by_sprint', (q) => q.eq('sprintId', sprint._id))
+          .collect()
+        return {
+          ...sprint,
+          stats: {
+            totalTasks: tasks.length,
+            totalCompletedTasks: tasks.filter((t) => t.status === 'done')
+              .length,
+          },
+        }
+      }),
+    )
   },
 })
 
@@ -283,29 +299,6 @@ export const burndownChart = query({
       totalTasks,
       doneTasks,
       burndown: result,
-    }
-  },
-})
-
-export const sprintStats = query({
-  args: {
-    sprintId: v.id('sprints'),
-  },
-  handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
-    const sprint = await ctx.db.get(args.sprintId)
-    if (!sprint) throw new Error('Sprint not found')
-
-    const tasks = await ctx.db
-      .query('tasks')
-      .withIndex('by_sprint', (q) => q.eq('sprintId', args.sprintId))
-      .collect()
-
-    return {
-      sprintId: args.sprintId,
-      totalTasks: tasks.length,
-      totalCompletedTasks: tasks.filter((t) => t.status === 'done').length,
     }
   },
 })
