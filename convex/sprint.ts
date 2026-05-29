@@ -44,10 +44,18 @@ export const create = mutation({
 export const listByTrack = query({
   args: {
     trackId: v.id('tracks'),
+    status: v.optional(SprintStatusValidator),
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
-
+    if (args.status) {
+      return await ctx.db
+        .query('sprints')
+        .withIndex('by_track_status', (q) =>
+          q.eq('trackId', args.trackId).eq('status', args.status!),
+        )
+        .collect()
+    }
     return await ctx.db
       .query('sprints')
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
@@ -275,6 +283,29 @@ export const burndownChart = query({
       totalTasks,
       doneTasks,
       burndown: result,
+    }
+  },
+})
+
+export const sprintStats = query({
+  args: {
+    sprintId: v.id('sprints'),
+  },
+  handler: async (ctx, args) => {
+    await requireIdentity(ctx)
+
+    const sprint = await ctx.db.get(args.sprintId)
+    if (!sprint) throw new Error('Sprint not found')
+
+    const tasks = await ctx.db
+      .query('tasks')
+      .withIndex('by_sprint', (q) => q.eq('sprintId', args.sprintId))
+      .collect()
+
+    return {
+      sprintId: args.sprintId,
+      totalTasks: tasks.length,
+      totalCompletedTasks: tasks.filter((t) => t.status === 'done').length,
     }
   },
 })

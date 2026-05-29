@@ -505,9 +505,11 @@ export default defineSchema({
     fields: ['taskId'],
   }),
 
-  sprints: defineTable(SprintValidator).index('by_track', {
-    fields: ['trackId'],
-  }),
+  sprints: defineTable(SprintValidator)
+    .index('by_track', {
+      fields: ['trackId'],
+    })
+    .index('by_track_status', ['trackId', 'status']),
 
   employeeTodos: defineTable(EmployeeTodosValidator)
     .index('by_employee', ['employeeId'])
