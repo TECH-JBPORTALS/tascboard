@@ -1,4 +1,14 @@
+import type { RemixiconComponentType } from '@remixicon/react'
+import {
+  RiCalendarLine,
+  RiCheckboxCircleFill,
+  RiCheckFill,
+  RiRoundedCorner,
+  RiRunLine,
+} from '@remixicon/react'
 import type { Doc } from '@/convex/_generated/dataModel'
+
+export const SPRINT_GOAL_MAX_LENGTH = 160
 
 export type TrackStatus = Doc<'tracks'>['status']
 export type SprintStatus = Doc<'sprints'>['status']
@@ -13,6 +23,40 @@ export const sprintStatusLabels: Record<SprintStatus, string> = {
   planned: 'Planned',
   active: 'Active',
   completed: 'Completed',
+}
+
+export const sprintStatusOrder: SprintStatus[] = [
+  'planned',
+  'active',
+  'completed',
+]
+
+type SprintStatusConfig = {
+  label: string
+  icon: RemixiconComponentType
+  iconClassName: string
+  shortcut: string
+}
+
+export const sprintStatusConfig: Record<SprintStatus, SprintStatusConfig> = {
+  planned: {
+    label: sprintStatusLabels.planned,
+    icon: RiCheckFill,
+    iconClassName: 'text-muted-foreground',
+    shortcut: '1',
+  },
+  active: {
+    label: sprintStatusLabels.active,
+    icon: RiRunLine,
+    iconClassName: 'text-primary',
+    shortcut: '2',
+  },
+  completed: {
+    label: sprintStatusLabels.completed,
+    icon: RiCheckboxCircleFill,
+    iconClassName: 'text-blue-500',
+    shortcut: '3',
+  },
 }
 
 export function initialsFromId(id: string) {

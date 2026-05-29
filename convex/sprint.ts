@@ -9,6 +9,7 @@ export const create = mutation({
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
+    status: v.optional(SprintStatusValidator),
   },
   returns: v.id('sprints'),
   handler: async (ctx, args) => {
@@ -24,8 +25,11 @@ export const create = mutation({
     const goal = args.goal.trim()
 
     if (!goal) throw new Error('Goal cannot be empty')
-    if (args.startDate > args.endDate) {
-      throw new Error('Start date cannot be after end date')
+    if (goal.length > 160) {
+      throw new Error('Goal must be 160 characters or fewer')
+    }
+    if (args.endDate <= args.startDate) {
+      throw new Error('End date must be after the start date')
     }
 
     return await ctx.db.insert('sprints', {
@@ -34,7 +38,7 @@ export const create = mutation({
       goal,
       startDate: args.startDate,
       endDate: args.endDate,
-      status: 'planned',
+      status: args.status ?? 'planned',
       createdBy: userId,
       createdAt: Date.now(),
     })
@@ -131,8 +135,13 @@ export const edit = mutation({
     const goal = args.goal.trim()
 
     if (!goal) throw new Error('Goal cannot be empty')
-    if (args.startDate > args.endDate) {
-      throw new Error('Start date cannot be after end date')
+
+    if (goal.length > 160) {
+      throw new Error('Goal must be 160 characters or fewer')
+    }
+
+    if (args.endDate <= args.startDate) {
+      throw new Error('End date must be after the start date')
     }
 
     await ctx.db.patch(args.sprintId, {
