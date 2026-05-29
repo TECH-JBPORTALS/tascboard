@@ -123,7 +123,6 @@ export const list = query({
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
-
     let members: Doc<'projectMember'>[] = []
 
     if (args.manager !== undefined) {
@@ -164,7 +163,7 @@ export const list = query({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : 'Unknown',
+              : (user?.name ?? 'Unknown'),
             image: image ?? '',
             email: user?.email ?? '',
           },

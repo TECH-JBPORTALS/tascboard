@@ -48,14 +48,38 @@ export const create = mutation({
 export const listByTrack = query({
   args: {
     trackId: v.id('tracks'),
+    status: v.optional(SprintStatusValidator),
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
+    const sprints = args.status
+      ? await ctx.db
+          .query('sprints')
+          .withIndex('by_track_status', (q) =>
+            q.eq('trackId', args.trackId).eq('status', args.status!),
+          )
+          .collect()
+      : await ctx.db
+          .query('sprints')
+          .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+          .collect()
 
-    return await ctx.db
-      .query('sprints')
-      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
-      .collect()
+    return await Promise.all(
+      sprints.map(async (sprint) => {
+        const tasks = await ctx.db
+          .query('tasks')
+          .withIndex('by_sprint', (q) => q.eq('sprintId', sprint._id))
+          .collect()
+        return {
+          ...sprint,
+          stats: {
+            totalTasks: tasks.length,
+            totalCompletedTasks: tasks.filter((t) => t.status === 'done')
+              .length,
+          },
+        }
+      }),
+    )
   },
 })
 
