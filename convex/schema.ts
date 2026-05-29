@@ -8,7 +8,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { projectColorValidator } from './lib/projectAppearance'
-import { trackMeetingAttendance } from './meeting'
 
 /*********************************************
  * EMPLOYEE PROFILE VALIDATORS
@@ -48,6 +47,14 @@ export const EmployeeTodosValidator = v.object({
   isCompleted: v.boolean(),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
+})
+
+export const EmployeeCertificatesValidator = v.object({
+  employeeProfileId: v.id('employeeProfiles'),
+  organizationId: v.string(),
+  storageId: v.id('_storage'),
+  fileName: v.string(),
+  contentType: v.string(),
 })
 
 /*********************************************
@@ -423,13 +430,10 @@ export default defineSchema({
     'employeeId',
   ]),
 
-  employeeCertificates: defineTable({
-    employeeProfileId: v.id('employeeProfiles'),
-    organizationId: v.string(),
-    storageId: v.id('_storage'),
-    fileName: v.string(),
-    contentType: v.string(),
-  }).index('by_profile', ['employeeProfileId']),
+  employeeCertificates: defineTable(EmployeeCertificatesValidator).index(
+    'by_profile',
+    ['employeeProfileId'],
+  ),
 
   projects: defineTable(ProjectValidator).index('by_organization', [
     'organizationId',
