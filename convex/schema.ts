@@ -201,7 +201,7 @@ export const SprintStatusValidator = v.union(
 
 export const SprintValidator = v.object({
   trackId: v.id('tracks'),
-  sprintName: v.string(),
+  sprintNumber: v.number(),
   goal: v.string(),
   startDate: v.number(),
   endDate: v.number(),
