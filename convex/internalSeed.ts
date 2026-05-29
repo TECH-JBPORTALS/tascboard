@@ -12,7 +12,7 @@ export const seedProjectMember = internalMutation({
       employeeId: args.employeeId,
       assignedBy: 'test-system',
       manager: false,
-      createAt: Date.now(),
+      createdAt: Date.now(),
 
       updatedAt: undefined,
     })

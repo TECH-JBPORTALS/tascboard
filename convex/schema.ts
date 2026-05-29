@@ -34,6 +34,29 @@ export const employeeProfileSchema = v.object({
   profilePhotoStorageId: v.optional(v.id('_storage')),
 })
 
+export const EmployeeTodoPriorityValidator = v.union(
+  v.literal('low'),
+  v.literal('medium'),
+  v.literal('high'),
+)
+export const EmployeeTodosValidator = v.object({
+  employeeId: v.string(),
+  title: v.string(),
+  description: v.optional(v.string()),
+  priority: EmployeeTodoPriorityValidator,
+  isCompleted: v.boolean(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const EmployeeCertificatesValidator = v.object({
+  employeeProfileId: v.id('employeeProfiles'),
+  organizationId: v.string(),
+  storageId: v.id('_storage'),
+  fileName: v.string(),
+  contentType: v.string(),
+})
+
 /*********************************************
  * Project VALIDATORS
  ********************************************/
@@ -77,6 +100,15 @@ export const ProjectActivityValidator = v.object({
   fromValue: v.optional(v.string()),
   toValue: v.optional(v.string()),
   createdAt: v.number(),
+})
+
+export const ProjectMemberValidator = v.object({
+  projectId: v.id('projects'),
+  employeeId: v.string(),
+  manager: v.boolean(),
+  assignedBy: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
 })
 /*********************************************
  * TRACK VALIDATOR
@@ -240,6 +272,131 @@ export const PayrollValidator = v.object({
   updatedAt: v.optional(v.number()),
 })
 
+/***************************************
+ * DailyReport Validator
+ */
+
+export const DailyReportValidator = v.object({
+  employeeId: v.string(),
+  reportDate: v.number(),
+  workSummary: v.string(),
+  loginTime: v.string(),
+  logoutTime: v.string(),
+  reviewerId: v.string(),
+  remark: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const DailyReportTaskTagValidator = v.object({
+  reportId: v.id('dailyReport'),
+  taskId: v.id('tasks'),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+/********************************************
+ * Leave Request Validator
+ ********************************************/
+
+export const LeaveRequestTypeValidator = v.union(
+  v.literal('sick'),
+  v.literal('casual'),
+  v.literal('emergency'),
+)
+
+export const LeaveRequestStatusValidator = v.union(
+  v.literal('pending'),
+  v.literal('approved'),
+  v.literal('rejected'),
+)
+
+export const LeaveRequestValidator = v.object({
+  employeeId: v.string(),
+  leaveType: LeaveRequestTypeValidator,
+  startDate: v.number(),
+  endDate: v.number(),
+  reason: v.string(),
+  status: LeaveRequestStatusValidator,
+  approvedBy: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+/**************************************
+ * Meeting Validators
+ **************************************/
+
+export const MeetingRecurenceDaysValidator = v.array(
+  v.union(
+    v.literal('monday'),
+    v.literal('tuesday'),
+    v.literal('wednesday'),
+    v.literal('thursday'),
+    v.literal('friday'),
+    v.literal('saturday'),
+    v.literal('sunday'),
+  ),
+)
+
+export const MeetingRecurrenceTypeValidator = v.union(
+  v.literal('none'),
+  v.literal('daily'),
+  v.literal('weekly'),
+)
+
+export const MeetingValidator = v.object({
+  organizationId: v.string(),
+  createdBy: v.string(),
+  title: v.string(),
+  description: v.optional(v.string()),
+  recurrenceType: MeetingRecurrenceTypeValidator,
+  recurrenceDays: MeetingRecurenceDaysValidator,
+  startTime: v.number(),
+  endTime: v.number(),
+  meetingLink: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const MeetingRecipientValidator = v.object({
+  meetingId: v.id('meeting'),
+  employeeId: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const ScheduleMeetingValidator = v.object({
+  meetingId: v.id('meeting'),
+  startTime: v.number(),
+  endTime: v.number(),
+  finalNotes: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+export const MeetingAttendanceValidator = v.object({
+  scheduleMeetingId: v.id('scheduleMeeting'),
+  employeeId: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
+/********************************************
+ * Comment Validators
+ ********************************************/
+
+export const CommentValidator = v.object({
+  taskId: v.id('tasks'),
+  // `null` for top-level (root of a thread), otherwise the parent comment's id
+  parentCommentId: v.union(v.id('comments'), v.null()),
+  deviceName: v.string(),
+  body: v.any(),
+  editedAt: v.optional(v.number()),
+  // When true, marks this comment as the resolution of its thread
+  isResolution: v.optional(v.boolean()),
+})
+
 /*
 ===========================================
               MAIN SCHEMA
@@ -273,13 +430,10 @@ export default defineSchema({
     'employeeId',
   ]),
 
-  employeeCertificates: defineTable({
-    employeeProfileId: v.id('employeeProfiles'),
-    organizationId: v.string(),
-    storageId: v.id('_storage'),
-    fileName: v.string(),
-    contentType: v.string(),
-  }).index('by_profile', ['employeeProfileId']),
+  employeeCertificates: defineTable(EmployeeCertificatesValidator).index(
+    'by_profile',
+    ['employeeProfileId'],
+  ),
 
   projects: defineTable(ProjectValidator).index('by_organization', [
     'organizationId',
@@ -308,27 +462,7 @@ export default defineSchema({
     .index('by_employee_and_date', ['employeeId', 'recordDate'])
     .index('by_employee', ['employeeId']),
 
-  leaveRequests: defineTable({
-    employeeId: v.string(),
-
-    leaveType: v.union(
-      v.literal('sick'),
-      v.literal('casual'),
-      v.literal('emergency'),
-    ),
-
-    startDate: v.number(),
-    endDate: v.number(),
-    reason: v.string(),
-    status: v.union(
-      v.literal('pending'),
-      v.literal('approved'),
-      v.literal('rejected'),
-    ),
-    approvedBy: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  leaveRequests: defineTable(LeaveRequestValidator)
     .index('by_employee', ['employeeId'])
     .index('by_status', ['status'])
     .index('by_approved_by', ['approvedBy']),
@@ -362,117 +496,46 @@ export default defineSchema({
     fields: ['taskId'],
   }),
 
-  comments: defineTable({
-    taskId: v.id('tasks'),
-    // `null` for top-level (root of a thread), otherwise the parent comment's id
-    parentCommentId: v.union(v.id('comments'), v.null()),
-    deviceName: v.string(),
-    body: v.any(),
-    editedAt: v.optional(v.number()),
-    // When true, marks this comment as the resolution of its thread
-    isResolution: v.optional(v.boolean()),
-  }).index('by_task', { fields: ['taskId'] }),
+  comments: defineTable(CommentValidator).index('by_task', {
+    fields: ['taskId'],
+  }),
 
   sprints: defineTable(SprintValidator).index('by_track', {
     fields: ['trackId'],
   }),
 
-  employeeTodos: defineTable({
-    employeeId: v.string(),
-    title: v.string(),
-    description: v.optional(v.string()),
-    priority: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
-    isCompleted: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  employeeTodos: defineTable(EmployeeTodosValidator)
     .index('by_employee', ['employeeId'])
     .index('by_employee_and_status', ['employeeId', 'isCompleted']),
 
-  meeting: defineTable({
-    organizationId: v.string(),
-    createdBy: v.string(),
-    title: v.string(),
-    description: v.optional(v.string()),
-    recurrenceType: v.union(
-      v.literal('none'),
-      v.literal('daily'),
-      v.literal('weekly'),
-    ),
-    recurrenceDays: v.array(
-      v.union(
-        v.literal('monday'),
-        v.literal('tuesday'),
-        v.literal('wednesday'),
-        v.literal('thursday'),
-        v.literal('friday'),
-        v.literal('saturday'),
-        v.literal('sunday'),
-      ),
-    ),
-    startTime: v.number(),
-    endTime: v.number(),
-    meetingLink: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  meeting: defineTable(MeetingValidator).index('by_organization', [
+    'organizationId',
+  ]),
 
-  meetingRecipient: defineTable({
-    meetingId: v.id('meeting'),
-    employeeId: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }),
+  meetingRecipient: defineTable(MeetingRecipientValidator).index('by_meeting', [
+    'meetingId',
+  ]),
 
-  scheduleMeeting: defineTable({
-    meetingId: v.id('meeting'),
-    startTime: v.number(),
-    endTime: v.number(),
-    finalNotes: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  scheduleMeeting: defineTable(ScheduleMeetingValidator).index('by_meeting', [
+    'meetingId',
+  ]),
 
-  meetingAttendee: defineTable({
-    scheduleMeetingId: v.id('scheduleMeeting'),
-    employeeId: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }),
+  meetingAttendee: defineTable(MeetingAttendanceValidator).index(
+    'by_schedule',
+    ['scheduleMeetingId'],
+  ),
 
   payroll: defineTable(PayrollValidator)
     .index('by_employee', ['employeeId'])
     .index('by_credited_at', ['creditedAt']),
 
-  dailyReport: defineTable({
-    employeeId: v.string(),
-    reportDate: v.number(),
-    workSummary: v.string(),
-    loginTime: v.string(),
-    logoutTime: v.string(),
-    reviewerId: v.string(),
-    remark: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  }),
+  dailyReport: defineTable(DailyReportValidator),
 
-  dailyReportTaskTag: defineTable({
-    reportId: v.id('dailyReport'),
-    taskId: v.id('tasks'),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  dailyReportTaskTag: defineTable(DailyReportTaskTagValidator)
     .index('by_reportId', ['reportId'])
     .index('by_reportId_taskId', ['reportId', 'taskId']),
 
-  projectMember: defineTable({
-    projectId: v.id('projects'),
-    employeeId: v.string(),
-    manager: v.boolean(),
-    assignedBy: v.string(),
-    createAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  projectMember: defineTable(ProjectMemberValidator)
     .index('by_project', ['projectId'])
     .index('by_project_employee', ['projectId', 'employeeId'])
     .index('by_project_manager', ['projectId', 'manager'])
