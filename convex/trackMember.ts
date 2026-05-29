@@ -2,8 +2,8 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
-import { getUserByUserId } from './lib/getUser'
 import { privateQuery } from './lib/customFunctions'
+import { getUserByUserId } from './lib/getUser'
 
 export const toggleMember = mutation({
   args: {
