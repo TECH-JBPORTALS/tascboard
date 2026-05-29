@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
+import { privateQuery } from './lib/customFunctions'
 import { getUserByUserId } from './lib/getUser'
 
 export const toggleMember = mutation({
@@ -103,7 +104,7 @@ export const unsetLead = mutation({
   },
 })
 
-export const list = query({
+export const list = privateQuery({
   args: {
     taskId: v.id('tasks'),
     lead: v.optional(v.boolean()),
@@ -137,7 +138,6 @@ export const list = query({
           )
           .unique()
 
-        const user = await getUserByUserId(ctx, member.employeeId)
         const image = profile?.profilePhotoStorageId
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
           : ''
@@ -149,8 +149,8 @@ export const list = query({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : (user?.name ?? 'Unknown'),
-            email: user?.email ?? '',
+              : (ctx.session.user?.name ?? 'Unknown'),
+            email: ctx.session.user?.email ?? '',
             image: image ?? '',
           },
         }

@@ -37,7 +37,7 @@ export default async function RootLayout({
     <html
       lang="en"
       className={cn(
-        'font-sans antialiased',
+        'font-sans antialiased dark',
         jetbrainsMono.variable,
         ibmPlexSans.variable,
       )}
