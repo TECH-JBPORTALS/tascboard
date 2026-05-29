@@ -38,8 +38,8 @@ export default async function RootLayout({
       lang="en"
       className={cn(
         'font-sans antialiased dark',
-        ibmPlexSans.variable,
         jetbrainsMono.variable,
+        ibmPlexSans.variable,
       )}
     >
       <body>
