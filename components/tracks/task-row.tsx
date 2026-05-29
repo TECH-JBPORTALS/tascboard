@@ -150,7 +150,7 @@ export function TaskRow({
       />
 
       {showMembers && (
-        <TaskMembersPicker taskId={task._id} trackId={task.trackId} compact />
+        <TaskMembersPicker taskId={task._id} trackId={task.trackId} />
       )}
 
       <span className="hidden w-14 shrink-0 text-right text-xs text-muted-foreground md:inline">

@@ -33,7 +33,6 @@ export function TaskMembersPicker({
   const [open, setOpen] = React.useState(false)
   const membersGroup = useTaskMemberGroups(taskId, trackId)
   const toggleMember = useMutation(api.taskMember.toggleMember)
-  const firstMember = membersGroup.taskMembers[0]
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -43,32 +42,22 @@ export function TaskMembersPicker({
             variant="ghost"
             size="sm"
             className={cn(
-              compact
-                ? 'size-6 rounded-full p-0 text-muted-foreground hover:text-foreground'
-                : 'h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground',
+              'h-7 gap-1.5 px-2 rounded-full font-normal text-muted-foreground hover:text-foreground',
             )}
           />
         }
       >
         {membersGroup.taskMembers.length > 0 ? (
-          compact ? (
-            <UserAvatar
-              className="size-5"
-              name={firstMember?.employee.name ?? 'Member'}
-              imageUrl={firstMember?.employee.image}
-            />
-          ) : (
-            <span className="flex -space-x-1.5">
-              {membersGroup.taskMembers.map((member) => (
-                <UserAvatar
-                  key={member.employeeId}
-                  className="size-4"
-                  name={member.employee.name}
-                  imageUrl={member.employee.image}
-                />
-              ))}
-            </span>
-          )
+          <span className="flex -space-x-1.5">
+            {membersGroup.taskMembers.map((member) => (
+              <UserAvatar
+                key={member.employeeId}
+                className="size-5 border-background border-2"
+                name={member.employee.name}
+                imageUrl={member.employee.image}
+              />
+            ))}
+          </span>
         ) : (
           <>
             <RiAccountCircle2Line className="size-3.5 opacity-70" />
@@ -86,28 +75,33 @@ export function TaskMembersPicker({
             <CommandInput placeholder="Set member..." />
             <CommandEmpty>No members found</CommandEmpty>
 
-            <CommandGroup>
-              {membersGroup.taskMembers.map((member) => (
-                <CommandItem
-                  key={member.employeeId}
-                  value={member.employeeId}
-                  onSelect={() =>
-                    void toggleMember({ taskId, employeeId: member.employeeId })
-                  }
-                  className="w-full"
-                >
-                  <UserAvatar
-                    name={member.employee.name}
-                    imageUrl={member.employee.image}
-                    className="size-5"
-                  />
-                  <span className="flex items-center gap-1">
-                    {member.employee.name}
-                  </span>
-                  {member.lead && <Badge variant="outline">Lead</Badge>}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {membersGroup.taskMembers.length > 0 && (
+              <CommandGroup heading="Assigned members">
+                {membersGroup.taskMembers.map((member) => (
+                  <CommandItem
+                    key={member.employeeId}
+                    value={member.employeeId}
+                    onSelect={() =>
+                      void toggleMember({
+                        taskId,
+                        employeeId: member.employeeId,
+                      })
+                    }
+                    className="w-full"
+                  >
+                    <UserAvatar
+                      name={member.employee.name}
+                      imageUrl={member.employee.image}
+                      className="size-5"
+                    />
+                    <span className="flex items-center gap-1">
+                      {member.employee.name}
+                    </span>
+                    {member.lead && <Badge variant="outline">Lead</Badge>}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
 
             {membersGroup.trackMembersGroup.length > 0 && (
               <CommandGroup heading="Track members group">

@@ -3,6 +3,7 @@ import type { Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
 import { getUserByUserId } from './lib/getUser'
+import { privateQuery } from './lib/customFunctions'
 
 export const toggleMember = mutation({
   args: {
@@ -115,7 +116,7 @@ export const unsetLead = mutation({
   },
 })
 
-export const list = query({
+export const list = privateQuery({
   args: {
     trackId: v.id('tracks'),
     lead: v.optional(v.boolean()),
@@ -149,7 +150,6 @@ export const list = query({
           )
           .unique()
 
-        const user = await getUserByUserId(ctx, member.employeeId)
         const image = profile?.profilePhotoStorageId
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
           : ''
@@ -161,8 +161,8 @@ export const list = query({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : (user?.name ?? 'Unknown'),
-            email: user?.email ?? '',
+              : (ctx.session.user?.name ?? 'Unknown'),
+            email: ctx.session.user?.email ?? '',
             image: image ?? '',
           },
         }
