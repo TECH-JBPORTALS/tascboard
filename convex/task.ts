@@ -12,6 +12,12 @@ import {
 } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
 import {
+  compareTaskStatusOrder,
+  getNextStatusOrder,
+  getTasksInStatus,
+  reindexStatusColumn,
+} from './lib/taskKanban'
+import {
   TaskPriorityValidator,
   TaskStatusValidator,
   TaskValidator,
@@ -21,7 +27,13 @@ import {
  * Create Task
  */
 export const create = mutation({
-  args: TaskValidator.omit('taskCode', 'createdAt', 'updatedAt', 'createdBy'),
+  args: TaskValidator.omit(
+    'taskCode',
+    'createdAt',
+    'updatedAt',
+    'createdBy',
+    'statusOrder',
+  ),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx)
     const lastTask = await ctx.db
@@ -29,6 +41,8 @@ export const create = mutation({
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
       .order('desc')
       .first()
+
+    const statusOrder = await getNextStatusOrder(ctx, args.trackId, args.status)
 
     const taskId = await ctx.db.insert('tasks', {
       trackId: args.trackId,
@@ -39,6 +53,7 @@ export const create = mutation({
       title: args.title.trim(),
       description: args.description,
       status: args.status,
+      statusOrder,
       createdBy: identity.userId,
       priority: args.priority,
       complexity: args.complexity,
@@ -105,10 +120,73 @@ export const listByTrack = query({
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    return await ctx.db
+    const tasks = await ctx.db
       .query('tasks')
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
       .collect()
+
+    return tasks.toSorted(compareTaskStatusOrder)
+  },
+})
+
+export const reorderKanban = mutation({
+  args: {
+    taskId: v.id('tasks'),
+    status: TaskStatusValidator,
+    statusOrder: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx)
+
+    const task = await ctx.db.get(args.taskId)
+    if (!task) {
+      throw new Error('Task not found')
+    }
+
+    const oldStatus = task.status
+    const newStatus = args.status
+    const targetIndex = Math.max(0, Math.floor(args.statusOrder))
+
+    const targetTasks = (
+      await getTasksInStatus(ctx, task.trackId, newStatus)
+    ).filter((t) => t._id !== args.taskId)
+
+    const insertIndex = Math.min(targetIndex, targetTasks.length)
+    targetTasks.splice(insertIndex, 0, task)
+
+    const actorUserId = identity.userId
+    const actorName = actorDisplayName(identity)
+
+    await Promise.all(
+      targetTasks.map((columnTask, index) => {
+        const patch: Partial<Doc<'tasks'>> = {
+          statusOrder: index,
+          updatedAt: Date.now(),
+        }
+
+        if (columnTask._id === args.taskId && newStatus !== oldStatus) {
+          patch.status = newStatus
+        }
+
+        return ctx.db.patch(columnTask._id, patch)
+      }),
+    )
+
+    if (newStatus !== oldStatus) {
+      await logTaskActivity(ctx, {
+        taskId: args.taskId,
+        actorUserId,
+        actorName,
+        kind: 'status_changed',
+        fromValue: taskStatusLabels[oldStatus] ?? oldStatus,
+        toValue: taskStatusLabels[newStatus] ?? newStatus,
+      })
+
+      await reindexStatusColumn(ctx, task.trackId, oldStatus, args.taskId)
+    }
+
+    return null
   },
 })
 
@@ -261,7 +339,7 @@ export const list = query({
       tasks = tasks.filter((t) => taskIds.has(t._id))
     }
 
-    return tasks
+    return tasks.toSorted(compareTaskStatusOrder)
   },
 })
 
