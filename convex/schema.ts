@@ -35,6 +35,21 @@ export const employeeProfileSchema = v.object({
   profilePhotoStorageId: v.optional(v.id('_storage')),
 })
 
+export const EmployeeTodoPriorityValidator = v.union(
+  v.literal('low'),
+  v.literal('medium'),
+  v.literal('high'),
+)
+export const EmployeeTodosValidator = v.object({
+  employeeId: v.string(),
+  title: v.string(),
+  description: v.optional(v.string()),
+  priority: EmployeeTodoPriorityValidator,
+  isCompleted: v.boolean(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()),
+})
+
 /*********************************************
  * Project VALIDATORS
  ********************************************/
@@ -476,15 +491,7 @@ export default defineSchema({
     fields: ['trackId'],
   }),
 
-  employeeTodos: defineTable({
-    employeeId: v.string(),
-    title: v.string(),
-    description: v.optional(v.string()),
-    priority: v.union(v.literal('low'), v.literal('medium'), v.literal('high')),
-    isCompleted: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.optional(v.number()),
-  })
+  employeeTodos: defineTable(EmployeeTodosValidator)
     .index('by_employee', ['employeeId'])
     .index('by_employee_and_status', ['employeeId', 'isCompleted']),
 
