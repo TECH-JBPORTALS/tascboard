@@ -47,8 +47,8 @@ export function TrackSprintGroup({
 
   const startDate = new Date(sprint.startDate)
   const endDate = new Date(sprint.endDate)
-  const totalTasks = 10
-  const completedTasks = 8
+  const totalTasks = sprint.stats.totalTasks
+  const completedTasks = sprint.stats.totalCompletedTasks
   const progressPercent =
     totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
 
@@ -57,7 +57,7 @@ export function TrackSprintGroup({
       defaultOpen
       className="border-b border-border/60 last:border-b-0"
     >
-      <div className="flex h-9 items-center gap-2 bg-muted/30 px-2">
+      <div className="flex h-9 items-center gap-2 justify-between bg-muted/30 px-2">
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left text-sm">
           <CollapsibleTrigger
             className="group"
@@ -96,21 +96,17 @@ export function TrackSprintGroup({
           </div>
         </div>
 
+        <div className="flex items-center flex-1 gap-0.5">
+          <SprintDatePicker date={startDate} onSelect={handleStartDateSelect} />
+          <RiArrowRightFill className="size-2.5 text-muted-foreground" />
+          <SprintDatePicker
+            date={endDate}
+            onSelect={handleEndDateSelect}
+            disabledDates={(date) => startOfDay(date) <= startOfDay(startDate)}
+          />
+        </div>
+
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-0.5">
-            <SprintDatePicker
-              date={startDate}
-              onSelect={handleStartDateSelect}
-            />
-            <RiArrowRightFill className="size-2.5 text-muted-foreground" />
-            <SprintDatePicker
-              date={endDate}
-              onSelect={handleEndDateSelect}
-              disabledDates={(date) =>
-                startOfDay(date) <= startOfDay(startDate)
-              }
-            />
-          </div>
           <div className="flex items-center gap-2.5">
             <span className="text-xs tabular-nums text-muted-foreground">
               {progressPercent.toFixed(0)}%
