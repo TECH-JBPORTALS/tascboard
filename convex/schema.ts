@@ -156,7 +156,7 @@ export const TaskComplexityValidator = v.union(
 export const TaskValidator = v.object({
   trackId: v.id('tracks'),
   projectId: v.id('projects'),
-  sprintId: v.optional(v.id('sprints')),
+  sprintId: v.optional(v.union(v.id('sprints'), v.null())),
   taskCode: v.string(),
   title: v.string(),
   description: v.optional(v.any()),
@@ -165,6 +165,7 @@ export const TaskValidator = v.object({
   priority: TaskPriorityValidator,
   complexity: TaskComplexityValidator,
   dueDate: v.optional(v.union(v.number(), v.null())),
+  statusOrder: v.optional(v.number()),
   createdAt: v.number(),
   startedAt: v.optional(v.number()),
   completedAt: v.optional(v.number()),
@@ -470,7 +471,13 @@ export default defineSchema({
   tasks: defineTable(TaskValidator)
     .index('by_track', ['trackId'])
     .index('by_project', ['projectId'])
-    .index('by_sprint', ['sprintId']),
+    .index('by_sprint', ['sprintId'])
+    .index('by_track_status_order', ['trackId', 'status', 'statusOrder'])
+    .index('by_track_status', ['trackId', 'status'])
+    .index('by_track_priority', ['trackId', 'priority'])
+    .index('by_track_sprint', ['trackId', 'sprintId'])
+    .index('by_track_dueDate', ['trackId', 'dueDate'])
+    .index('by_track_status_priority', ['trackId', 'status', 'priority']),
 
   labels: defineTable({
     name: v.string(),
@@ -500,9 +507,11 @@ export default defineSchema({
     fields: ['taskId'],
   }),
 
-  sprints: defineTable(SprintValidator).index('by_track', {
-    fields: ['trackId'],
-  }),
+  sprints: defineTable(SprintValidator)
+    .index('by_track', {
+      fields: ['trackId'],
+    })
+    .index('by_track_status', ['trackId', 'status']),
 
   employeeTodos: defineTable(EmployeeTodosValidator)
     .index('by_employee', ['employeeId'])

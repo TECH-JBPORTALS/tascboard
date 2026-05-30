@@ -91,8 +91,33 @@ function normalizeValue(
   return typeof value === 'string' ? value : ''
 }
 
-function comparableValue(value: EditorValue): string {
-  return typeof value === 'string' ? value : JSON.stringify(value)
+function jsonContentToText(content: JSONContent | null | undefined): string {
+  if (!content) return ''
+  if (content.type === 'text') return content.text ?? ''
+  if (content.type === 'hardBreak') return '\n'
+  if (!content.content?.length) return ''
+  return content.content.map((child) => jsonContentToText(child)).join('')
+}
+
+function comparableValue(
+  value: EditorValue | null | undefined,
+  contentType: EditorContentType,
+): string {
+  if (contentType === 'json') {
+    return JSON.stringify(
+      value && typeof value === 'object' ? value : EMPTY_DOC,
+    )
+  }
+
+  if (contentType === 'text') {
+    if (typeof value === 'string') return value
+    if (value && typeof value === 'object') {
+      return jsonContentToText(value).replace(/\n+/g, ' ')
+    }
+    return ''
+  }
+
+  return typeof value === 'string' ? value : ''
 }
 
 function serializeValue(
@@ -105,12 +130,8 @@ function serializeValue(
     return editor.getText().replace(/\n+/g, ' ')
   }
 
-  const markdownEditor = editor as TiptapEditor & {
-    getMarkdown?: () => string
-  }
-
-  if (typeof markdownEditor.getMarkdown === 'function') {
-    return markdownEditor.getMarkdown()
+  if (typeof editor.getMarkdown === 'function') {
+    return editor.getMarkdown()
   }
 
   return editor.getText()
@@ -131,6 +152,7 @@ export function GlobalTiptapEditor({
   editorAriaLabel,
   contentType,
   extensions: extraExtensions,
+  ...remainingProps
 }: GlobalTiptapEditorProps) {
   const resolvedContentType = resolveContentType(mode, contentType)
   const normalizedValue = React.useMemo(
@@ -237,13 +259,18 @@ export function GlobalTiptapEditor({
     if (!editor) return
     const nextValue = normalizeValue(value, resolvedContentType)
     const currentValue = serializeValue(editor, resolvedContentType)
-    if (comparableValue(nextValue) === comparableValue(currentValue)) return
+    if (
+      comparableValue(value, resolvedContentType) ===
+      comparableValue(currentValue, resolvedContentType)
+    ) {
+      return
+    }
 
     editor.commands.setContent(nextValue, {
       emitUpdate: false,
       contentType: resolvedContentType === 'markdown' ? 'markdown' : 'json',
     })
-    latestValueRef.current = nextValue
+    latestValueRef.current = serializeValue(editor, resolvedContentType)
   }, [editor, value, resolvedContentType])
 
   if (!editor) return null
@@ -256,6 +283,7 @@ export function GlobalTiptapEditor({
         disabled && 'opacity-70',
         className,
       )}
+      {...remainingProps}
     >
       {canShowBubble ? (
         <BubbleMenu

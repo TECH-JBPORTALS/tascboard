@@ -9,6 +9,7 @@ export const create = mutation({
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
+    status: v.optional(SprintStatusValidator),
   },
   returns: v.id('sprints'),
   handler: async (ctx, args) => {
@@ -24,8 +25,11 @@ export const create = mutation({
     const goal = args.goal.trim()
 
     if (!goal) throw new Error('Goal cannot be empty')
-    if (args.startDate > args.endDate) {
-      throw new Error('Start date cannot be after end date')
+    if (goal.length > 160) {
+      throw new Error('Goal must be 160 characters or fewer')
+    }
+    if (args.endDate <= args.startDate) {
+      throw new Error('End date must be after the start date')
     }
 
     return await ctx.db.insert('sprints', {
@@ -34,7 +38,7 @@ export const create = mutation({
       goal,
       startDate: args.startDate,
       endDate: args.endDate,
-      status: 'planned',
+      status: args.status ?? 'planned',
       createdBy: userId,
       createdAt: Date.now(),
     })
@@ -44,14 +48,38 @@ export const create = mutation({
 export const listByTrack = query({
   args: {
     trackId: v.id('tracks'),
+    status: v.optional(SprintStatusValidator),
   },
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
+    const sprints = args.status
+      ? await ctx.db
+          .query('sprints')
+          .withIndex('by_track_status', (q) =>
+            q.eq('trackId', args.trackId).eq('status', args.status!),
+          )
+          .collect()
+      : await ctx.db
+          .query('sprints')
+          .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+          .collect()
 
-    return await ctx.db
-      .query('sprints')
-      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
-      .collect()
+    return await Promise.all(
+      sprints.map(async (sprint) => {
+        const tasks = await ctx.db
+          .query('tasks')
+          .withIndex('by_sprint', (q) => q.eq('sprintId', sprint._id))
+          .collect()
+        return {
+          ...sprint,
+          stats: {
+            totalTasks: tasks.length,
+            totalCompletedTasks: tasks.filter((t) => t.status === 'done')
+              .length,
+          },
+        }
+      }),
+    )
   },
 })
 
@@ -131,8 +159,13 @@ export const edit = mutation({
     const goal = args.goal.trim()
 
     if (!goal) throw new Error('Goal cannot be empty')
-    if (args.startDate > args.endDate) {
-      throw new Error('Start date cannot be after end date')
+
+    if (goal.length > 160) {
+      throw new Error('Goal must be 160 characters or fewer')
+    }
+
+    if (args.endDate <= args.startDate) {
+      throw new Error('End date must be after the start date')
     }
 
     await ctx.db.patch(args.sprintId, {

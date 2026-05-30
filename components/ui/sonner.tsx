@@ -1,24 +1,45 @@
 'use client'
 
+import {
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiErrorWarningLine,
+  RiInformationLine,
+  RiLoaderLine,
+} from '@remixicon/react'
+import { useTheme } from 'next-themes'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
 
-export function Toaster({ ...props }: ToasterProps) {
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = 'system' } = useTheme()
+
   return (
     <Sonner
+      theme={theme as ToasterProps['theme']}
       className="toaster group"
-      position="bottom-center"
+      icons={{
+        success: <RiCheckboxCircleLine className="size-4" />,
+        info: <RiInformationLine className="size-4" />,
+        warning: <RiErrorWarningLine className="size-4" />,
+        error: <RiCloseCircleLine className="size-4" />,
+        loading: <RiLoaderLine className="size-4 animate-spin" />,
+      }}
+      style={
+        {
+          '--normal-bg': 'var(--popover)',
+          '--normal-text': 'var(--popover-foreground)',
+          '--normal-border': 'var(--border)',
+          '--border-radius': 'var(--radius)',
+        } as React.CSSProperties
+      }
       toastOptions={{
         classNames: {
-          toast:
-            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
-          description: 'group-[.toast]:text-muted-foreground',
-          actionButton:
-            'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-          cancelButton:
-            'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+          toast: 'cn-toast',
         },
       }}
       {...props}
     />
   )
 }
+
+export { Toaster }

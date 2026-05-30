@@ -3,7 +3,6 @@
 import { RiAddFill, RiCalendarTodoFill } from '@remixicon/react'
 import { format, isAfter } from 'date-fns'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import { TaskDueDatePicker } from '@/components/tasks/task-due-date-picker'
 import { TaskMembersPicker } from '@/components/tasks/task-members-picker'
 import {
@@ -15,19 +14,27 @@ import {
   TaskStatusPicker,
 } from '@/components/tasks/task-status-picker'
 import type { Doc } from '@/convex/_generated/dataModel'
+import { useTaskHref } from '@/hooks/use-task-href'
 import { cn } from '@/lib/utils'
+import {
+  TaskSprintIcon,
+  TaskSprintPicker,
+  useSprintDisplayLabel,
+} from '../tasks/task-sprint-picker'
 import { Button } from '../ui/button'
 
-type TaskIssueRowProps = {
+export type TaskRowProps = {
   task: Doc<'tasks'>
   className?: string
+  showMembers?: boolean
+  showSprint?: boolean
 }
 
 function RowTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<'button'>) {
+}: React.ComponentProps<typeof Button>) {
   return (
     <Button
       type="button"
@@ -41,13 +48,14 @@ function RowTrigger({
   )
 }
 
-export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
-  const params = useParams<{
-    orgSlug: string
-    projectId: string
-    trackId: string
-  }>()
-  const href = `/${params.orgSlug}/pro/${params.projectId}/track/${params.trackId}/task/${task._id}`
+export function TaskRow({
+  task,
+  className,
+  showMembers = true,
+  showSprint,
+}: TaskRowProps) {
+  const href = useTaskHref(task._id)
+  const sprintLabel = useSprintDisplayLabel(task.trackId, task.sprintId)
 
   return (
     <div
@@ -90,6 +98,33 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
         {task.title}
       </Link>
 
+      {showSprint && (
+        <TaskSprintPicker
+          taskId={task._id}
+          value={task.sprintId}
+          trigger={
+            <RowTrigger
+              variant={task.sprintId ? 'outline' : 'ghost'}
+              className="text-xs text-muted-foreground rounded-full"
+              size={'xs'}
+              aria-label="Change sprint"
+            >
+              {task.sprintId ? (
+                <>
+                  <TaskSprintIcon className={cn('size-4')} /> {sprintLabel}
+                </>
+              ) : (
+                <>
+                  <RiAddFill />
+                  Set sprint
+                </>
+              )}
+            </RowTrigger>
+          }
+          trackId={task.trackId}
+        />
+      )}
+
       <TaskDueDatePicker
         taskId={task._id}
         dueDate={task.dueDate}
@@ -114,7 +149,9 @@ export function TaskIssueRow({ task, className }: TaskIssueRowProps) {
         }
       />
 
-      <TaskMembersPicker taskId={task._id} trackId={task.trackId} compact />
+      {showMembers && (
+        <TaskMembersPicker taskId={task._id} trackId={task.trackId} />
+      )}
 
       <span className="hidden w-14 shrink-0 text-right text-xs text-muted-foreground md:inline">
         {format(task.createdAt, 'MMM d')}

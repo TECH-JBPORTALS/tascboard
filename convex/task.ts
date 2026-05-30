@@ -12,6 +12,12 @@ import {
 } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
 import {
+  compareTaskStatusOrder,
+  getNextStatusOrder,
+  getTasksInStatus,
+  reindexStatusColumn,
+} from './lib/taskKanban'
+import {
   TaskPriorityValidator,
   TaskStatusValidator,
   TaskValidator,
@@ -21,7 +27,13 @@ import {
  * Create Task
  */
 export const create = mutation({
-  args: TaskValidator.omit('taskCode', 'createdAt', 'updatedAt', 'createdBy'),
+  args: TaskValidator.omit(
+    'taskCode',
+    'createdAt',
+    'updatedAt',
+    'createdBy',
+    'statusOrder',
+  ),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx)
     const lastTask = await ctx.db
@@ -29,6 +41,8 @@ export const create = mutation({
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
       .order('desc')
       .first()
+
+    const statusOrder = await getNextStatusOrder(ctx, args.trackId, args.status)
 
     const taskId = await ctx.db.insert('tasks', {
       trackId: args.trackId,
@@ -39,6 +53,7 @@ export const create = mutation({
       title: args.title.trim(),
       description: args.description,
       status: args.status,
+      statusOrder,
       createdBy: identity.userId,
       priority: args.priority,
       complexity: args.complexity,
@@ -105,10 +120,73 @@ export const listByTrack = query({
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    return await ctx.db
+    const tasks = await ctx.db
       .query('tasks')
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
       .collect()
+
+    return tasks.toSorted(compareTaskStatusOrder)
+  },
+})
+
+export const reorderKanban = mutation({
+  args: {
+    taskId: v.id('tasks'),
+    status: TaskStatusValidator,
+    statusOrder: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx)
+
+    const task = await ctx.db.get(args.taskId)
+    if (!task) {
+      throw new Error('Task not found')
+    }
+
+    const oldStatus = task.status
+    const newStatus = args.status
+    const targetIndex = Math.max(0, Math.floor(args.statusOrder))
+
+    const targetTasks = (
+      await getTasksInStatus(ctx, task.trackId, newStatus)
+    ).filter((t) => t._id !== args.taskId)
+
+    const insertIndex = Math.min(targetIndex, targetTasks.length)
+    targetTasks.splice(insertIndex, 0, task)
+
+    const actorUserId = identity.userId
+    const actorName = actorDisplayName(identity)
+
+    await Promise.all(
+      targetTasks.map((columnTask, index) => {
+        const patch: Partial<Doc<'tasks'>> = {
+          statusOrder: index,
+          updatedAt: Date.now(),
+        }
+
+        if (columnTask._id === args.taskId && newStatus !== oldStatus) {
+          patch.status = newStatus
+        }
+
+        return ctx.db.patch(columnTask._id, patch)
+      }),
+    )
+
+    if (newStatus !== oldStatus) {
+      await logTaskActivity(ctx, {
+        taskId: args.taskId,
+        actorUserId,
+        actorName,
+        kind: 'status_changed',
+        fromValue: taskStatusLabels[oldStatus] ?? oldStatus,
+        toValue: taskStatusLabels[newStatus] ?? newStatus,
+      })
+
+      await reindexStatusColumn(ctx, task.trackId, oldStatus, args.taskId)
+    }
+
+    return null
   },
 })
 
@@ -191,15 +269,11 @@ export const listEmployeesByTrack = query({
 export const list = query({
   args: {
     trackId: v.id('tracks'),
-
-    // optional filters
     sprintId: v.optional(v.id('sprints')),
     status: v.optional(TaskStatusValidator),
     priority: v.optional(TaskPriorityValidator),
-
     assigneeId: v.optional(v.string()),
     labelId: v.optional(v.id('labels')),
-
     dueFrom: v.optional(v.number()),
     dueTo: v.optional(v.number()),
   },
@@ -207,28 +281,64 @@ export const list = query({
   handler: async (ctx, args) => {
     await requireIdentity(ctx)
 
-    // 1. base query (indexed)
-    let tasks = await ctx.db
-      .query('tasks')
-      .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
-      .collect()
+    let tasks
 
-    // 2. sprint filter (light index already exists if used directly)
-    if (args.sprintId !== undefined) {
-      tasks = tasks.filter((t) => t.sprintId === args.sprintId)
+    // track + status + priority
+    if (args.status && args.priority) {
+      const status = args.status
+      const priority = args.priority
+      tasks = await ctx.db
+        .query('tasks')
+        .withIndex('by_track_status_priority', (q) =>
+          q
+            .eq('trackId', args.trackId)
+            .eq('status', status)
+            .eq('priority', priority),
+        )
+        .collect()
     }
 
-    // 3. status filter
-    if (args.status !== undefined) {
-      tasks = tasks.filter((t) => t.status === args.status)
+    // track + status
+    else if (args.status) {
+      const status = args.status
+      tasks = await ctx.db
+        .query('tasks')
+        .withIndex('by_track_status', (q) =>
+          q.eq('trackId', args.trackId).eq('status', status),
+        )
+        .collect()
     }
 
-    // 4. priority filter
-    if (args.priority !== undefined) {
-      tasks = tasks.filter((t) => t.priority === args.priority)
+    // track + priority
+    else if (args.priority) {
+      const priority = args.priority
+      tasks = await ctx.db
+        .query('tasks')
+        .withIndex('by_track_priority', (q) =>
+          q.eq('trackId', args.trackId).eq('priority', priority),
+        )
+        .collect()
     }
 
-    // 5. due date range filter
+    // track + sprint
+    else if (args.sprintId) {
+      tasks = await ctx.db
+        .query('tasks')
+        .withIndex('by_track_sprint', (q) =>
+          q.eq('trackId', args.trackId).eq('sprintId', args.sprintId),
+        )
+        .collect()
+    }
+
+    // only track
+    else {
+      tasks = await ctx.db
+        .query('tasks')
+        .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
+        .collect()
+    }
+
+    // due date range
     if (args.dueFrom !== undefined) {
       tasks = tasks.filter((t) => (t.dueDate ?? 0) >= args.dueFrom!)
     }
@@ -237,8 +347,8 @@ export const list = query({
       tasks = tasks.filter((t) => (t.dueDate ?? 0) <= args.dueTo!)
     }
 
-    // 6. assignee filter (via taskMember table)
-    if (args.assigneeId !== undefined) {
+    // assignee filter
+    if (args.assigneeId) {
       const taskLinks = await ctx.db
         .query('taskMember')
         .withIndex('by_employee', (q) => q.eq('employeeId', args.assigneeId!))
@@ -249,8 +359,8 @@ export const list = query({
       tasks = tasks.filter((t) => taskIds.has(t._id))
     }
 
-    // 7. label filter (via taskLabels table)
-    if (args.labelId !== undefined) {
+    // label filter
+    if (args.labelId) {
       const links = await ctx.db
         .query('taskLabels')
         .withIndex('by_label', (q) => q.eq('labelId', args.labelId!))
@@ -261,10 +371,9 @@ export const list = query({
       tasks = tasks.filter((t) => taskIds.has(t._id))
     }
 
-    return tasks
+    return tasks.toSorted(compareTaskStatusOrder)
   },
 })
-
 /** Update Task */
 export const update = mutation({
   args: {
@@ -340,7 +449,10 @@ export const update = mutation({
     if (args.body.complexity !== undefined)
       patch.complexity = args.body.complexity
 
-    if (args.body.dueDate !== task.dueDate) {
+    if (
+      Object.hasOwn(args.body, 'dueDate') &&
+      args.body.dueDate !== task.dueDate
+    ) {
       patch.dueDate = args.body.dueDate
       await logTaskActivity(ctx, {
         taskId: args.taskId,
@@ -354,8 +466,12 @@ export const update = mutation({
       })
     }
 
-    if (args.body.sprintId !== undefined) {
-      patch.sprintId = args.body.sprintId ?? undefined
+    if (Object.hasOwn(args.body, 'sprintId')) {
+      const nextSprintId = args.body.sprintId ?? undefined
+      const currentSprintId = task.sprintId ?? undefined
+      if (nextSprintId !== currentSprintId) {
+        patch.sprintId = nextSprintId
+      }
     }
 
     if (Object.keys(patch).length === 0) {
@@ -364,29 +480,6 @@ export const update = mutation({
 
     patch.updatedAt = Date.now()
     await ctx.db.patch(args.taskId, patch)
-
-    return null
-  },
-})
-
-export const updateDescription = mutation({
-  args: {
-    taskId: v.id('tasks'),
-    description: v.any(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
-    const task = await ctx.db.get(args.taskId)
-    if (!task) {
-      throw new Error('Task not found')
-    }
-
-    await ctx.db.patch(args.taskId, {
-      description: args.description,
-      updatedAt: Date.now(),
-    })
 
     return null
   },
