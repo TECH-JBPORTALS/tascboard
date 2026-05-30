@@ -10,6 +10,8 @@ import {
   RiCalendarLine,
   RiInboxFill,
   RiInboxLine,
+  RiMoneyDollarCircleFill,
+  RiMoneyDollarCircleLine,
   RiRouteLine,
   RiSettings3Line,
   RiTeamFill,
@@ -59,12 +61,12 @@ const navItems = [
     fillIcon: RiCalendarCheckFill,
     permissions: { attendance: ['read'] },
   },
-  {
-    label: 'Settings',
-    href: '/settings',
-    icon: RiSettings3Line,
-    fillIcon: RiSettings3Line,
-    permissions: { settings: ['read'] },
+    {
+  label: 'Payroll',
+  href: '/payroll',
+  icon: RiMoneyDollarCircleLine,
+  fillIcon: RiMoneyDollarCircleFill,
+  permissions: { attendance: ['manage'] },
   },
   {
   label: 'Meetings',
@@ -73,6 +75,14 @@ const navItems = [
   fillIcon: RiCalendarFill,
   permissions: { attendance: ['read'] },
   },
+  {
+    label: 'Settings',
+    href: '/settings',
+    icon: RiSettings3Line,
+    fillIcon: RiSettings3Line,
+    permissions: { settings: ['read'] },
+  },
+
 ]
 
 export function AppSidebar({
