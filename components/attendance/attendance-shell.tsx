@@ -25,19 +25,19 @@ export function AttendanceShell({
   children,
 }: Props) {
   return (
-    <div className='flex flex-1 flex-col'>
+    <div className="flex flex-1 flex-col">
       <PageHeader
         icon={<RiCalendarCheckLine />}
-        title='Attendance'
-        description='Track and manage employee attendance'
+        title="Attendance"
+        description="Track and manage employee attendance"
         actions={actions}
       />
       <Tabs
         value={activeTab}
         onValueChange={(v) => onTabChange(v as ActiveTab)}
-        className='w-full border-b bg-accent/40'
+        className="w-full border-b bg-accent/40"
       >
-        <TabsList variant='line'>
+        <TabsList variant="line">
           {TABS.map((t) => (
             <TabsTrigger key={t.value} value={t.value}>
               {t.label}

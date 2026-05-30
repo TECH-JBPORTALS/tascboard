@@ -40,7 +40,9 @@ export function buildDailyColumns(
           />
           <div>
             <p className="text-sm font-medium">{row.original.employee.name}</p>
-            <p className="text-xs text-muted-foreground">{row.original.employee.role}</p>
+            <p className="text-xs text-muted-foreground">
+              {row.original.employee.role}
+            </p>
           </div>
         </div>
       ),
@@ -51,12 +53,28 @@ export function buildDailyColumns(
       cell: ({ row }) => {
         const { employee, onCreate, record, recordDate } = row.original
         if (record) {
-          return <Badge variant={STATUS_VARIANT[record.status] ?? 'secondary'}>{STATUS_LABELS[record.status]}</Badge>
+          return (
+            <Badge variant={STATUS_VARIANT[record.status] ?? 'secondary'}>
+              {STATUS_LABELS[record.status]}
+            </Badge>
+          )
         }
         return (
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => void onCreate(employee.id, recordDate, 'present')}>Present</Button>
-            <Button size="sm" variant="outline" onClick={() => void onCreate(employee.id, recordDate, 'on leave')}>On Leave</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void onCreate(employee.id, recordDate, 'present')}
+            >
+              Present
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void onCreate(employee.id, recordDate, 'on leave')}
+            >
+              On Leave
+            </Button>
           </div>
         )
       },
@@ -64,7 +82,8 @@ export function buildDailyColumns(
     {
       id: 'checkIn',
       header: 'Check In',
-      cell: ({ row }) => row.original.record ? formatTime(row.original.record.loginTime) : '—',
+      cell: ({ row }) =>
+        row.original.record ? formatTime(row.original.record.loginTime) : '—',
     },
     {
       id: 'checkOut',
@@ -73,7 +92,11 @@ export function buildDailyColumns(
         const { onCheckOut, record } = row.original
         if (!record) return '—'
         if (record.logoutTime) return formatTime(record.logoutTime)
-        return <Button size="sm" variant="outline" onClick={() => void onCheckOut()}>Check Out</Button>
+        return (
+          <Button size="sm" variant="outline" onClick={() => void onCheckOut()}>
+            Check Out
+          </Button>
+        )
       },
     },
     {

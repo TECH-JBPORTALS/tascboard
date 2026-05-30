@@ -13,13 +13,13 @@ type StatCardProps = {
 
 function StatCard({ label, value, sub }: StatCardProps) {
   return (
-    <div className='flex flex-col gap-1 rounded-lg border bg-card p-4'>
-      <span className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+    <div className="flex flex-col gap-1 rounded-lg border bg-card p-4">
+      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span className='text-2xl font-bold'>{value}</span>
+      <span className="text-2xl font-bold">{value}</span>
       {sub ? (
-        <span className='text-xs text-muted-foreground'>{sub}</span>
+        <span className="text-xs text-muted-foreground">{sub}</span>
       ) : null}
     </div>
   )
@@ -33,13 +33,13 @@ export function DailyStats({ records, totalEmployees }: Props) {
   const absent = Math.max(0, totalEmployees - records.length)
 
   return (
-    <div className='grid grid-cols-2 gap-3 p-4 md:grid-cols-5 md:p-6'>
-      <StatCard label='Present' value={present} />
-      <StatCard label='Late' value={late} />
-      <StatCard label='Half Day' value={halfDay} />
-      <StatCard label='On Leave' value={onLeave} />
+    <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-5 md:p-6">
+      <StatCard label="Present" value={present} />
+      <StatCard label="Late" value={late} />
+      <StatCard label="Half Day" value={halfDay} />
+      <StatCard label="On Leave" value={onLeave} />
       <StatCard
-        label='Absent'
+        label="Absent"
         value={absent}
         sub={`of ${totalEmployees} total`}
       />

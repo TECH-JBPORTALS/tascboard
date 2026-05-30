@@ -27,10 +27,16 @@ export function LeaveRowActions({ record }: Props) {
   const remove = useMutation(api.leaveRequest.remove)
 
   const handleApprove = () =>
-    update({ leaveRequestId: record._id, body: { status: 'approved', approvedBy: deviceName } })
+    update({
+      leaveRequestId: record._id,
+      body: { status: 'approved', approvedBy: deviceName },
+    })
 
   const handleReject = () =>
-    update({ leaveRequestId: record._id, body: { status: 'rejected', approvedBy: deviceName } })
+    update({
+      leaveRequestId: record._id,
+      body: { status: 'rejected', approvedBy: deviceName },
+    })
 
   const handleCancel = () => remove({ leaveRequestId: record._id })
 
@@ -40,30 +46,30 @@ export function LeaveRowActions({ record }: Props) {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant='ghost' size='sm' className='size-8 p-0'>
-            <RiMoreLine className='size-4' />
+          <Button variant="ghost" size="sm" className="size-8 p-0">
+            <RiMoreLine className="size-4" />
           </Button>
         }
       />
-      <DropdownMenuContent align='end'>
+      <DropdownMenuContent align="end">
         {record.status === 'pending' ? (
           <>
             <DropdownMenuItem onClick={handleApprove}>
-              <RiCheckLine className='size-4' />
+              <RiCheckLine className="size-4" />
               Approve
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleReject}>
-              <RiCloseLine className='size-4' />
+              <RiCloseLine className="size-4" />
               Reject
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCancel}>
-              <RiProhibitedLine className='size-4' />
+              <RiProhibitedLine className="size-4" />
               Cancel Request
             </DropdownMenuItem>
           </>
         ) : null}
-        <DropdownMenuItem className='text-destructive' onClick={handleDelete}>
-          <RiDeleteBinLine className='size-4' />
+        <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+          <RiDeleteBinLine className="size-4" />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -3,11 +3,9 @@
 import { RiFilePdfLine } from '@remixicon/react'
 import { useState } from 'react'
 
-
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
- 
   type AttendanceRecord,
   type AttendanceStatus,
   type EmployeeRef,
@@ -29,10 +27,14 @@ type Props = {
 
 export function DailyTab({ date, onPrev, onNext, records, employees }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<AttendanceStatus | 'all'>('all')
+  const [statusFilter, setStatusFilter] = useState<AttendanceStatus | 'all'>(
+    'all',
+  )
 
   const filteredEmployees = employees.filter((emp) => {
-    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = emp.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
     if (!matchesSearch) return false
     if (statusFilter === 'all') return true
     const record = records?.find((r) => r.employeeId === emp.id)
@@ -40,9 +42,9 @@ export function DailyTab({ date, onPrev, onNext, records, employees }: Props) {
   })
 
   return (
-    <div className='flex flex-col'>
-      <div className='flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6'>
-        <div className='flex items-center gap-2'>
+    <div className="flex flex-col">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6">
+        <div className="flex items-center gap-2">
           <DailyDateNav date={date} onPrev={onPrev} onNext={onNext} />
           <AttendanceSearchBar
             searchTerm={searchTerm}
@@ -52,19 +54,19 @@ export function DailyTab({ date, onPrev, onNext, records, employees }: Props) {
           />
         </div>
         <Button
-          size='sm'
-          variant='outline'
+          size="sm"
+          variant="outline"
           onClick={() => exportDailyPDF(records ?? [], employees, date)}
         >
-          <RiFilePdfLine className='size-4' />
+          <RiFilePdfLine className="size-4" />
           Export PDF
         </Button>
       </div>
       {records === undefined ? (
-        <div className='space-y-3 p-4 md:p-6'>
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
-          <Skeleton className='h-10 w-full' />
+        <div className="space-y-3 p-4 md:p-6">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
         </div>
       ) : (
         <DailyTable

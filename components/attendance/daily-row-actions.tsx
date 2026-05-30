@@ -31,8 +31,7 @@ export function DailyRowActions({ onEdit, record }: Props) {
   const handleCheckout = () =>
     void markLogout({ attendanceId: record._id, logoutTime: Date.now() })
 
-  const handleDelete = () =>
-    void remove({ attendanceId: record._id })
+  const handleDelete = () => void remove({ attendanceId: record._id })
 
   return (
     <DropdownMenu>

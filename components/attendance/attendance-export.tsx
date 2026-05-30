@@ -9,8 +9,18 @@ import {
 } from '@/lib/attendance-types'
 
 const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ]
 
 function downloadCsv(rows: (string | number)[][], filename: string) {
@@ -25,7 +35,7 @@ export function exportDailyCsv(records: EnrichedAttendance[], date: Date) {
   const label = date.toLocaleDateString('en-IN').replace(/\//g, '-')
   downloadCsv(
     [
-      ['Employee','Role','Status','Check In','Check Out','Total Hours'],
+      ['Employee', 'Role', 'Status', 'Check In', 'Check Out', 'Total Hours'],
       ...records.map((r) => [
         r.employee?.name ?? 'Unknown',
         r.employee?.role ?? '',
@@ -48,16 +58,38 @@ export function exportMonthlyCsv(
   const elapsed = getElapsedWorkingDays(year, month)
   downloadCsv(
     [
-      ['Employee','Role','Present','Late','Half Day','On Leave','Absent','Attendance %'],
+      [
+        'Employee',
+        'Role',
+        'Present',
+        'Late',
+        'Half Day',
+        'On Leave',
+        'Absent',
+        'Attendance %',
+      ],
       ...employees.map((emp) => {
         const er = records.filter((r) => r.employeeId === emp.id)
         const present = er.filter((r) => r.status === 'present').length
         const late = er.filter((r) => r.status === 'late').length
         const halfDay = er.filter((r) => r.status === 'half day').length
         const onLeave = er.filter((r) => r.status === 'on leave').length
-        const absent = Math.max(0, elapsed - (present + late + halfDay + onLeave))
-        const pct = elapsed > 0 ? Math.round(((present + late) / elapsed) * 100) : 0
-        return [emp.name, emp.role, present, late, halfDay, onLeave, absent, `${pct}%`]
+        const absent = Math.max(
+          0,
+          elapsed - (present + late + halfDay + onLeave),
+        )
+        const pct =
+          elapsed > 0 ? Math.round(((present + late) / elapsed) * 100) : 0
+        return [
+          emp.name,
+          emp.role,
+          present,
+          late,
+          halfDay,
+          onLeave,
+          absent,
+          `${pct}%`,
+        ]
       }),
     ],
     `attendance-${MONTH_NAMES[month]}-${year}.csv`,

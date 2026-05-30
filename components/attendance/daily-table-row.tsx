@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { api } from '@/convex/_generated/api'
 import {
- 
   type AttendanceRecord,
   type AttendanceStatus,
   type EmployeeRef,
@@ -25,7 +24,10 @@ type Props = {
   recordDate: number
 }
 
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const STATUS_VARIANT: Record<
+  string,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
   present: 'default',
   late: 'destructive',
   'on leave': 'outline',
@@ -40,7 +42,12 @@ export function DailyTableRow({ employee, onEdit, record, recordDate }: Props) {
   const update = useMutation(api.attendance.updateAttendance)
 
   const mark = (status: AttendanceStatus) =>
-    create({ employeeId: employee.id, loginTime: Date.now(), recordDate, status })
+    create({
+      employeeId: employee.id,
+      loginTime: Date.now(),
+      recordDate,
+      status,
+    })
 
   const checkOut = async () => {
     if (!record) return
@@ -55,10 +62,9 @@ export function DailyTableRow({ employee, onEdit, record, recordDate }: Props) {
     })
   }
 
-  const isOvertime =
-    record?.logoutTime
-      ? record.logoutTime - record.loginTime > OVERTIME_MS
-      : false
+  const isOvertime = record?.logoutTime
+    ? record.logoutTime - record.loginTime > OVERTIME_MS
+    : false
 
   const enriched: EnrichedAttendance | undefined = record
     ? { ...record, employee }
@@ -82,10 +88,18 @@ export function DailyTableRow({ employee, onEdit, record, recordDate }: Props) {
           </Badge>
         ) : (
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => void mark('present')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void mark('present')}
+            >
               Present
             </Button>
-            <Button size="sm" variant="outline" onClick={() => void mark('on leave')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void mark('on leave')}
+            >
               On Leave
             </Button>
           </div>

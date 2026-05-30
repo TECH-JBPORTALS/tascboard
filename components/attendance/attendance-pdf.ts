@@ -1,13 +1,21 @@
 import {
-  getElapsedWorkingDays,
   type AttendanceRecord,
   type EmployeeRef,
+  getElapsedWorkingDays,
 } from '@/lib/attendance-types'
 
 function fmt(ts: number, type: 'date' | 'time'): string {
   return type === 'date'
-    ? new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-    : new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+    ? new Date(ts).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : new Date(ts).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
 }
 
 const BASE_STYLE = `body{font-family:sans-serif;padding:24px;color:#111}h2{margin-bottom:4px}
@@ -28,28 +36,55 @@ function printHTML(title: string, label: string, thead: string, tbody: string) {
   win.print()
 }
 
-export function exportDailyPDF(records: AttendanceRecord[], employees: EmployeeRef[], date: Date) {
-  const label = date.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const thead = '<tr><th>Employee</th><th>Role</th><th>Status</th><th>Check In</th><th>Check Out</th></tr>'
-  const tbody = employees.map((emp) => {
-    const r = records.find((rec) => rec.employeeId === emp.id)
-    return `<tr><td>${emp.name}</td><td>${emp.role}</td><td>${r?.status ?? '—'}</td>
+export function exportDailyPDF(
+  records: AttendanceRecord[],
+  employees: EmployeeRef[],
+  date: Date,
+) {
+  const label = date.toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  const thead =
+    '<tr><th>Employee</th><th>Role</th><th>Status</th><th>Check In</th><th>Check Out</th></tr>'
+  const tbody = employees
+    .map((emp) => {
+      const r = records.find((rec) => rec.employeeId === emp.id)
+      return `<tr><td>${emp.name}</td><td>${emp.role}</td><td>${r?.status ?? '—'}</td>
       <td>${r ? fmt(r.loginTime, 'time') : '—'}</td>
       <td>${r?.logoutTime ? fmt(r.logoutTime, 'time') : '—'}</td></tr>`
-  }).join('')
+    })
+    .join('')
   printHTML(`Daily Attendance — ${label}`, label, thead, tbody)
 }
 
-export function exportMonthlyPDF(records: AttendanceRecord[], employees: EmployeeRef[], year: number, month: number) {
-  const label = new Date(year, month, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+export function exportMonthlyPDF(
+  records: AttendanceRecord[],
+  employees: EmployeeRef[],
+  year: number,
+  month: number,
+) {
+  const label = new Date(year, month, 1).toLocaleDateString('en-IN', {
+    month: 'long',
+    year: 'numeric',
+  })
   const elapsed = getElapsedWorkingDays(year, month)
-  const thead = '<tr><th>Employee</th><th>Role</th><th>Present</th><th>Leave Days</th><th>Attendance %</th></tr>'
-  const tbody = employees.map((emp) => {
-    const emp_records = records.filter((r) => r.employeeId === emp.id)
-    const present = emp_records.filter((r) => r.status === 'present' || r.status === 'late').length
-    const leave = emp_records.filter((r) => r.status === 'on leave' || r.status === 'half day').length
-    const pct = elapsed > 0 ? Math.round((present / elapsed) * 100) : 0
-    return `<tr><td>${emp.name}</td><td>${emp.role}</td><td>${present}</td><td>${leave}</td><td>${pct}%</td></tr>`
-  }).join('')
+  const thead =
+    '<tr><th>Employee</th><th>Role</th><th>Present</th><th>Leave Days</th><th>Attendance %</th></tr>'
+  const tbody = employees
+    .map((emp) => {
+      const emp_records = records.filter((r) => r.employeeId === emp.id)
+      const present = emp_records.filter(
+        (r) => r.status === 'present' || r.status === 'late',
+      ).length
+      const leave = emp_records.filter(
+        (r) => r.status === 'on leave' || r.status === 'half day',
+      ).length
+      const pct = elapsed > 0 ? Math.round((present / elapsed) * 100) : 0
+      return `<tr><td>${emp.name}</td><td>${emp.role}</td><td>${present}</td><td>${leave}</td><td>${pct}%</td></tr>`
+    })
+    .join('')
   printHTML(`Monthly Attendance — ${label}`, label, thead, tbody)
 }
