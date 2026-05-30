@@ -1,15 +1,10 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
-import { MutationCtx, mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
-import { getUserByUserId } from './lib/getUser'
+import { MutationCtx } from './_generated/server'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 import { getTrackMembers } from './lib/memberHelper'
-import {
-  actorDisplayName,
-  formatTaskDate,
-  logTaskActivity,
-} from './lib/taskActivityLog'
+import { formatTaskDate, logTaskActivity } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
 import {
   compareTaskStatusOrder,
@@ -26,7 +21,7 @@ import {
 /**
  * Create Task
  */
-export const create = mutation({
+export const create = privateMutation({
   args: TaskValidator.omit(
     'taskCode',
     'createdAt',
@@ -35,7 +30,6 @@ export const create = mutation({
     'statusOrder',
   ),
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
     const lastTask = await ctx.db
       .query('tasks')
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
@@ -54,7 +48,7 @@ export const create = mutation({
       description: args.description,
       status: args.status,
       statusOrder,
-      createdBy: identity.userId,
+      createdBy: ctx.session.userId,
       priority: args.priority,
       complexity: args.complexity,
       dueDate: args.dueDate,
@@ -65,8 +59,8 @@ export const create = mutation({
 
     await logTaskActivity(ctx, {
       taskId,
-      actorUserId: identity.userId,
-      actorName: actorDisplayName(identity),
+      actorUserId: ctx.session.userId,
+      actorName: ctx.session.user.name,
       kind: 'created',
       toValue: args.title.trim(),
     })
@@ -78,13 +72,11 @@ export const create = mutation({
 /**
  * Get Task by ID
  */
-export const get = query({
+export const get = privateQuery({
   args: {
     taskId: v.id('tasks'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const task = await ctx.db.get(args.taskId)
     if (!task) return null
 
@@ -113,13 +105,11 @@ export const get = query({
 /**
  * List Tasks by Track
  */
-export const listByTrack = query({
+export const listByTrack = privateQuery({
   args: {
     trackId: v.id('tracks'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const tasks = await ctx.db
       .query('tasks')
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
@@ -129,7 +119,7 @@ export const listByTrack = query({
   },
 })
 
-export const reorderKanban = mutation({
+export const reorderKanban = privateMutation({
   args: {
     taskId: v.id('tasks'),
     status: TaskStatusValidator,
@@ -137,8 +127,6 @@ export const reorderKanban = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-
     const task = await ctx.db.get(args.taskId)
     if (!task) {
       throw new Error('Task not found')
@@ -155,8 +143,8 @@ export const reorderKanban = mutation({
     const insertIndex = Math.min(targetIndex, targetTasks.length)
     targetTasks.splice(insertIndex, 0, task)
 
-    const actorUserId = identity.userId
-    const actorName = actorDisplayName(identity)
+    const actorUserId = ctx.session.userId
+    const actorName = ctx.session.user.name
 
     await Promise.all(
       targetTasks.map((columnTask, index) => {
@@ -190,13 +178,11 @@ export const reorderKanban = mutation({
   },
 })
 
-export const listEmployeesByTrack = query({
+export const listTaskEmployees = privateQuery({
   args: {
     trackId: v.id('tracks'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     // 1. Get tasks in track
     const tasks = await ctx.db
       .query('tasks')
@@ -240,8 +226,6 @@ export const listEmployeesByTrack = query({
           )
           .unique()
 
-        const user = await getUserByUserId(ctx, member.employeeId)
-
         const image = profile?.profilePhotoStorageId
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
           : ''
@@ -254,8 +238,8 @@ export const listEmployeesByTrack = query({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : 'Unknown',
-            email: user?.email ?? '',
+              : ctx.session.user.name,
+            email: ctx.session.user.email ?? '',
             image: image ?? '',
           },
         }
@@ -266,7 +250,7 @@ export const listEmployeesByTrack = query({
   },
 })
 
-export const list = query({
+export const list = privateQuery({
   args: {
     trackId: v.id('tracks'),
     sprintId: v.optional(v.id('sprints')),
@@ -279,8 +263,6 @@ export const list = query({
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     let tasks
 
     // track + status + priority
@@ -375,7 +357,7 @@ export const list = query({
   },
 })
 /** Update Task */
-export const update = mutation({
+export const update = privateMutation({
   args: {
     taskId: v.id('tasks'),
     body: TaskValidator.omit(
@@ -387,16 +369,14 @@ export const update = mutation({
     ).partial(),
   },
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-
     const task = await ctx.db.get(args.taskId)
 
     if (!task) {
       throw new Error('Task not found')
     }
 
-    const actorUserId = identity.userId
-    const actorName = actorDisplayName(identity)
+    const actorUserId = ctx.session.userId
+    const actorName = ctx.session.user.name
     const patch: Partial<Doc<'tasks'>> = {}
 
     if (args.body.title !== undefined) {
@@ -519,7 +499,7 @@ export async function removeTaskCascade(ctx: MutationCtx, taskId: Id<'tasks'>) {
 }
 
 /** REMOVE TASK */
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     taskId: v.id('tasks'),
   },
