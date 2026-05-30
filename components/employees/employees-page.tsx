@@ -9,8 +9,8 @@ import { DataTable } from '../data-table'
 import { type EmployeeRow, employeeColumns } from './employees-columns'
 
 export function EmployeesPage() {
-  const { allowed, isLoading: permissionLoading } = usePermission({
-    employee: ['list'],
+  const { allowed } = usePermission({
+    organization: ['delete'],
   })
   const employees = useQuery(api.employees.listEmployees, allowed ? {} : 'skip')
 
@@ -26,7 +26,7 @@ export function EmployeesPage() {
     }))
   }, [employees])
 
-  if (!permissionLoading && !allowed) {
+  if (!allowed) {
     return (
       <div className="flex flex-1 flex-col p-6">
         <p className="text-muted-foreground">

@@ -15,18 +15,16 @@ import {
   invitationColumnsWithoutActions,
 } from './invitations-columns'
 
-const listPermissions: PermissionRequest = { employee: ['list'] }
-const invitePermissions: PermissionRequest = { employee: ['invite'] }
+const ownerPermissions: PermissionRequest = { organization: ['delete'] }
 
 export function InvitationsPage() {
-  const { allowed, isLoading: permissionLoading } =
-    usePermission(listPermissions)
-  const { allowed: canInvite } = usePermission(invitePermissions)
+  const { allowed } = usePermission(ownerPermissions)
+  const canInvite = allowed
   const { data: organization } = authClient.useActiveOrganization()
   const orgId = (organization as { id: string } | null | undefined)?.id
 
   const invitations = useQuery(
-    api.employees.auth.listPendingInvitations,
+    api.employees.listInvitations,
     allowed ? {} : 'skip',
   )
 
@@ -61,7 +59,7 @@ export function InvitationsPage() {
     return invitationColumnsWithoutActions
   }, [canInvite, orgId, handleRequestCancel])
 
-  if (!permissionLoading && !allowed) {
+  if (!allowed) {
     return (
       <div className="flex flex-1 flex-col p-6">
         <p className="text-muted-foreground">

@@ -96,8 +96,8 @@ export function EmployeeDetailsPage({
   tabSegments,
 }: EmployeeDetailsPageProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>()
-  const { allowed, isLoading: permissionLoading } = usePermission({
-    employee: ['list'],
+  const { allowed } = usePermission({
+    organization: ['delete'],
   })
   const employee = useQuery(
     api.employees.getEmployeeDetails,
@@ -109,7 +109,7 @@ export function EmployeeDetailsPage({
   const basePath = `/${orgSlug}/employees/${employeeId}`
   const activeTabHref = `${basePath}/${activeTab}`
 
-  if (!permissionLoading && !allowed) {
+  if (!allowed) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
         <p className="text-muted-foreground">

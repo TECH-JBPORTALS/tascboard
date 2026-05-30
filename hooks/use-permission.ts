@@ -1,36 +1,18 @@
 'use client'
 
-import { useQuery } from 'convex/react'
-import { api } from '@/convex/_generated/api'
-import { checkRolePermission, type PermissionRequest } from '@/lib/permissions'
+import { useOrganizationAccess } from '@/components/organization/organization-access-provider'
+import { checkRolePermission } from '@/lib/auth-client'
+import type { PermissionRequest } from '@/lib/permissions'
 
-export function useEmployeeRole(organizationId?: string) {
-  return useQuery(
-    api.employees.auth.getRole,
-    organizationId !== undefined ? { organizationId } : {},
-  )
+export function useOrgRole() {
+  return useOrganizationAccess()
 }
 
-/** @deprecated Use useEmployeeRole */
-export const useMemberRole = useEmployeeRole
+export function usePermission(permissions: PermissionRequest) {
+  const { role, isReady } = useOrganizationAccess()
 
-export function usePermission(
-  permissions: PermissionRequest,
-  organizationId?: string,
-) {
-  const role = useEmployeeRole(organizationId)
+  const allowed =
+    isReady && role !== null ? checkRolePermission(role, permissions) : false
 
-  if (role === undefined) {
-    return { allowed: false, isLoading: true }
-  }
-
-  if (role === null) {
-    return { allowed: false, isLoading: false }
-  }
-
-  return {
-    allowed: checkRolePermission(role, permissions),
-    isLoading: false,
-    role,
-  }
+  return { allowed, role, isReady }
 }

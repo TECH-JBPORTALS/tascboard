@@ -10,7 +10,7 @@ export type InvitationRow = {
   email: string
   role: string | null
   status: string
-  expiresAt: number
+  expiresAt: Date
 }
 
 const baseColumns: ColumnDef<InvitationRow>[] = [

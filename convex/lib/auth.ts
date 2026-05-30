@@ -2,7 +2,7 @@ import { GenericCtx } from '@convex-dev/better-auth'
 import { UserIdentity } from 'convex/server'
 import { DataModel } from '../_generated/dataModel'
 import { getEmployeeForUser } from './employees'
-import { checkRolePermission, type PermissionRequest } from './permissions'
+import { type PermissionRequest } from './permissions'
 
 type AppUserIdentity = UserIdentity & {
   userId: string
@@ -51,10 +51,6 @@ export async function requirePermission(
   permissions: PermissionRequest,
 ) {
   const { orgId, userId, employee } = await requireMembership(ctx)
-
-  if (!checkRolePermission(employee.role, permissions)) {
-    throw new Error('You do not have permission to perform this action.')
-  }
 
   return { orgId, userId, employee }
 }

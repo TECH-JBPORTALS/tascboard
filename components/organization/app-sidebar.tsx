@@ -2,8 +2,6 @@
 
 import {
   RiAddLargeFill,
-  RiArrowDownSLine,
-  RiArrowRightSLine,
   RiCalendarCheckFill,
   RiCalendarCheckLine,
   RiInboxFill,
@@ -14,10 +12,10 @@ import {
   RiTeamLine,
   RiTriangleFill,
 } from '@remixicon/react'
-import { useQuery } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog'
 import { ProjectIcon } from '@/components/projects/project-icon'
 import {
@@ -40,13 +38,13 @@ import {
 import { api } from '@/convex/_generated/api'
 import type { PermissionRequest } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { Protect } from '../auth/protect'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '../ui/collapsible'
-import { NavPermissionGate } from './nav-permission-gate'
-import { OrganizationSwitcher } from './OrganizationSwitcher'
+import { OrganizationSwitcher } from './organization-switcher'
 
 const navItems = [
   { label: 'Inbox', href: '', icon: RiInboxLine, fillIcon: RiInboxFill },
@@ -55,21 +53,20 @@ const navItems = [
     href: '/employees',
     icon: RiTeamLine,
     fillIcon: RiTeamFill,
-    permissions: { employee: ['list'] },
+    permissions: { organization: ['delete'] } as PermissionRequest,
   },
   {
     label: 'Attendance',
     href: '/attendance',
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
-    permissions: { attendance: ['read'] },
   },
   {
     label: 'Settings',
     href: '/settings',
     icon: RiSettings3Line,
     fillIcon: RiSettings3Line,
-    permissions: { settings: ['read'] },
+    permissions: { organization: ['delete'] },
   },
 ]
 
@@ -126,12 +123,12 @@ export function AppSidebar({
 
                 if ('permissions' in item && item.permissions) {
                   return (
-                    <NavPermissionGate
+                    <Protect
                       key={item.label}
                       permissions={item.permissions as PermissionRequest}
                     >
                       {link}
-                    </NavPermissionGate>
+                    </Protect>
                   )
                 }
 
