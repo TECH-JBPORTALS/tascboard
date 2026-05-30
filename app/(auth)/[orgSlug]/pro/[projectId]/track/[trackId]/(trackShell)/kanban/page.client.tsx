@@ -4,6 +4,7 @@ import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { useParams } from 'next/navigation'
 import { TrackKanbanBoard } from '@/components/tracks/track-kanban-board'
 import { TrackKanbanSkeleton } from '@/components/tracks/track-kanban-skeleton'
+import { useTrackTaskFiltersContext } from '@/components/tracks/track-task-filters-context'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 
@@ -18,7 +19,8 @@ export function TrackKanbanViewPage() {
 
   const track = useQuery(api.track.get, { trackId })
   const project = useQuery(api.project.get, { projectId })
-  const tasks = useQuery(api.task.list, { trackId })
+  const { listArgs } = useTrackTaskFiltersContext()
+  const tasks = useQuery(api.task.list, listArgs)
 
   if (track === undefined || project === undefined || tasks === undefined) {
     return <TrackKanbanSkeleton />
@@ -34,6 +36,7 @@ export function TrackKanbanViewPage() {
         track={track}
         projectId={projectId}
         projectName={project.name}
+        tasks={tasks}
       />
     </div>
   )

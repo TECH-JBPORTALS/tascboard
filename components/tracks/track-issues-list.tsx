@@ -2,6 +2,7 @@
 
 import { useQuery } from 'convex/react'
 import { TrackStatusGroup } from '@/components/tracks/track-status-group'
+import { useTrackTaskFiltersContext } from '@/components/tracks/track-task-filters-context'
 import { api } from '@/convex/_generated/api'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { groupTasksByStatus, taskStatusOrder } from '@/lib/task-utils'
@@ -12,7 +13,8 @@ type TrackIssuesListProps = {
 }
 
 export function TrackIssuesList({ track, projectId }: TrackIssuesListProps) {
-  const tasks = useQuery(api.task.listByTrack, { trackId: track._id })
+  const { listArgs, hasActiveFilters } = useTrackTaskFiltersContext()
+  const tasks = useQuery(api.task.list, listArgs)
 
   if (tasks === undefined) {
     return (
@@ -25,10 +27,12 @@ export function TrackIssuesList({ track, projectId }: TrackIssuesListProps) {
     (status) => byStatus[status].length > 0,
   )
 
-  if (visibleStatuses.length === 0) {
+  if (tasks.length === 0) {
     return (
       <p className="px-4 py-12 text-center text-sm text-muted-foreground">
-        No issues yet. Use &quot;New issue&quot; to create one.
+        {hasActiveFilters
+          ? 'No issues match the current filters.'
+          : 'No issues yet. Use "New issue" to create one.'}
       </p>
     )
   }

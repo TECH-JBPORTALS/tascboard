@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import { CreateSprintDialog } from './create-sprint-dialog'
+import { TrackTaskFilterBar } from './track-task-filter-bar'
 
 type TrackShellProps = {
   orgSlug: string
@@ -122,6 +123,7 @@ export function TrackShell({
             trackId={track._id}
           />
         </div>
+        <TrackTaskFilterBar trackId={track._id} projectId={project._id} />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>

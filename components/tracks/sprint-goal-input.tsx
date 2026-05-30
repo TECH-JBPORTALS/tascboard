@@ -34,7 +34,7 @@ export function SprintGoalInput({
       placeholder={placeholder}
       aria-label={ariaLabel ?? placeholder}
       className={cn(
-        'pb-0 pt-0 text-xs! font-medium! leading-snug sm:pb-0',
+        'pb-0 pt-0 text-xs! font-semibold! leading-snug sm:pb-0',
         className,
       )}
       onChange={(text) => onChange?.(clamp(text))}

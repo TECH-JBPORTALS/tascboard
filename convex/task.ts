@@ -12,6 +12,7 @@ import {
   getTasksInStatus,
   reindexStatusColumn,
 } from './lib/taskKanban'
+import { listTasksForTrack } from './lib/taskList'
 import {
   TaskPriorityValidator,
   TaskStatusValidator,
@@ -254,108 +255,32 @@ export const list = privateQuery({
   args: {
     trackId: v.id('tracks'),
     sprintId: v.optional(v.id('sprints')),
-    status: v.optional(TaskStatusValidator),
-    priority: v.optional(TaskPriorityValidator),
-    assigneeId: v.optional(v.string()),
-    labelId: v.optional(v.id('labels')),
+    statuses: v.optional(v.array(TaskStatusValidator)),
+    assigneeIds: v.optional(v.array(v.string())),
+    labelIds: v.optional(v.array(v.id('labels'))),
+    noDueDate: v.optional(v.boolean()),
     dueFrom: v.optional(v.number()),
     dueTo: v.optional(v.number()),
   },
 
   handler: async (ctx, args) => {
-    let tasks
+    const statuses = args.statuses
+    const assigneeIds = args.assigneeIds
+    const labelIds = args.labelIds
 
-    // track + status + priority
-    if (args.status && args.priority) {
-      const status = args.status
-      const priority = args.priority
-      tasks = await ctx.db
-        .query('tasks')
-        .withIndex('by_track_status_priority', (q) =>
-          q
-            .eq('trackId', args.trackId)
-            .eq('status', status)
-            .eq('priority', priority),
-        )
-        .collect()
-    }
-
-    // track + status
-    else if (args.status) {
-      const status = args.status
-      tasks = await ctx.db
-        .query('tasks')
-        .withIndex('by_track_status', (q) =>
-          q.eq('trackId', args.trackId).eq('status', status),
-        )
-        .collect()
-    }
-
-    // track + priority
-    else if (args.priority) {
-      const priority = args.priority
-      tasks = await ctx.db
-        .query('tasks')
-        .withIndex('by_track_priority', (q) =>
-          q.eq('trackId', args.trackId).eq('priority', priority),
-        )
-        .collect()
-    }
-
-    // track + sprint
-    else if (args.sprintId) {
-      tasks = await ctx.db
-        .query('tasks')
-        .withIndex('by_track_sprint', (q) =>
-          q.eq('trackId', args.trackId).eq('sprintId', args.sprintId),
-        )
-        .collect()
-    }
-
-    // only track
-    else {
-      tasks = await ctx.db
-        .query('tasks')
-        .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
-        .collect()
-    }
-
-    // due date range
-    if (args.dueFrom !== undefined) {
-      tasks = tasks.filter((t) => (t.dueDate ?? 0) >= args.dueFrom!)
-    }
-
-    if (args.dueTo !== undefined) {
-      tasks = tasks.filter((t) => (t.dueDate ?? 0) <= args.dueTo!)
-    }
-
-    // assignee filter
-    if (args.assigneeId) {
-      const taskLinks = await ctx.db
-        .query('taskMember')
-        .withIndex('by_employee', (q) => q.eq('employeeId', args.assigneeId!))
-        .collect()
-
-      const taskIds = new Set(taskLinks.map((t) => t.taskId))
-
-      tasks = tasks.filter((t) => taskIds.has(t._id))
-    }
-
-    // label filter
-    if (args.labelId) {
-      const links = await ctx.db
-        .query('taskLabels')
-        .withIndex('by_label', (q) => q.eq('labelId', args.labelId!))
-        .collect()
-
-      const taskIds = new Set(links.map((l) => l.taskId))
-
-      tasks = tasks.filter((t) => taskIds.has(t._id))
-    }
-
-    return tasks.toSorted(compareTaskStatusOrder)
+    return await listTasksForTrack(ctx, {
+      trackId: args.trackId,
+      sprintId: args.sprintId,
+      statuses,
+      assigneeIds,
+      labelIds,
+      noDueDate: args.noDueDate,
+      dueFrom: args.dueFrom,
+      dueTo: args.dueTo,
+    })
   },
 })
+
 /** Update Task */
 export const update = privateMutation({
   args: {
