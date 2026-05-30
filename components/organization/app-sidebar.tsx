@@ -6,6 +6,8 @@ import {
   RiArrowRightSLine,
   RiCalendarCheckFill,
   RiCalendarCheckLine,
+  RiCalendarFill,
+  RiCalendarLine,
   RiInboxFill,
   RiInboxLine,
   RiRouteLine,
@@ -63,6 +65,13 @@ const navItems = [
     icon: RiSettings3Line,
     fillIcon: RiSettings3Line,
     permissions: { settings: ['read'] },
+  },
+  {
+  label: 'Meetings',
+  href: '/meetings',
+  icon: RiCalendarLine,
+  fillIcon: RiCalendarFill,
+  permissions: { attendance: ['read'] },
   },
 ]
 
