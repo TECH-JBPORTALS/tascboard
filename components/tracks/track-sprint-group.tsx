@@ -1,11 +1,7 @@
 'use client'
 
-import {
-  RiAddLine,
-  RiArrowRightFill,
-  RiRunLine,
-  RiTriangleFill,
-} from '@remixicon/react'
+//TODO: Add sprint progress percentage, fetch from the api
+import { RiAddLine, RiArrowRightFill, RiTriangleFill } from '@remixicon/react'
 import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { startOfDay } from 'date-fns'
 import * as React from 'react'
