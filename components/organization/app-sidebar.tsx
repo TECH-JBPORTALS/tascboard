@@ -40,13 +40,13 @@ import {
 import { api } from '@/convex/_generated/api'
 import type { PermissionRequest } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
-import { NavPermissionGate } from './nav-permission-gate'
-import { OrganizationSwitcher } from './OrganizationSwitcher'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '../ui/collapsible'
+import { NavPermissionGate } from './nav-permission-gate'
+import { OrganizationSwitcher } from './OrganizationSwitcher'
 
 const navItems = [
   { label: 'Inbox', href: '', icon: RiInboxLine, fillIcon: RiInboxFill },

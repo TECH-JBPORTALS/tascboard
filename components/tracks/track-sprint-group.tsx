@@ -12,6 +12,7 @@ import {
   SprintStatusIcon,
   SprintStatusPicker,
 } from '@/components/tracks/sprint-status-picker'
+import { useTrackTaskFiltersContext } from '@/components/tracks/track-task-filters-context'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -130,7 +131,7 @@ export function TrackSprintGroup({
       </div>
 
       <CollapsibleContent>
-        <SprintTasks sprintId={sprint._id} trackId={track._id} />
+        <SprintTasks sprintId={sprint._id} />
       </CollapsibleContent>
 
       <CreateTaskDialog
@@ -144,14 +145,9 @@ export function TrackSprintGroup({
   )
 }
 
-function SprintTasks({
-  sprintId,
-  trackId,
-}: {
-  sprintId: Id<'sprints'>
-  trackId: Id<'tracks'>
-}) {
-  const sprintTasks = useQuery(api.task.list, { trackId, sprintId })
+function SprintTasks({ sprintId }: { sprintId: Id<'sprints'> }) {
+  const { listArgsForSprint } = useTrackTaskFiltersContext()
+  const sprintTasks = useQuery(api.task.list, listArgsForSprint(sprintId))
 
   return (
     <div>

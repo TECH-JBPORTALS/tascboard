@@ -38,6 +38,7 @@ import type * as lib_scopeEngine from "../lib/scopeEngine.js";
 import type * as lib_taskActivityLog from "../lib/taskActivityLog.js";
 import type * as lib_taskDisplay from "../lib/taskDisplay.js";
 import type * as lib_taskKanban from "../lib/taskKanban.js";
+import type * as lib_taskList from "../lib/taskList.js";
 import type * as meeting from "../meeting.js";
 import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   "lib/taskActivityLog": typeof lib_taskActivityLog;
   "lib/taskDisplay": typeof lib_taskDisplay;
   "lib/taskKanban": typeof lib_taskKanban;
+  "lib/taskList": typeof lib_taskList;
   meeting: typeof meeting;
   payroll: typeof payroll;
   project: typeof project;
