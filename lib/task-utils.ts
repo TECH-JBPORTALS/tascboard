@@ -111,6 +111,16 @@ export const taskPriorityConfig: Record<TaskPriority, PriorityConfig> = {
   },
 }
 
+export function sortTasksByStatusOrder<
+  T extends Pick<Doc<'tasks'>, 'statusOrder' | 'createdAt'>,
+>(tasks: T[]) {
+  return tasks.toSorted((a, b) => {
+    const aOrder = a.statusOrder ?? a.createdAt
+    const bOrder = b.statusOrder ?? b.createdAt
+    return aOrder - bOrder
+  })
+}
+
 export function groupTasksByStatus(tasks: Doc<'tasks'>[]) {
   const groups = Object.fromEntries(
     taskStatusOrder.map((status) => [status, [] as Doc<'tasks'>[]]),
@@ -118,6 +128,10 @@ export function groupTasksByStatus(tasks: Doc<'tasks'>[]) {
 
   for (const task of tasks) {
     groups[task.status].push(task)
+  }
+
+  for (const status of taskStatusOrder) {
+    groups[status] = sortTasksByStatusOrder(groups[status])
   }
 
   return groups

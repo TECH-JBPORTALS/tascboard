@@ -109,7 +109,6 @@ export const removeManager = privateMutation({
     return null
   },
 })
-
 export const list = privateQuery({
   args: {
     projectId: v.id('projects'),

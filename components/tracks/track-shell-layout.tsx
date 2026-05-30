@@ -56,28 +56,35 @@ export function TrackShellLayout({ children }: TrackShellLayoutProps) {
   }
 
   return (
-    <TrackShell
-      orgSlug={params.orgSlug}
-      project={project}
-      track={track}
-      issueCount={tasks.length}
-    >
-      {children}
-    </TrackShell>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <TrackShell
+        orgSlug={params.orgSlug}
+        project={project}
+        track={track}
+        issueCount={tasks.length}
+      >
+        {children}
+      </TrackShell>
+    </div>
   )
 }
 
 function TrackShellPageSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="sticky top-0 z-20 shrink-0 bg-sidebar backdrop-blur supports-backdrop-filter:bg-sidebar/80">
         <PageHeader
+          className="static z-auto"
           title={<Skeleton className="h-4 w-56" />}
           description={<Skeleton className="h-3 w-40" />}
           actions={<Skeleton className="h-8 w-32" />}
         />
-        <div className="flex flex-col gap-4 px-6 py-6">
+        <div className="border-b px-2 py-2">
           <Skeleton className="h-8 w-56" />
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-4 px-6 py-6">
           <Skeleton className="min-h-[40vh] w-full" />
         </div>
       </div>
