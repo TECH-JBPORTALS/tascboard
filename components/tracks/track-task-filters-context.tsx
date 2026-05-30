@@ -26,7 +26,7 @@ export function TrackTaskFiltersProvider({
   view,
   children,
 }: TrackTaskFiltersProviderProps) {
-  const employees = useQuery(api.task.listEmployeesByTrack, { trackId })
+  const employees = useQuery(api.task.listTaskEmployees, { trackId })
   const labels = useQuery(api.label.listByProject, { projectId })
   const sprints = useQuery(api.sprint.listByTrack, { trackId })
 

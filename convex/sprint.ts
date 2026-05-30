@@ -1,9 +1,8 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 import { SprintStatusValidator } from './schema'
 
-export const create = mutation({
+export const create = privateMutation({
   args: {
     trackId: v.id('tracks'),
     goal: v.string(),
@@ -18,8 +17,6 @@ export const create = mutation({
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
       .order('desc')
       .first()
-    const { userId } = await requireIdentity(ctx)
-
     const track = await ctx.db.get(args.trackId)
     if (!track) throw new Error('Track not found')
     const goal = args.goal.trim()
@@ -39,19 +36,18 @@ export const create = mutation({
       startDate: args.startDate,
       endDate: args.endDate,
       status: args.status ?? 'planned',
-      createdBy: userId,
+      createdBy: ctx.session.userId,
       createdAt: Date.now(),
     })
   },
 })
 
-export const listByTrack = query({
+export const listByTrack = privateQuery({
   args: {
     trackId: v.id('tracks'),
     status: v.optional(SprintStatusValidator),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const sprints = args.status
       ? await ctx.db
           .query('sprints')
@@ -83,7 +79,7 @@ export const listByTrack = query({
   },
 })
 
-export const addTask = mutation({
+export const addTask = privateMutation({
   args: {
     taskId: v.id('tasks'),
     sprintId: v.id('sprints'),
@@ -95,8 +91,6 @@ export const addTask = mutation({
   }),
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const task = await ctx.db.get(args.taskId)
 
     if (!task) {
@@ -124,14 +118,12 @@ export const addTask = mutation({
   },
 })
 
-export const listTasksBySprint = query({
+export const listTasksBySprint = privateQuery({
   args: {
     sprintId: v.id('sprints'),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const sprint = await ctx.db.get(args.sprintId)
     if (!sprint) {
       throw new Error('Sprint not found')
@@ -144,7 +136,7 @@ export const listTasksBySprint = query({
   },
 })
 
-export const edit = mutation({
+export const edit = privateMutation({
   args: {
     sprintId: v.id('sprints'),
     goal: v.string(),
@@ -180,7 +172,7 @@ export const edit = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     sprintId: v.id('sprints'),
   },
@@ -194,14 +186,12 @@ export const remove = mutation({
   },
 })
 
-export const backlog = query({
+export const backlog = privateQuery({
   args: {
     trackId: v.id('tracks'),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const tasks = await ctx.db
       .query('tasks')
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
@@ -211,7 +201,7 @@ export const backlog = query({
   },
 })
 
-export const progress = query({
+export const progress = privateQuery({
   args: {
     sprintId: v.id('sprints'),
   },
@@ -244,23 +234,10 @@ export const progress = query({
   },
 })
 
-export const burndownChart = query({
+export const burndownChart = privateQuery({
   args: {
     sprintId: v.id('sprints'),
   },
-  returns: v.object({
-    sprintId: v.id('sprints'),
-    totalTasks: v.number(),
-    doneTasks: v.number(),
-    burndown: v.array(
-      v.object({
-        date: v.number(),
-        ideal: v.number(),
-        remaining: v.number(),
-      }),
-    ),
-  }),
-
   handler: async (ctx, args) => {
     const sprint = await ctx.db.get(args.sprintId)
 

@@ -1,19 +1,14 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
-import { privateQuery } from './lib/customFunctions'
-import { getUserByUserId } from './lib/getUser'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 
-export const toggleMember = mutation({
+export const toggleMember = privateMutation({
   args: {
     employeeId: v.string(),
     projectId: v.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
-
     const existing = await ctx.db
       .query('projectMember')
       .withIndex('by_project_employee', (q) =>
@@ -29,7 +24,7 @@ export const toggleMember = mutation({
       projectId: args.projectId,
       employeeId: args.employeeId,
       manager: false,
-      assignedBy: userId,
+      assignedBy: ctx.session.user.id,
       createdAt: Date.now(),
     })
 
@@ -37,14 +32,13 @@ export const toggleMember = mutation({
   },
 })
 
-export const setManager = mutation({
+export const setManager = privateMutation({
   args: {
     employeeId: v.string(),
     projectId: v.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
     const existingMember = await ctx.db
       .query('projectMember')
       .withIndex('by_project_employee', (q) =>
@@ -77,7 +71,7 @@ export const setManager = mutation({
       projectId: args.projectId,
       employeeId: args.employeeId,
       manager: true,
-      assignedBy: userId,
+      assignedBy: ctx.session.user.id,
       createdAt: Date.now(),
     })
 
@@ -89,15 +83,13 @@ export const setManager = mutation({
  * REMOVE MANAGER ROLE ONLY
  * (still remains a member)
  */
-export const removeManager = mutation({
+export const removeManager = privateMutation({
   args: {
     employeeId: v.string(),
     projectId: v.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const member = await ctx.db
       .query('projectMember')
       .withIndex('by_project_employee', (q) =>
@@ -123,7 +115,6 @@ export const list = privateQuery({
     manager: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     let members: Doc<'projectMember'>[] = []
 
     if (args.manager !== undefined) {
@@ -162,9 +153,9 @@ export const list = privateQuery({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : (ctx.session.user?.name ?? 'Unknown'),
+              : ctx.session.user.name,
             image: image ?? '',
-            email: ctx.session.user?.email ?? '',
+            email: ctx.session.user.email ?? '',
           },
         }
       }),

@@ -1,21 +1,23 @@
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
-import { MutationCtx, mutation, query } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import { MutationCtx } from './_generated/server'
+import {
+  organizationMutation,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
 import { getTrackMembers } from './lib/memberHelper'
 import { TrackValidator } from './schema'
 import { removeTaskCascade } from './task'
 // -------------------- CREATE --------------------
-export const create = mutation({
+export const create = organizationMutation({
   args: TrackValidator.omit('createdAt', 'updatedAt'),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
     const project = await ctx.db.get(args.projectId)
     if (!project || project.organizationId !== orgId) {
       throw new Error('Not found')
     }
-
     return await ctx.db.insert('tracks', {
       name: args.name.trim(),
       description: args.description?.trim(),
@@ -29,13 +31,12 @@ export const create = mutation({
 })
 
 // -------------------- LIST BY PROJECT --------------------
-export const listByProject = query({
+export const listByProject = privateQuery({
   args: {
     projectId: v.id('projects'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
 
     const project = await ctx.db.get(args.projectId)
     if (!project || project.organizationId !== orgId) {
@@ -50,13 +51,11 @@ export const listByProject = query({
 })
 
 // -------------------- GET --------------------
-export const get = query({
+export const get = privateQuery({
   args: {
     trackId: v.id('tracks'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const track = await ctx.db.get(args.trackId)
 
     if (!track) return null
@@ -71,14 +70,12 @@ export const get = query({
 })
 
 // -------------------- UPDATE --------------------
-export const update = mutation({
+export const update = privateMutation({
   args: {
     trackId: v.id('tracks'),
     body: TrackValidator.omit('projectId', 'createdAt', 'updatedAt').partial(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const track = await ctx.db.get(args.trackId)
 
     if (!track) {
@@ -149,12 +146,11 @@ export async function removeTrackCascade(
 }
 
 // -------------------- REMOVE --------------------
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     trackId: v.id('tracks'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const track = await ctx.db.get(args.trackId)
     if (!track) {
       throw new Error('Track not found')

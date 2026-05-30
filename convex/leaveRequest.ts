@@ -1,14 +1,15 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
-import { MutationCtx, mutation, query } from './_generated/server'
+import { MutationCtx } from './_generated/server'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 import { LeaveRequestValidator } from './schema'
 
 const getDays = (start: number, end: number) => {
   return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
 }
 const LEAVE_QUOTA = 24
-export const raise = mutation({
+export const raise = privateMutation({
   args: LeaveRequestValidator.omit(
     'status',
     'approvedBy',
@@ -57,7 +58,7 @@ export const raise = mutation({
     }
   },
 })
-export const update = mutation({
+export const update = privateMutation({
   args: {
     leaveRequestId: v.id('leaveRequests'),
     body: LeaveRequestValidator.omit(
@@ -99,7 +100,7 @@ export const update = mutation({
   },
 })
 
-export const get = query({
+export const get = privateQuery({
   args: {
     leaveRequestId: v.id('leaveRequests'),
   },
@@ -108,7 +109,7 @@ export const get = query({
   },
 })
 
-export const list = query({
+export const list = privateQuery({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query('leaveRequests').order('desc').collect()
@@ -122,7 +123,7 @@ export async function removeLeaveCascade(
   await ctx.db.delete(leaveRequestId)
 }
 
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     leaveRequestId: v.id('leaveRequests'),
   },
@@ -136,7 +137,7 @@ export const remove = mutation({
   },
 })
 
-export const getLeaveBalance = query({
+export const getLeaveBalance = privateQuery({
   args: { employeeId: v.string() },
   handler: async (ctx, { employeeId }) => {
     const requests = await ctx.db
@@ -156,7 +157,7 @@ export const getLeaveBalance = query({
     }
   },
 })
-export const getStats = query({
+export const getStats = privateQuery({
   args: {
     employeeId: v.string(),
     year: v.number(),

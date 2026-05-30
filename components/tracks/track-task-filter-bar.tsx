@@ -65,7 +65,7 @@ export function TrackTaskFilterBar({
   const [open, setOpen] = React.useState(false)
   const [step, setStep] = React.useState<'type' | TrackTaskFilterType>('type')
 
-  const employees = useQuery(api.task.listEmployeesByTrack, { trackId })
+  const employees = useQuery(api.task.listTaskEmployees, { trackId })
   const labels = useQuery(api.label.listByProject, { projectId })
   const sprints = useQuery(api.sprint.listByTrack, { trackId })
 
@@ -239,7 +239,7 @@ function filterTypeIcon(type: TrackTaskFilterType) {
   }
 }
 
-type AssigneeOption = (typeof api.task.listEmployeesByTrack._returnType)[number]
+type AssigneeOption = (typeof api.task.listTaskEmployees._returnType)[number]
 
 function AssigneeFilterPicker({
   employees,
