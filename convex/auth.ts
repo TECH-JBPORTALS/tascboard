@@ -3,7 +3,7 @@ import { convex } from '@convex-dev/better-auth/plugins'
 import { BetterAuthOptions, betterAuth } from 'better-auth/minimal'
 import { organization } from 'better-auth/plugins'
 import { v } from 'convex/values'
-import { ac, admin, employee, owner } from '../lib/permissions'
+import { ac, employee, owner } from '../lib/permissions'
 import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
 import { query } from './_generated/server'
@@ -119,7 +119,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     plugins: [
       organization({
         ac,
-        roles: { owner, admin, employee },
+        roles: { owner, employee },
         async sendInvitationEmail(data) {
           await runAction(ctx, internal.emails.processInvitationEmail, {
             organizationId: data.organization.id,
@@ -212,4 +212,14 @@ export const getActiveOrganization = query(async (ctx) => {
   const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
 
   return await auth.api.getFullOrganization({ headers })
+})
+
+export const getActiveMemberRole = query({
+  args: {},
+  returns: v.union(v.object({ role: v.string() }), v.null()),
+  handler: async (ctx) => {
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+
+    return await auth.api.getActiveMemberRole({ headers })
+  },
 })

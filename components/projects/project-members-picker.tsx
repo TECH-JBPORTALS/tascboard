@@ -1,7 +1,8 @@
 'use client'
 
 import { RiAccountCircle2Line } from '@remixicon/react'
-import { useMutation, useQuery } from 'convex/react'
+import { useMutation } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache'
 import * as React from 'react'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
@@ -103,10 +104,10 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.name}
-                      imageUrl={employee.image}
+                      name={employee.user.name}
+                      imageUrl={employee.user.image}
                     />
-                    {employee.name}
+                    {employee.user.name}
                   </CommandItem>
                 ))}
               </CommandGroup>

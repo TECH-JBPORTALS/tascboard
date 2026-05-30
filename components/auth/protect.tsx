@@ -3,20 +3,18 @@
 import { usePermission } from '@/hooks/use-permission'
 import type { PermissionRequest } from '@/lib/permissions'
 
-export function PermissionGate({
+export function Protect({
   permissions,
-  organizationId,
   children,
   fallback = null,
 }: {
   permissions: PermissionRequest
-  organizationId?: string
   children: React.ReactNode
   fallback?: React.ReactNode
 }) {
-  const { allowed, isLoading } = usePermission(permissions, organizationId)
+  const { allowed, isReady } = usePermission(permissions)
 
-  if (isLoading) return null
-  if (!allowed) return <>{fallback}</>
+  if (!isReady || !allowed) return <>{fallback}</>
+
   return <>{children}</>
 }

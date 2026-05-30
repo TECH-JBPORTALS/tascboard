@@ -6,36 +6,9 @@
 import { v } from 'convex/values'
 import { components } from '../_generated/api'
 import { internalMutation, query } from '../_generated/server'
-import {
-  requireIdentity,
-  requireOrganization,
-  requirePermission,
-} from '../lib/auth'
-import {
-  type EmployeeRecord,
-  getAdapterPage,
-  type InvitationRecord,
-} from '../lib/betterAuthAdapter'
-import { getEmployeeForUser } from '../lib/employees'
-
-const employeeListItem = v.object({
-  id: v.string(),
-  userId: v.string(),
-  role: v.string(),
-  createdAt: v.number(),
-  name: v.string(),
-  email: v.string(),
-  image: v.union(v.string(), v.null()),
-  active: v.boolean(),
-})
-
-const invitationListItem = v.object({
-  id: v.string(),
-  email: v.string(),
-  role: v.union(v.string(), v.null()),
-  status: v.string(),
-  expiresAt: v.number(),
-})
+import { authComponent, createAuth } from '../auth'
+import { type InvitationRecord } from '../lib/betterAuthAdapter'
+import { organizationQuery } from '../lib/customFunctions'
 
 const invitationPreview = v.object({
   status: v.string(),
@@ -108,93 +81,26 @@ export const deleteInvitationRecord = internalMutation({
   },
 })
 
-export const list = query({
+export const list = organizationQuery({
   args: {},
-  returns: v.array(employeeListItem),
   handler: async (ctx) => {
-    await requirePermission(ctx, { employee: ['list'] })
-    const { orgId } = await requireOrganization(ctx)
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+    const employees = await auth.api.listMembers({
+      headers,
+    })
 
-    const employeesResult = await ctx.runQuery(
-      components.betterAuth.adapter.findMany,
-      {
-        model: 'employee',
-        where: [{ field: 'organizationId', operator: 'eq', value: orgId }],
-        paginationOpts: { numItems: 200, cursor: null },
-      },
-    )
-
-    const employeeList = getAdapterPage(employeesResult) as EmployeeRecord[]
-    const result = []
-
-    for (const employee of employeeList) {
-      const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-        model: 'user',
-        where: [{ field: '_id', operator: 'eq', value: employee.userId }],
-      })
-
-      const u = user as {
-        name: string
-        email: string
-        image?: string | null
-      } | null
-
-      result.push({
-        id: employee._id,
-        userId: employee.userId,
-        role: employee.role,
-        createdAt: employee.createdAt,
-        name: u?.name ?? 'Unknown',
-        email: u?.email ?? '',
-        image: u?.image ?? null,
-        active: employee.active,
-      })
-    }
-
-    return result
+    return employees.members
   },
 })
 
-export const listPendingInvitations = query({
+export const listPendingInvitations = organizationQuery({
   args: {},
-  returns: v.array(invitationListItem),
   handler: async (ctx) => {
-    await requirePermission(ctx, { employee: ['list'] })
-    const { orgId } = await requireOrganization(ctx)
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+    const invitations = await auth.api.listInvitations({
+      headers,
+    })
 
-    const invitationsResult = await ctx.runQuery(
-      components.betterAuth.adapter.findMany,
-      {
-        model: 'invitation',
-        where: [
-          { field: 'organizationId', operator: 'eq', value: orgId },
-          { field: 'status', operator: 'eq', value: 'pending' },
-        ],
-        paginationOpts: { numItems: 100, cursor: null },
-      },
-    )
-
-    const list = getAdapterPage(invitationsResult) as InvitationRecord[]
-
-    return list.map((inv) => ({
-      id: inv._id,
-      email: inv.email,
-      role: inv.role ?? null,
-      status: inv.status,
-      expiresAt: inv.expiresAt,
-    }))
-  },
-})
-
-export const getRole = query({
-  args: { organizationId: v.optional(v.string()) },
-  returns: v.union(v.string(), v.null()),
-  handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-    const orgId = args.organizationId ?? identity.orgId
-    if (!orgId) return null
-
-    const employee = await getEmployeeForUser(ctx, orgId, identity.userId)
-    return employee?.role ?? null
+    return invitations
   },
 })

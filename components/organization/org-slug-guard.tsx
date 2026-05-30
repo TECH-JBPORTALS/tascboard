@@ -5,6 +5,7 @@ import { RiTBoxLine } from '@remixicon/react'
 import { type Preloaded } from 'convex/react'
 import { useParams, useRouter } from 'next/navigation'
 import { type ReactNode, useEffect, useMemo } from 'react'
+import { OrganizationAccessProvider } from '@/components/organization/organization-access-provider'
 import { api } from '@/convex/_generated/api'
 import { findOrganizationBySlug } from '@/lib/organization-membership'
 
@@ -29,6 +30,7 @@ type OrgSlugGuardProps = {
   preloadedActiveOrganizationQuery: Preloaded<
     typeof api.auth.getActiveOrganization
   >
+  preloadedMemberRoleQuery?: Preloaded<typeof api.auth.getActiveMemberRole>
 }
 
 /**
@@ -40,6 +42,7 @@ export function OrgSlugGuard({
   children,
   preloadedOrganizationsQuery,
   preloadedActiveOrganizationQuery,
+  preloadedMemberRoleQuery,
 }: OrgSlugGuardProps) {
   const router = useRouter()
   const params = useParams<{ orgSlug?: string }>()
@@ -80,6 +83,16 @@ export function OrgSlugGuard({
 
   if (!org) {
     return <OrganizationRouteSkeleton />
+  }
+
+  if (preloadedMemberRoleQuery) {
+    return (
+      <OrganizationAccessProvider
+        preloadedMemberRoleQuery={preloadedMemberRoleQuery}
+      >
+        {children}
+      </OrganizationAccessProvider>
+    )
   }
 
   return <>{children}</>
