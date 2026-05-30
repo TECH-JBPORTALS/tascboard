@@ -6,10 +6,10 @@ import { UserAvatar } from '@/components/employees/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  type DailyRow,
   formatTime,
   getTotalHours,
   STATUS_LABELS,
-  type DailyRow,
 } from '@/lib/attendance-types'
 import { buildActionsColumn } from './daily-columns-actions'
 

@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { api } from '@/convex/_generated/api'
 import {
-  formatTime,
-  getTotalHours,
-  STATUS_LABELS,
+ 
   type AttendanceRecord,
   type AttendanceStatus,
   type EmployeeRef,
   type EnrichedAttendance,
+  formatTime,
+  getTotalHours,
+  STATUS_LABELS,
 } from '@/lib/attendance-types'
 import { DailyRowActions } from './daily-row-actions'
 
