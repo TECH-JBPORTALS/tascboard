@@ -1,19 +1,14 @@
 import { v } from 'convex/values'
 import { components, internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
-import { internalMutation, mutation, query } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import { organizationMutation, privateQuery } from './lib/customFunctions'
 import { getProjectMembers } from './lib/memberHelper'
-import {
-  actorDisplayName,
-  formatProjectDate,
-  logProjectActivity,
-} from './lib/projectActivityLog'
+import { formatProjectDate, logProjectActivity } from './lib/projectActivityLog'
 import { ProjectValidator } from './schema'
 import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from './syncEditor'
 import { removeTrackCascade } from './track'
 
-export const create = mutation({
+export const create = organizationMutation({
   args: ProjectValidator.omit(
     'organizationId',
     'description',
@@ -22,15 +17,10 @@ export const create = mutation({
   ),
 
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-    const { orgId, userId } = await requireOrganization(ctx)
-
+    const { userId, activeOrganizationId: orgId, user } = ctx.session
     if (args.endDate < args.startDate) {
       throw new Error('End date cannot be before start date')
     }
-
-    const now = Date.now()
-
     const insertedProjectId = await ctx.db.insert('projects', {
       organizationId: orgId,
       name: args.name.trim(),
@@ -40,35 +30,31 @@ export const create = mutation({
       startDate: args.startDate,
       endDate: args.endDate,
       status: args.status,
-      createdAt: now,
+      createdAt: Date.now(),
     })
-
     await ctx.runMutation(internal.syncEditor.createEditor, {
       id: getProjectEditorId(insertedProjectId),
       content: EMPTY_PROSEMIRROR_DOC,
     })
-
     await logProjectActivity(ctx, {
       projectId: insertedProjectId,
       organizationId: orgId,
       actorUserId: userId,
-      actorName: actorDisplayName(identity),
+      actorName: user.name,
       kind: 'created',
       toValue: args.name.trim(),
     })
-
     return insertedProjectId
   },
 })
 
-export const list = query({
+export const list = privateQuery({
   args: {},
   handler: async (ctx) => {
-    await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
     const projects = await ctx.db
       .query('projects')
-      .withIndex('by_organization', (q) => q.eq('organizationId', orgId))
+      .withIndex('by_organization', (q) => q.eq('organizationId', orgId!))
       .order('desc')
       .collect()
 
@@ -84,13 +70,12 @@ export const list = query({
   },
 })
 
-export const get = query({
+export const get = privateQuery({
   args: {
     projectId: v.id('projects'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
     const project = await ctx.db.get(args.projectId)
     if (!project || project.organizationId !== orgId) {
       return null
@@ -108,7 +93,7 @@ export const get = query({
   },
 })
 
-export const update = mutation({
+export const update = organizationMutation({
   args: {
     projectId: v.id('projects'),
     body: ProjectValidator.omit(
@@ -118,18 +103,15 @@ export const update = mutation({
       'updatedAt',
     ).partial(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-    const { orgId, userId } = await requireOrganization(ctx)
-    const actorName = actorDisplayName(identity)
+    const { userId, user, activeOrganizationId: orgId } = ctx.session
+    const actorName = user.name
 
     const project = await ctx.db.get(args.projectId)
 
     if (!project || project.organizationId !== orgId) {
       throw new Error('Not found')
     }
-
     const nextStartDate = args.body.startDate ?? project.startDate
     const nextEndDate = args.body.endDate ?? project.endDate
 
@@ -262,15 +244,14 @@ export const update = mutation({
   },
 })
 
-export const updateDescription = mutation({
+export const updateDescription = organizationMutation({
   args: {
     projectId: v.id('projects'),
     description: v.any(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
 
     const project = await ctx.db.get(args.projectId)
 
@@ -287,7 +268,7 @@ export const updateDescription = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = organizationMutation({
   args: {
     projectId: v.id('projects'),
   },
@@ -296,10 +277,8 @@ export const remove = mutation({
     message: v.string(),
   }),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const project = await ctx.db.get(args.projectId)
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
 
     if (!project || project.organizationId !== orgId) {
       throw new Error('Not found')
@@ -345,12 +324,11 @@ export const remove = mutation({
 })
 
 /** Idempotent seed so new organizations have starter projects */
-export const seedStarterProjects = internalMutation({
+export const seedStarterProjects = organizationMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const { orgId } = await requireOrganization(ctx)
-
+    const { activeOrganizationId: orgId } = ctx.session
     const existing = await ctx.db
       .query('projects')
       .withIndex('by_organization', (q) => q.eq('organizationId', orgId))
