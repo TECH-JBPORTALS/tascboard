@@ -1,9 +1,14 @@
 import { v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import {
+  organizationMutation,
+  organizationQuery,
+  privateInternalMutation,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
 import { MeetingValidator } from './schema'
 
-export const create = mutation({
+export const create = organizationMutation({
   args: MeetingValidator.omit(
     'organizationId',
     'createdBy',
@@ -13,8 +18,7 @@ export const create = mutation({
     recipients: v.array(v.string()),
   }),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
     const now = Date.now()
     const meetingId = await ctx.db.insert('meeting', {
       organizationId: orgId,
@@ -41,7 +45,7 @@ export const create = mutation({
     return meetingId
   },
 })
-export const update = mutation({
+export const update = organizationMutation({
   args: {
     meetingId: v.id('meeting'),
     body: MeetingValidator.omit(
@@ -53,8 +57,7 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
     const meeting = await ctx.db.get(args.meetingId)
 
     if (!meeting) {
@@ -65,7 +68,7 @@ export const update = mutation({
       throw new Error('Unauthorized')
     }
 
-    if (meeting.createdBy !== identity.userId) {
+    if (meeting.createdBy !== userId) {
       throw new Error('Unauthorized')
     }
 
@@ -83,24 +86,24 @@ export const update = mutation({
   },
 })
 
-export const list = query({
+export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
     return await ctx.db
       .query('meeting')
-      .withIndex('by_organization', (q) => q.eq('organizationId', orgId))
+      .withIndex('by_organization', (q) => q.eq('organizationId', orgId!))
       .order('desc')
       .collect()
   },
 })
 
-export const get = query({
+export const get = organizationQuery({
   args: {
     meetingId: v.id('meeting'),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await requireOrganization(ctx)
+    const { activeOrganizationId: orgId } = ctx.session
     const meeting = await ctx.db.get(args.meetingId)
     if (!meeting) return null
     if (meeting.organizationId !== orgId) {
@@ -110,13 +113,12 @@ export const get = query({
   },
 })
 
-export const remove = mutation({
+export const remove = organizationMutation({
   args: {
     meetingId: v.id('meeting'),
   },
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
     const meeting = await ctx.db.get(args.meetingId)
     if (!meeting) {
       throw new Error('Meeting not found')
@@ -124,7 +126,7 @@ export const remove = mutation({
     if (meeting.organizationId !== orgId) {
       throw new Error('Unauthorized')
     }
-    if (meeting.createdBy !== identity.userId) {
+    if (meeting.createdBy !== userId) {
       throw new Error('Unauthorized')
     }
     const recipients = await ctx.db
@@ -156,7 +158,7 @@ export const remove = mutation({
   },
 })
 
-export const scheduleMeeting = mutation({
+export const scheduleMeeting = privateMutation({
   args: {
     meetingId: v.id('meeting'),
     startTime: v.number(),
@@ -182,7 +184,7 @@ export const scheduleMeeting = mutation({
   },
 })
 
-export const inviteAttendees = mutation({
+export const inviteAttendees = privateMutation({
   args: {
     scheduleMeetingId: v.id('scheduleMeeting'),
     employeeIds: v.array(v.string()),
@@ -204,7 +206,7 @@ export const inviteAttendees = mutation({
   },
 })
 
-export const sendMeetingReminders = internalMutation({
+export const sendMeetingReminders = privateInternalMutation({
   args: {
     scheduleMeetingId: v.id('scheduleMeeting'),
   },
@@ -221,7 +223,7 @@ export const sendMeetingReminders = internalMutation({
   },
 })
 
-export const recordMeetingNotes = mutation({
+export const recordMeetingNotes = privateMutation({
   args: {
     scheduleMeetingId: v.id('scheduleMeeting'),
     finalNotes: v.string(),
@@ -245,7 +247,7 @@ export const recordMeetingNotes = mutation({
   },
 })
 
-export const trackMeetingAttendance = query({
+export const trackMeetingAttendance = privateQuery({
   args: {
     scheduleMeetingId: v.id('scheduleMeeting'),
   },
@@ -261,7 +263,7 @@ export const trackMeetingAttendance = query({
   },
 })
 
-export const getRecipients = query({
+export const getRecipients = privateQuery({
   args: {
     meetingId: v.id('meeting'),
   },
@@ -273,7 +275,7 @@ export const getRecipients = query({
   },
 })
 
-export const getSchedules = query({
+export const getSchedules = privateQuery({
   args: {
     meetingId: v.id('meeting'),
   },

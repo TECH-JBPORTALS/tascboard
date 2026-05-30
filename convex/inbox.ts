@@ -1,10 +1,15 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { internalMutation, mutation, query } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import {
+  organizationMutation,
+  organizationQuery,
+  privateInternalMutation,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
 import { InboxValidator } from './schema'
 
-export const createInboxItem = internalMutation({
+export const createInboxItem = privateInternalMutation({
   args: InboxValidator.omit('read', 'archived'),
   handler: async (ctx, args) => {
     const insertedItemId = await ctx.db.insert('inboxItems', {
@@ -16,13 +21,12 @@ export const createInboxItem = internalMutation({
   },
 })
 
-export const list = query({
+export const list = organizationQuery({
   args: {
     filter: v.union(v.literal('inbox'), v.literal('archive')),
   },
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     if (args.filter === 'inbox') {
       return await ctx.db
@@ -50,10 +54,10 @@ export const list = query({
   },
 })
 
-export const get = query({
+export const get = privateQuery({
   args: { id: v.id('inboxItems') },
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
+    const { userId } = ctx.session
 
     const item = await ctx.db.get(args.id)
     if (!item || item.recipientUserId !== userId) {
@@ -65,12 +69,11 @@ export const get = query({
 })
 
 /** Latest onboarding inbox item for the active org (used after accepting an invite). */
-export const getOnboardingInboxItemId = query({
+export const getOnboardingInboxItemId = organizationQuery({
   args: {},
   returns: v.union(v.id('inboxItems'), v.null()),
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     const items = await ctx.db
       .query('inboxItems')
@@ -88,12 +91,11 @@ export const getOnboardingInboxItemId = query({
   },
 })
 
-export const unreadCount = query({
+export const unreadCount = organizationQuery({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     const unread = await ctx.db
       .query('inboxItems')
@@ -110,12 +112,11 @@ export const unreadCount = query({
   },
 })
 
-export const archiveCount = query({
+export const archiveCount = organizationQuery({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     const unread = await ctx.db
       .query('inboxItems')
@@ -131,14 +132,12 @@ export const archiveCount = query({
   },
 })
 
-export const markRead = mutation({
+export const markRead = privateMutation({
   args: { itemId: v.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
-
     const doc = await ctx.db.get(args.itemId)
-    if (!doc || doc.recipientUserId !== userId) {
+    if (!doc || doc.recipientUserId !== ctx.session.userId) {
       throw new Error('Not found')
     }
     await ctx.db.patch(args.itemId, { read: true })
@@ -146,11 +145,11 @@ export const markRead = mutation({
   },
 })
 
-export const markUnread = mutation({
+export const markUnread = privateMutation({
   args: { itemId: v.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
+    const { userId } = ctx.session
 
     const doc = await ctx.db.get(args.itemId)
     if (!doc || doc.recipientUserId !== userId) {
@@ -161,11 +160,10 @@ export const markUnread = mutation({
   },
 })
 
-export const listArchived = query({
+export const listArchived = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     return await ctx.db
       .query('inboxItems')
@@ -180,11 +178,11 @@ export const listArchived = query({
   },
 })
 
-export const archive = mutation({
+export const archive = privateMutation({
   args: { itemId: v.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
+    const { userId } = ctx.session
 
     const doc = await ctx.db.get(args.itemId)
     if (!doc || doc.recipientUserId !== userId) {
@@ -195,11 +193,11 @@ export const archive = mutation({
   },
 })
 
-export const unarchive = mutation({
+export const unarchive = privateMutation({
   args: { itemId: v.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
+    const { userId } = ctx.session
 
     const doc = await ctx.db.get(args.itemId)
     if (!doc || doc.recipientUserId !== userId) {
@@ -210,11 +208,11 @@ export const unarchive = mutation({
   },
 })
 
-export const permanentlyDelete = mutation({
+export const permanentlyDelete = privateMutation({
   args: { itemId: v.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { userId } = await requireIdentity(ctx)
+    const { userId } = ctx.session
 
     const doc = await ctx.db.get(args.itemId)
     if (!doc || doc.recipientUserId !== userId) {
@@ -228,12 +226,11 @@ export const permanentlyDelete = mutation({
   },
 })
 
-export const deleteAllArchived = mutation({
+export const deleteAllArchived = organizationMutation({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     const archived = await ctx.db
       .query('inboxItems')
@@ -253,12 +250,11 @@ export const deleteAllArchived = mutation({
   },
 })
 
-export const markAllRead = mutation({
+export const markAllRead = organizationMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     const unread = await ctx.db
       .query('inboxItems')
@@ -279,12 +275,11 @@ export const markAllRead = mutation({
 })
 
 /** Idempotent seed so new workspaces have a Linear-style inbox preview. */
-export const seedWelcomeItems = mutation({
+export const seedWelcomeItems = organizationMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const { userId } = await requireIdentity(ctx)
-    const { orgId } = await requireOrganization(ctx)
+    const { userId, activeOrganizationId: orgId } = ctx.session
 
     const existing = await ctx.db
       .query('inboxItems')

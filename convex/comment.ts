@@ -1,6 +1,5 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 
 function collectText(value: unknown): string {
   if (typeof value === 'string') return value
@@ -25,20 +24,20 @@ function isEmptyEditorBody(body: unknown): boolean {
   return collectText(body).trim().length === 0
 }
 
-export const listByTask = query({
+export const listByTask = privateQuery({
   args: {
     taskId: v.id('tasks'),
   },
-  handler: async (ctx, { taskId }) => {
+  handler: async (ctx, args) => {
     const comments = await ctx.db
       .query('comments')
-      .withIndex('by_task', (q) => q.eq('taskId', taskId))
+      .withIndex('by_task', (q) => q.eq('taskId', args.taskId))
       .collect()
     return comments.sort((a, b) => a._creationTime - b._creationTime)
   },
 })
 
-export const create = mutation({
+export const create = privateMutation({
   args: {
     taskId: v.id('tasks'),
     parentCommentId: v.union(v.id('comments'), v.null()),
@@ -46,8 +45,6 @@ export const create = mutation({
     body: v.any(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     if (isEmptyEditorBody(args.body)) {
       throw new Error('Comment body cannot be empty')
     }
@@ -70,15 +67,13 @@ export const create = mutation({
   },
 })
 
-export const edit = mutation({
+export const edit = privateMutation({
   args: {
     commentId: v.id('comments'),
     body: v.any(),
     deviceName: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const comment = await ctx.db.get(args.commentId)
     if (!comment) throw new Error('Comment not found')
     if (comment.deviceName !== args.deviceName) {
@@ -95,14 +90,12 @@ export const edit = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     commentId: v.id('comments'),
     deviceName: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const comment = await ctx.db.get(args.commentId)
     if (!comment) return
     if (comment.deviceName !== args.deviceName) {
@@ -123,13 +116,11 @@ export const remove = mutation({
   },
 })
 
-export const toggleResolution = mutation({
+export const toggleResolution = privateMutation({
   args: {
     commentId: v.id('comments'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const comment = await ctx.db.get(args.commentId)
     if (!comment) throw new Error('Comment not found')
 

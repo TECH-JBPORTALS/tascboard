@@ -1,18 +1,11 @@
-import type { Id } from '../_generated/dataModel'
+import { format, isSameDay } from 'date-fns'
 import type { MutationCtx } from '../_generated/server'
 import { ProjectActivityValidator } from '../schema'
 
-function getStartOfToday() {
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  return now.getTime()
-}
 export async function logProjectActivity(
   ctx: MutationCtx,
   args: Omit<typeof ProjectActivityValidator.type, 'createdAt'>,
 ) {
-  const startOfToday = getStartOfToday()
-
   const existingActivities = await ctx.db
     .query('projectActivities')
     .withIndex('by_project_actor', (q) =>
@@ -26,7 +19,8 @@ export async function logProjectActivity(
       activity.kind === args.kind &&
       activity.fromValue === args.fromValue &&
       activity.toValue === args.toValue &&
-      (activity.createdAt ?? 0) >= startOfToday,
+      activity.createdAt &&
+      isSameDay(new Date(activity.createdAt), Date.now()),
   )
 
   if (duplicateActivity) {
@@ -45,24 +39,5 @@ export async function logProjectActivity(
 }
 
 export function formatProjectDate(timestamp: number) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(timestamp))
-}
-
-export function actorDisplayName(identity: {
-  name?: string | null
-  email?: string | null
-}) {
-  const name = identity.name?.trim()
-  if (name) {
-    return name
-  }
-  const email = identity.email?.trim()
-  if (email) {
-    return email
-  }
-  return 'Someone'
+  return format(new Date(timestamp), 'MMM d, yyyy')
 }
