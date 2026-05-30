@@ -12,11 +12,12 @@ import {
   RiSettings3Line,
   RiTeamFill,
   RiTeamLine,
+  RiTriangleFill,
 } from '@remixicon/react'
 import { useQuery } from 'convex/react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog'
 import { ProjectIcon } from '@/components/projects/project-icon'
 import {
@@ -28,6 +29,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -40,6 +42,11 @@ import type { PermissionRequest } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { NavPermissionGate } from './nav-permission-gate'
 import { OrganizationSwitcher } from './OrganizationSwitcher'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '../ui/collapsible'
 
 const navItems = [
   { label: 'Inbox', href: '', icon: RiInboxLine, fillIcon: RiInboxFill },
@@ -147,21 +154,12 @@ function ProjectSidebarGroup() {
   const basePath = `/${params.orgSlug}`
   const projects = useQuery(api.project.list)
   const [createOpen, setCreateOpen] = useState(false)
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    () => new Set(),
-  )
 
-  function toggleProject(projectId: string) {
-    setExpandedProjects((prev) => {
-      const next = new Set(prev)
-      if (next.has(projectId)) {
-        next.delete(projectId)
-      } else {
-        next.add(projectId)
-      }
-      return next
-    })
-  }
+  const getProjectActiveState = useMemo(
+    () => (href: string) =>
+      pathname === href || pathname.startsWith(`${href}/`),
+    [pathname],
+  )
 
   return (
     <SidebarGroup>
@@ -178,59 +176,51 @@ function ProjectSidebarGroup() {
         <SidebarMenu>
           {projects?.map((pro) => {
             const href = `${basePath}/pro/${pro._id}`
-            const isProjectActive =
-              pathname === href || pathname.startsWith(`${href}/`)
-            const isExpanded = expandedProjects.has(pro._id) || isProjectActive
+            const isProjectActive = getProjectActiveState(href)
             const tracks = pro.tracks ?? []
             const hasTracks = tracks.length > 0
-            const Chevron = isExpanded ? RiArrowDownSLine : RiArrowRightSLine
 
             return (
               <SidebarMenuItem key={pro._id} className="relative">
-                <SidebarMenuButton
-                  isActive={isProjectActive && !pathname.includes('/track/')}
-                  tooltip={{ children: pro.name }}
-                  render={<Link href={href} />}
-                >
-                  <ProjectIcon icon={pro.icon} color={pro.color} size="sm" />
-                  <span className="truncate">{pro.name}</span>
-                </SidebarMenuButton>
-                {hasTracks ? (
-                  <button
-                    type="button"
-                    className="absolute right-1 top-1.5 flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent"
-                    aria-label={
-                      isExpanded ? 'Collapse tracks' : 'Expand tracks'
-                    }
-                    onClick={(event) => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      toggleProject(pro._id)
-                    }}
+                <Collapsible>
+                  <SidebarMenuButton
+                    isActive={isProjectActive && !pathname.includes('/track/')}
+                    tooltip={{ children: pro.name }}
+                    render={<Link href={href} />}
                   >
-                    <Chevron className="size-3.5" />
-                  </button>
-                ) : null}
-                {hasTracks && isExpanded ? (
-                  <SidebarMenuSub>
-                    {tracks.map((track) => {
-                      const trackHref = `${href}/track/${track._id}`
-                      const isTrackActive = pathname === trackHref
+                    <ProjectIcon icon={pro.icon} color={pro.color} size="sm" />
+                    <span className="truncate">{pro.name}</span>
+                  </SidebarMenuButton>
+                  {hasTracks && (
+                    <CollapsibleTrigger
+                      render={
+                        <SidebarMenuAction className="[&>svg]:size-1.5! group/menu-action [&>svg]:text-muted-foreground" />
+                      }
+                    >
+                      <RiTriangleFill className="rotate-90 group-data-panel-open/menu-action:rotate-180" />
+                    </CollapsibleTrigger>
+                  )}
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {tracks.map((track) => {
+                        const trackHref = `${href}/track/${track._id}`
+                        const isTrackActive = pathname.startsWith(trackHref)
 
-                      return (
-                        <SidebarMenuSubItem key={track._id}>
-                          <SidebarMenuSubButton
-                            isActive={isTrackActive}
-                            render={<Link href={trackHref} />}
-                          >
-                            <RiRouteLine className="size-3.5 opacity-70" />
-                            <span className="truncate">{track.name}</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      )
-                    })}
-                  </SidebarMenuSub>
-                ) : null}
+                        return (
+                          <SidebarMenuSubItem key={track._id}>
+                            <SidebarMenuSubButton
+                              isActive={isTrackActive}
+                              render={<Link href={trackHref} />}
+                            >
+                              <RiRouteLine className="size-3.5 opacity-70" />
+                              <span className="truncate">{track.name}</span>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        )
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
               </SidebarMenuItem>
             )
           })}
