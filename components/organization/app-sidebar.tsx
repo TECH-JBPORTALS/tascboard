@@ -55,7 +55,7 @@ const navItems = [
     href: '/employees',
     icon: RiTeamLine,
     fillIcon: RiTeamFill,
-    permissions: { organization: ['delete'] } as PermissionRequest,
+    permissions: { organization: ['delete'] },
   },
   {
     label: 'Attendance',
@@ -68,7 +68,7 @@ const navItems = [
     href: '/payroll',
     icon: RiMoneyDollarCircleLine,
     fillIcon: RiMoneyDollarCircleFill,
-    permissions: { payroll: ['manage'] },
+    permissions: { organization: ['delete'] },
   },
   {
     label: 'Settings',
