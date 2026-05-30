@@ -48,11 +48,11 @@ export function TaskMembersPicker({
         }
       >
         {membersGroup.taskMembers.length > 0 ? (
-          <span className="flex -space-x-1.5">
+          <span className="flex -space-x-2.5">
             {membersGroup.taskMembers.map((member) => (
               <UserAvatar
                 key={member.employeeId}
-                className="size-5 border-background border-2"
+                className="size-6 border-card border-2"
                 name={member.employee.name}
                 imageUrl={member.employee.image}
               />

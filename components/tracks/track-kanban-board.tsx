@@ -15,7 +15,6 @@ import {
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useMutation } from 'convex/react'
-import { useQuery } from 'convex-helpers/react/cache/hooks'
 import * as React from 'react'
 import { type KanbanTask, TaskCard } from '@/components/tracks/task-card'
 import { TrackKanbanColumn } from '@/components/tracks/track-kanban-column'
@@ -31,6 +30,7 @@ type TrackKanbanBoardProps = {
   track: Doc<'tracks'>
   projectId: Id<'projects'>
   projectName: string
+  tasks: Doc<'tasks'>[]
 }
 
 function findStatusForId(
@@ -70,8 +70,8 @@ export function TrackKanbanBoard({
   track,
   projectId,
   projectName,
+  tasks,
 }: TrackKanbanBoardProps) {
-  const tasks = useQuery(api.task.list, { trackId: track._id })
   const reorderKanban = useMutation(api.task.reorderKanban)
   const [activeTask, setActiveTask] = React.useState<KanbanTask | null>(null)
   const [dropTargetStatus, setDropTargetStatus] =
@@ -143,10 +143,6 @@ export function TrackKanbanBoard({
       status: overStatus,
       statusOrder: newIndex,
     })
-  }
-
-  if (tasks === undefined) {
-    return null
   }
 
   return (

@@ -1,7 +1,5 @@
 import { v } from 'convex/values'
-import type { Doc } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 
 const subtaskReturn = v.object({
   _id: v.id('subtasks'),
@@ -12,47 +10,40 @@ const subtaskReturn = v.object({
   order: v.number(),
 })
 
-export const listByTask = query({
+export const listByTask = privateQuery({
   args: {
     taskId: v.id('tasks'),
   },
   returns: v.array(subtaskReturn),
-  handler: async (ctx, { taskId }) => {
-    await requireIdentity(ctx)
-
+  handler: async (ctx, args) => {
     return await ctx.db
       .query('subtasks')
-      .withIndex('by_task_and_order', (q) => q.eq('taskId', taskId))
+      .withIndex('by_task_and_order', (q) => q.eq('taskId', args.taskId))
       .collect()
   },
 })
 
-export const create = mutation({
+export const create = privateMutation({
   args: {
     taskId: v.id('tasks'),
     title: v.string(),
     deviceName: v.string(),
   },
   returns: v.id('subtasks'),
-  handler: async (ctx, { taskId, title }) => {
-    await requireIdentity(ctx)
-
-    const trimmed = title.trim()
+  handler: async (ctx, args) => {
+    const trimmed = args.title.trim()
 
     if (!trimmed) {
       throw new Error('Subtask title cannot be empty')
     }
-
     const siblings = await ctx.db
       .query('subtasks')
-      .withIndex('by_task_and_order', (q) => q.eq('taskId', taskId))
+      .withIndex('by_task_and_order', (q) => q.eq('taskId', args.taskId))
       .collect()
-
     const order =
       siblings.reduce((max, subtask) => Math.max(max, subtask.order), -1) + 1
-
     return await ctx.db.insert('subtasks', {
-      taskId,
+      taskId: args.taskId,
       title: trimmed,
       completed: false,
       order,
@@ -60,22 +51,19 @@ export const create = mutation({
   },
 })
 
-export const toggle = mutation({
+export const toggle = privateMutation({
   args: {
     subtaskId: v.id('subtasks'),
     deviceName: v.string(),
   },
-  returns: v.null(),
-  handler: async (ctx, { subtaskId }) => {
-    await requireIdentity(ctx)
-
-    const subtask = await ctx.db.get(subtaskId)
+  handler: async (ctx, args) => {
+    const subtask = await ctx.db.get(args.subtaskId)
 
     if (!subtask) {
       throw new Error('Subtask not found')
     }
 
-    await ctx.db.patch(subtaskId, {
+    await ctx.db.patch(args.subtaskId, {
       completed: !subtask.completed,
     })
 
@@ -83,23 +71,20 @@ export const toggle = mutation({
   },
 })
 
-export const rename = mutation({
+export const rename = privateMutation({
   args: {
     subtaskId: v.id('subtasks'),
     title: v.string(),
     deviceName: v.string(),
   },
-  returns: v.null(),
-  handler: async (ctx, { subtaskId, title }) => {
-    await requireIdentity(ctx)
-
-    const subtask = await ctx.db.get(subtaskId)
+  handler: async (ctx, args) => {
+    const subtask = await ctx.db.get(args.subtaskId)
 
     if (!subtask) {
       throw new Error('Subtask not found')
     }
 
-    const trimmed = title.trim()
+    const trimmed = args.title.trim()
 
     if (!trimmed) {
       throw new Error('Subtask title cannot be empty')
@@ -109,7 +94,7 @@ export const rename = mutation({
       return null
     }
 
-    await ctx.db.patch(subtaskId, {
+    await ctx.db.patch(args.subtaskId, {
       title: trimmed,
     })
 
@@ -117,22 +102,20 @@ export const rename = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     subtaskId: v.id('subtasks'),
     deviceName: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, { subtaskId }) => {
-    await requireIdentity(ctx)
-
-    const subtask = await ctx.db.get(subtaskId)
+  handler: async (ctx, args) => {
+    const subtask = await ctx.db.get(args.subtaskId)
 
     if (!subtask) {
       throw new Error('Subtask not found')
     }
 
-    await ctx.db.delete(subtaskId)
+    await ctx.db.delete(args.subtaskId)
 
     return null
   },

@@ -4,7 +4,7 @@ import {
   customQuery,
 } from 'convex-helpers/server/customFunctions'
 import { DataModel } from '../_generated/dataModel'
-import { mutation, query } from '../_generated/server'
+import { internalMutation, mutation, query } from '../_generated/server'
 import { authComponent, createAuth } from '../auth'
 
 async function validateSession(ctx: GenericCtx<DataModel>) {
@@ -70,3 +70,43 @@ export const organizationMutation = customMutation(privateMutation, {
     }
   },
 })
+/** Private Internal Mutation will validate the session and returns BetterAuth session object */
+export const privateInternalMutation = customMutation(internalMutation, {
+  args: {},
+  input: async (ctx, args) => {
+    const session = await validateSession(ctx)
+    return {
+      ctx: {
+        ...ctx,
+        session,
+      },
+      args,
+    }
+  },
+})
+
+/** Organization Internal Mutation will validate the session and returns BetterAuth session object with the active organization id */
+export const organizationInternalMutation = customMutation(
+  privateInternalMutation,
+  {
+    args: {},
+    input: async (ctx, args) => {
+      const session = await validateSession(ctx)
+
+      if (!session.activeOrganizationId) {
+        throw new Error('No active organization')
+      }
+
+      return {
+        ctx: {
+          ...ctx,
+          session: {
+            ...session,
+            activeOrganizationId: session.activeOrganizationId,
+          },
+        },
+        args,
+      }
+    },
+  },
+)

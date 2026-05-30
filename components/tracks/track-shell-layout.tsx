@@ -2,13 +2,18 @@
 
 import { useQuery } from 'convex/react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import { TrackShell } from '@/components/tracks/track-shell'
+import {
+  TrackTaskFiltersProvider,
+  useTrackTaskFiltersContext,
+} from '@/components/tracks/track-task-filters-context'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
-import type { Id } from '@/convex/_generated/dataModel'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
+import { getTrackTaskView } from '@/lib/track-task-filters'
 
 type TrackShellLayoutProps = {
   children: React.ReactNode
@@ -23,11 +28,12 @@ export function TrackShellLayout({ children }: TrackShellLayoutProps) {
   const projectId = params.projectId as Id<'projects'>
   const trackId = params.trackId as Id<'tracks'>
 
+  const pathname = usePathname()
+  const view = getTrackTaskView(pathname)
   const project = useQuery(api.project.get, { projectId })
   const track = useQuery(api.track.get, { trackId })
-  const tasks = useQuery(api.task.listByTrack, { trackId })
 
-  if (project === undefined || track === undefined || tasks === undefined) {
+  if (project === undefined || track === undefined) {
     return <TrackShellPageSkeleton />
   }
 
@@ -56,12 +62,43 @@ export function TrackShellLayout({ children }: TrackShellLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <TrackShell
+    <TrackTaskFiltersProvider
+      trackId={trackId}
+      projectId={projectId}
+      view={view}
+    >
+      <TrackShellLayoutInner
         orgSlug={params.orgSlug}
         project={project}
         track={track}
-        issueCount={tasks.length}
+      >
+        {children}
+      </TrackShellLayoutInner>
+    </TrackTaskFiltersProvider>
+  )
+}
+
+function TrackShellLayoutInner({
+  orgSlug,
+  project,
+  track,
+  children,
+}: {
+  orgSlug: string
+  project: Doc<'projects'>
+  track: Doc<'tracks'>
+  children: React.ReactNode
+}) {
+  const { listArgs } = useTrackTaskFiltersContext()
+  const tasks = useQuery(api.task.list, listArgs)
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <TrackShell
+        orgSlug={orgSlug}
+        project={project}
+        track={track}
+        issueCount={tasks?.length ?? 0}
       >
         {children}
       </TrackShell>

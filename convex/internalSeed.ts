@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
-import { internalMutation } from './_generated/server'
+import { privateInternalMutation } from './lib/customFunctions'
 
-export const seedProjectMember = internalMutation({
+export const seedProjectMember = privateInternalMutation({
   args: {
     projectId: v.id('projects'),
     employeeId: v.string(),
@@ -19,7 +19,7 @@ export const seedProjectMember = internalMutation({
   },
 })
 
-export const seedTrackMember = internalMutation({
+export const seedTrackMember = privateInternalMutation({
   args: {
     trackId: v.id('tracks'),
     employeeId: v.string(),

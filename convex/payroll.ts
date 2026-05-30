@@ -1,8 +1,11 @@
 import { v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
+import {
+  privateInternalMutation,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
 
-export const create = internalMutation({
+export const create = privateInternalMutation({
   args: {
     employeeId: v.string(),
     creditedAt: v.number(),
@@ -24,12 +27,11 @@ export const create = internalMutation({
   },
 })
 
-export const list = query({
+export const list = privateQuery({
   args: {
     employeeId: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const records = await ctx.db
       .query('payroll')
       .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
@@ -39,13 +41,12 @@ export const list = query({
   },
 })
 
-export const listAll = query({
+export const listAll = privateQuery({
   args: {
     from: v.optional(v.number()),
     to: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const records = await ctx.db.query('payroll').collect()
     const filtered = records.filter((p) => {
       const afterFrom = args.from ? p.creditedAt >= args.from : true
@@ -56,18 +57,17 @@ export const listAll = query({
   },
 })
 
-export const get = query({
+export const get = privateQuery({
   args: {
     id: v.id('payroll'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const record = await ctx.db.get(args.id)
     return record ?? null
   },
 })
 
-export const update = mutation({
+export const update = privateMutation({
   args: {
     id: v.id('payroll'),
     basicSalary: v.optional(v.float64()),
@@ -77,7 +77,6 @@ export const update = mutation({
     netSalary: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const { id, ...updates } = args
 
     const record = await ctx.db.get(id)
@@ -94,12 +93,11 @@ export const update = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     id: v.id('payroll'),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const record = await ctx.db.get(args.id)
     if (!record) {
       throw new Error('Payroll record not found')
@@ -110,12 +108,11 @@ export const remove = mutation({
   },
 })
 
-export const getSummary = query({
+export const getSummary = privateQuery({
   args: {
     employeeId: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
     const records = await ctx.db
       .query('payroll')
       .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import { convexTest, TestConvexForDataModel } from 'convex-test'
+import { startOfDay } from 'date-fns'
 
 import { api } from '../_generated/api'
 import { DataModel, Id } from '../_generated/dataModel'
@@ -320,6 +321,127 @@ describe('Task', () => {
     const tasks = await t.query(api.task.list, { trackId })
     expect(tasks.length).toBeGreaterThan(0)
     expect(tasks[0]?.title).toBe('Initial Task')
+  })
+
+  test('list filters by assignee OR', async () => {
+    const secondId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      title: 'Second Task',
+      status: 'backlog',
+      priority: 'low',
+      complexity: 'easy',
+    })
+
+    await t.mutation(api.taskMember.toggleMember, {
+      taskId,
+      employeeId: 'emp-1',
+    })
+    await t.mutation(api.taskMember.toggleMember, {
+      taskId: secondId,
+      employeeId: 'emp-2',
+    })
+
+    const byEmp1 = await t.query(api.task.list, {
+      trackId,
+      assigneeIds: ['emp-1'],
+    })
+    expect(byEmp1.some((task) => task._id === taskId)).toBe(true)
+    expect(byEmp1.some((task) => task._id === secondId)).toBe(false)
+
+    const byEither = await t.query(api.task.list, {
+      trackId,
+      assigneeIds: ['emp-1', 'emp-2'],
+    })
+    expect(byEither.some((task) => task._id === taskId)).toBe(true)
+    expect(byEither.some((task) => task._id === secondId)).toBe(true)
+  })
+
+  test('list filters by label OR', async () => {
+    const labelA = await t.mutation(api.label.create, {
+      projectId,
+      name: 'Bug',
+      color: '#f00',
+    })
+    const labelB = await t.mutation(api.label.create, {
+      projectId,
+      name: 'Feature',
+      color: '#0f0',
+    })
+    const secondId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      title: 'Labeled Task',
+      status: 'backlog',
+      priority: 'low',
+      complexity: 'easy',
+    })
+
+    await t.mutation(api.label.attachToTask, {
+      taskId,
+      labelId: labelA,
+      deviceName: 'test',
+    })
+    await t.mutation(api.label.attachToTask, {
+      taskId: secondId,
+      labelId: labelB,
+      deviceName: 'test',
+    })
+
+    const byA = await t.query(api.task.list, {
+      trackId,
+      labelIds: [labelA],
+    })
+    expect(byA.some((task) => task._id === taskId)).toBe(true)
+    expect(byA.some((task) => task._id === secondId)).toBe(false)
+
+    const byEither = await t.query(api.task.list, {
+      trackId,
+      labelIds: [labelA, labelB],
+    })
+    expect(byEither.some((task) => task._id === taskId)).toBe(true)
+    expect(byEither.some((task) => task._id === secondId)).toBe(true)
+  })
+
+  test('list filters overdue and no due date', async () => {
+    const todayStart = startOfDay(new Date()).getTime()
+    const overdue = await t.query(api.task.list, {
+      trackId,
+      dueTo: todayStart - 1,
+    })
+    expect(overdue.some((task) => task._id === taskId)).toBe(true)
+
+    const noDueId = await t.mutation(api.task.create, {
+      trackId,
+      projectId,
+      title: 'No due date',
+      status: 'backlog',
+      priority: 'low',
+      complexity: 'easy',
+    })
+
+    const noDueOnly = await t.query(api.task.list, {
+      trackId,
+      noDueDate: true,
+    })
+    expect(noDueOnly.some((task) => task._id === noDueId)).toBe(true)
+    expect(noDueOnly.some((task) => task._id === taskId)).toBe(false)
+  })
+
+  test('list filters by statuses OR', async () => {
+    await t.mutation(api.task.update, {
+      taskId,
+      body: { status: 'done' },
+    })
+
+    const filtered = await t.query(api.task.list, {
+      trackId,
+      statuses: ['done', 'backlog'],
+    })
+    expect(
+      filtered.every((task) => ['done', 'backlog'].includes(task.status)),
+    ).toBe(true)
+    expect(filtered.some((task) => task._id === taskId)).toBe(true)
   })
 
   test('reorderKanban moves task within column', async () => {

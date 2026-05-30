@@ -1,19 +1,14 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
-import { privateQuery } from './lib/customFunctions'
-import { getUserByUserId } from './lib/getUser'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 
-export const toggleMember = mutation({
+export const toggleMember = privateMutation({
   args: {
     trackId: v.id('tracks'),
     employeeId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const existing = await ctx.db
       .query('trackMember')
       .withIndex('by_track_employee', (q) =>
@@ -38,15 +33,13 @@ export const toggleMember = mutation({
   },
 })
 
-export const setLead = mutation({
+export const setLead = privateMutation({
   args: {
     trackId: v.id('tracks'),
     employeeId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const existingMember = await ctx.db
       .query('trackMember')
       .withIndex('by_track_employee', (q) =>
@@ -87,15 +80,13 @@ export const setLead = mutation({
   },
 })
 
-export const unsetLead = mutation({
+export const unsetLead = privateMutation({
   args: {
     trackId: v.id('tracks'),
     employeeId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const member = await ctx.db
       .query('trackMember')
       .withIndex('by_track_employee', (q) =>
@@ -122,8 +113,6 @@ export const list = privateQuery({
     lead: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     let members: Doc<'trackMember'>[] = []
 
     if (args.lead !== undefined) {
@@ -161,8 +150,8 @@ export const list = privateQuery({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : (ctx.session.user?.name ?? 'Unknown'),
-            email: ctx.session.user?.email ?? '',
+              : ctx.session.user.name,
+            email: ctx.session.user.email ?? '',
             image: image ?? '',
           },
         }
