@@ -8,6 +8,8 @@ import {
   RiCalendarCheckLine,
   RiInboxFill,
   RiInboxLine,
+  RiMoneyDollarCircleFill,
+  RiMoneyDollarCircleLine,
   RiRouteLine,
   RiSettings3Line,
   RiTeamFill,
@@ -63,6 +65,13 @@ const navItems = [
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
     permissions: { attendance: ['read'] },
+  },
+  {
+    label: 'Payroll',
+    href: '/payroll',
+    icon: RiMoneyDollarCircleLine,
+    fillIcon: RiMoneyDollarCircleFill,
+    permissions: { payroll: ['manage'] },
   },
   {
     label: 'Settings',
