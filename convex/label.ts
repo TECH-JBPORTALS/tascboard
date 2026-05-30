@@ -1,8 +1,7 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
-import { actorDisplayName, logTaskActivity } from './lib/taskActivityLog'
+import { privateMutation, privateQuery } from './lib/customFunctions'
+import { logTaskActivity } from './lib/taskActivityLog'
 
 const labelReturn = v.object({
   _id: v.id('labels'),
@@ -12,14 +11,12 @@ const labelReturn = v.object({
   projectId: v.id('projects'),
 })
 
-export const listByProject = query({
+export const listByProject = privateQuery({
   args: {
     projectId: v.id('projects'),
   },
   returns: v.array(labelReturn),
   handler: async (ctx, { projectId }) => {
-    await requireIdentity(ctx)
-
     return await ctx.db
       .query('labels')
       .withIndex('by_project', (q) => q.eq('projectId', projectId))
@@ -27,14 +24,12 @@ export const listByProject = query({
   },
 })
 
-export const listTaskLabels = query({
+export const listTaskLabels = privateQuery({
   args: {
     taskId: v.id('tasks'),
   },
   returns: v.array(labelReturn),
   handler: async (ctx, { taskId }) => {
-    await requireIdentity(ctx)
-
     const links = await ctx.db
       .query('taskLabels')
       .withIndex('by_task', (q) => q.eq('taskId', taskId))
@@ -48,7 +43,7 @@ export const listTaskLabels = query({
   },
 })
 
-export const create = mutation({
+export const create = privateMutation({
   args: {
     projectId: v.id('projects'),
     name: v.string(),
@@ -56,8 +51,6 @@ export const create = mutation({
   },
   returns: v.id('labels'),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const trimmed = args.name.trim()
 
     if (!trimmed) {
@@ -72,14 +65,12 @@ export const create = mutation({
   },
 })
 
-export const get = query({
+export const get = privateQuery({
   args: {
     labelId: v.id('labels'),
   },
   returns: v.union(labelReturn, v.null()),
   handler: async (ctx, { labelId }) => {
-    await requireIdentity(ctx)
-
     const label = await ctx.db.get(labelId)
 
     if (!label) {
@@ -90,7 +81,7 @@ export const get = query({
   },
 })
 
-export const update = mutation({
+export const update = privateMutation({
   args: {
     labelId: v.id('labels'),
     body: v.object({
@@ -100,8 +91,6 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, { labelId, body }) => {
-    await requireIdentity(ctx)
-
     const label = await ctx.db.get(labelId)
 
     if (!label) {
@@ -130,14 +119,12 @@ export const update = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     labelId: v.id('labels'),
   },
   returns: v.null(),
   handler: async (ctx, { labelId }) => {
-    await requireIdentity(ctx)
-
     const label = await ctx.db.get(labelId)
 
     if (!label) {
@@ -157,7 +144,7 @@ export const remove = mutation({
   },
 })
 
-export const attachToTask = mutation({
+export const attachToTask = privateMutation({
   args: {
     taskId: v.id('tasks'),
     labelId: v.id('labels'),
@@ -165,8 +152,6 @@ export const attachToTask = mutation({
   },
   returns: v.union(v.id('taskLabels'), v.null()),
   handler: async (ctx, { taskId, labelId }) => {
-    const identity = await requireIdentity(ctx)
-
     const label = await ctx.db.get(labelId)
 
     if (!label) {
@@ -189,8 +174,8 @@ export const attachToTask = mutation({
 
     await logTaskActivity(ctx, {
       taskId,
-      actorUserId: identity.userId,
-      actorName: actorDisplayName(identity),
+      actorUserId: ctx.session.userId,
+      actorName: ctx.session.user.name,
       kind: 'label_added',
       toValue: label.name,
       meta: label.color,
@@ -200,7 +185,7 @@ export const attachToTask = mutation({
   },
 })
 
-export const detachFromTask = mutation({
+export const detachFromTask = privateMutation({
   args: {
     taskId: v.id('tasks'),
     labelId: v.id('labels'),
@@ -208,8 +193,6 @@ export const detachFromTask = mutation({
   },
   returns: v.null(),
   handler: async (ctx, { taskId, labelId }) => {
-    const identity = await requireIdentity(ctx)
-
     const label = await ctx.db.get(labelId)
 
     const links = await ctx.db
@@ -228,8 +211,8 @@ export const detachFromTask = mutation({
     if (label) {
       await logTaskActivity(ctx, {
         taskId,
-        actorUserId: identity.userId,
-        actorName: actorDisplayName(identity),
+        actorUserId: ctx.session.userId,
+        actorName: ctx.session.user.name,
         kind: 'label_removed',
         fromValue: label.name,
         meta: label.color,

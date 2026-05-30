@@ -1,14 +1,11 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 import { AttendanceValidator } from './schema'
 
-export const createAttendance = mutation({
+export const createAttendance = privateMutation({
   args: AttendanceValidator.omit('createdAt', 'updatedAt'),
   returns: v.id('attendance'),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const existingAttendance = await ctx.db
       .query('attendance')
       .withIndex('by_employee_and_date', (q) =>
@@ -31,14 +28,12 @@ export const createAttendance = mutation({
   },
 })
 
-export const listByEmployee = query({
+export const listByEmployee = privateQuery({
   args: {
     employeeId: v.string(),
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     return await ctx.db
       .query('attendance')
       .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
@@ -47,15 +42,13 @@ export const listByEmployee = query({
   },
 })
 
-export const getAttendanceByDate = query({
+export const getAttendanceByDate = privateQuery({
   args: {
     employeeId: v.string(),
     recordDate: v.number(),
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     return await ctx.db
       .query('attendance')
       .withIndex('by_employee_and_date', (q) =>
@@ -65,7 +58,7 @@ export const getAttendanceByDate = query({
   },
 })
 
-export const updateAttendance = mutation({
+export const updateAttendance = privateMutation({
   args: {
     attendanceId: v.id('attendance'),
     body: AttendanceValidator.omit(
@@ -76,8 +69,6 @@ export const updateAttendance = mutation({
     ).partial(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const attendance = await ctx.db.get(args.attendanceId)
 
     if (!attendance) {
@@ -106,14 +97,12 @@ export const updateAttendance = mutation({
   },
 })
 
-export const deleteAttendance = mutation({
+export const deleteAttendance = privateMutation({
   args: {
     attendanceId: v.id('attendance'),
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const attendance = await ctx.db.get(args.attendanceId)
 
     if (!attendance) {
@@ -126,14 +115,12 @@ export const deleteAttendance = mutation({
   },
 })
 
-export const markLogout = mutation({
+export const markLogout = privateMutation({
   args: {
     attendanceId: v.id('attendance'),
     logoutTime: v.number(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const attendance = await ctx.db.get(args.attendanceId)
 
     if (!attendance) {
@@ -149,14 +136,12 @@ export const markLogout = mutation({
   },
 })
 
-export const listTodayAttendance = query({
+export const listTodayAttendance = privateQuery({
   args: {
     startOfDay: v.number(),
     endOfDay: v.number(),
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     return await ctx.db
       .query('attendance')
       .filter((q) =>

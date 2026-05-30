@@ -1,36 +1,32 @@
 import { v } from 'convex/values'
 import { Doc } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
-import { requireIdentity } from './lib/auth'
+import { privateMutation, privateQuery } from './lib/customFunctions'
 import { EmployeeTodoPriorityValidator } from './schema'
 // GET ALL
-export const list = query({
+export const list = privateQuery({
   args: {
     employeeId: v.string(),
   },
-  handler: async (ctx, { employeeId }) => {
-    await requireIdentity(ctx)
-
+  handler: async (ctx, args) => {
     return await ctx.db
       .query('employeeTodos')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employeeId))
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
       .collect()
   },
 })
 
 // GET BY ID
-export const get = query({
+export const get = privateQuery({
   args: {
     todoId: v.id('employeeTodos'),
   },
   handler: async (ctx, { todoId }) => {
-    await requireIdentity(ctx)
     return await ctx.db.get(todoId)
   },
 })
 
 // CREATE
-export const create = mutation({
+export const create = privateMutation({
   args: {
     employeeId: v.string(),
     title: v.string(),
@@ -38,8 +34,6 @@ export const create = mutation({
     priority: EmployeeTodoPriorityValidator,
   },
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const title = args.title.trim()
     if (!title) throw new Error('Title cannot be empty')
 
@@ -56,7 +50,7 @@ export const create = mutation({
 })
 
 // UPDATE
-export const update = mutation({
+export const update = privateMutation({
   args: {
     todoId: v.id('employeeTodos'),
     body: v.object({
@@ -68,51 +62,47 @@ export const update = mutation({
       isCompleted: v.optional(v.boolean()),
     }),
   },
-  handler: async (ctx, { todoId, body }) => {
-    await requireIdentity(ctx)
-
-    const todo = await ctx.db.get(todoId)
+  handler: async (ctx, args) => {
+    const todo = await ctx.db.get(args.todoId)
     if (!todo) throw new Error('Todo not found')
 
     const patch: Partial<Doc<'employeeTodos'>> = {
       updatedAt: Date.now(),
     }
 
-    if (body.title !== undefined) {
-      const title = body.title.trim()
+    if (args.body.title !== undefined) {
+      const title = args.body.title.trim()
       if (!title) throw new Error('Title cannot be empty')
       patch.title = title
     }
 
-    if (body.description !== undefined) {
-      patch.description = body.description?.trim()
+    if (args.body.description !== undefined) {
+      patch.description = args.body.description?.trim()
     }
 
-    if (body.priority !== undefined) {
-      patch.priority = body.priority
+    if (args.body.priority !== undefined) {
+      patch.priority = args.body.priority
     }
 
-    if (body.isCompleted !== undefined) {
-      patch.isCompleted = body.isCompleted
+    if (args.body.isCompleted !== undefined) {
+      patch.isCompleted = args.body.isCompleted
     }
 
-    await ctx.db.patch(todoId, patch)
+    await ctx.db.patch(args.todoId, patch)
     return null
   },
 })
 
 // DELETE
-export const remove = mutation({
+export const remove = privateMutation({
   args: {
     todoId: v.id('employeeTodos'),
   },
-  handler: async (ctx, { todoId }) => {
-    await requireIdentity(ctx)
-
-    const todo = await ctx.db.get(todoId)
+  handler: async (ctx, args) => {
+    const todo = await ctx.db.get(args.todoId)
     if (!todo) throw new Error('Todo not found')
 
-    await ctx.db.delete(todoId)
+    await ctx.db.delete(args.todoId)
     return null
   },
 })

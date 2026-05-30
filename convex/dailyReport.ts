@@ -1,18 +1,19 @@
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import {
+  organizationMutation,
+  organizationQuery,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
 import { DailyReportValidator } from './schema'
 
-export const create = mutation({
+export const create = organizationMutation({
   args: DailyReportValidator.omit('createdAt', 'updatedAt'),
 
   returns: v.id('dailyReport'),
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-    await requireOrganization(ctx)
-
     const reportId = await ctx.db.insert('dailyReport', {
       ...args,
       createdAt: Date.now(),
@@ -22,24 +23,19 @@ export const create = mutation({
   },
 })
 
-export const list = query({
+export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    await requireIdentity(ctx)
-    await requireOrganization(ctx)
-
     return await ctx.db.query('dailyReport').order('desc').collect()
   },
 })
 
-export const get = query({
+export const get = organizationQuery({
   args: {
     reportId: v.id('dailyReport'),
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const report = await ctx.db.get(args.reportId)
 
     if (!report) {
@@ -50,7 +46,7 @@ export const get = query({
   },
 })
 
-export const update = mutation({
+export const update = organizationMutation({
   args: {
     reportId: v.id('dailyReport'),
     body: DailyReportValidator.omit(
@@ -61,8 +57,6 @@ export const update = mutation({
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const { reportId, body } = args
 
     const report = await ctx.db.get(reportId)
@@ -89,14 +83,12 @@ export const update = mutation({
   },
 })
 
-export const remove = mutation({
+export const remove = organizationMutation({
   args: {
     reportId: v.id('dailyReport'),
   },
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const report = await ctx.db.get(args.reportId)
 
     if (!report) {
@@ -119,7 +111,7 @@ export const remove = mutation({
   },
 })
 
-export const createTaskTag = mutation({
+export const createTaskTag = privateMutation({
   args: {
     reportId: v.id('dailyReport'),
     taskId: v.id('tasks'),
@@ -128,8 +120,6 @@ export const createTaskTag = mutation({
   returns: v.id('dailyReportTaskTag'),
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const existing = await ctx.db
       .query('dailyReportTaskTag')
       .withIndex('by_reportId_taskId', (q) =>
@@ -150,7 +140,7 @@ export const createTaskTag = mutation({
   },
 })
 
-export const listTaskTags = query({
+export const listTaskTags = privateQuery({
   args: {
     reportId: v.id('dailyReport'),
   },
@@ -165,8 +155,6 @@ export const listTaskTags = query({
     }),
   ),
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     return await ctx.db
       .query('dailyReportTaskTag')
       .withIndex('by_reportId', (q) => q.eq('reportId', args.reportId))
@@ -174,7 +162,7 @@ export const listTaskTags = query({
   },
 })
 
-export const updateTaskTag = mutation({
+export const updateTaskTag = privateMutation({
   args: {
     tagId: v.id('dailyReportTaskTag'),
     taskId: v.optional(v.id('tasks')),
@@ -184,8 +172,6 @@ export const updateTaskTag = mutation({
   returns: v.null(),
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const tag = await ctx.db.get(args.tagId)
 
     if (!tag) {
@@ -235,7 +221,7 @@ export const updateTaskTag = mutation({
   },
 })
 
-export const removeTaskTag = mutation({
+export const removeTaskTag = privateMutation({
   args: {
     tagId: v.id('dailyReportTaskTag'),
   },
@@ -243,8 +229,6 @@ export const removeTaskTag = mutation({
   returns: v.null(),
 
   handler: async (ctx, args) => {
-    await requireIdentity(ctx)
-
     const tag = await ctx.db.get(args.tagId)
 
     if (!tag) {
@@ -257,14 +241,12 @@ export const removeTaskTag = mutation({
   },
 })
 
-export const seedDailyReports = mutation({
+export const seedDailyReports = privateMutation({
   args: {},
 
   returns: v.null(),
 
   handler: async (ctx) => {
-    const identity = await requireIdentity(ctx)
-
     const existing = await ctx.db.query('dailyReport').collect()
 
     if (existing.length > 0) {
@@ -273,23 +255,23 @@ export const seedDailyReports = mutation({
 
     const samples: Omit<Doc<'dailyReport'>, '_id' | '_creationTime'>[] = [
       {
-        employeeId: identity.userId,
+        employeeId: ctx.session.userId,
         reportDate: Date.now(),
         workSummary:
           'Completed dashboard UI implementation and fixed authentication bugs.',
         loginTime: '09:00 AM',
         logoutTime: '06:00 PM',
-        reviewerId: identity.userId,
+        reviewerId: ctx.session.userId,
         remark: 'Good progress',
         createdAt: Date.now(),
       },
       {
-        employeeId: identity.userId,
+        employeeId: ctx.session.userId,
         reportDate: Date.now(),
         workSummary: 'Worked on Convex backend APIs and optimized queries.',
         loginTime: '09:30 AM',
         logoutTime: '06:30 PM',
-        reviewerId: identity.userId,
+        reviewerId: ctx.session.userId,
         remark: 'Need query review',
         createdAt: Date.now(),
       },

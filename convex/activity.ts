@@ -1,8 +1,8 @@
 import { v } from 'convex/values'
-import { query } from './_generated/server'
 import { requireIdentity } from './lib/auth'
+import { privateQuery } from './lib/customFunctions'
 
-export const listByTask = query({
+export const listByTask = privateQuery({
   args: {
     taskId: v.id('tasks'),
     limit: v.optional(v.number()),
