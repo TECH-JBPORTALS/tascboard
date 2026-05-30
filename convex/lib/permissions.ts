@@ -1,7 +1,5 @@
 export {
   ac,
-  admin,
-  checkRolePermission,
   employee,
   type OrgRole,
   orgRoles,

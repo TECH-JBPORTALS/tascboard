@@ -10,16 +10,21 @@ export default async function OrgLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [preloadedOrganizationsQuery, preloadedActiveOrganizationQuery] =
-    await Promise.all([
-      preloadAuthQuery(api.auth.listOrganizations),
-      preloadAuthQuery(api.auth.getActiveOrganization),
-    ])
+  const [
+    preloadedOrganizationsQuery,
+    preloadedActiveOrganizationQuery,
+    preloadedMemberRoleQuery,
+  ] = await Promise.all([
+    preloadAuthQuery(api.auth.listOrganizations),
+    preloadAuthQuery(api.auth.getActiveOrganization),
+    preloadAuthQuery(api.auth.getActiveMemberRole),
+  ])
 
   return (
     <OrgSlugGuard
       preloadedOrganizationsQuery={preloadedOrganizationsQuery}
       preloadedActiveOrganizationQuery={preloadedActiveOrganizationQuery}
+      preloadedMemberRoleQuery={preloadedMemberRoleQuery}
     >
       <SidebarProvider
         style={{ '--header-height': '56px' } as React.CSSProperties}

@@ -34,7 +34,7 @@ const employeeDetails = v.object({
 
 export const listEmployees = organizationQuery({
   args: {},
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
     const employees = await auth.api.listMembers({
       headers,
@@ -49,12 +49,24 @@ export const listEmployees = organizationQuery({
   },
 })
 
-export const getEmployeeDetails = query({
+export const listInvitations = organizationQuery({
+  args: {},
+  handler: async (ctx) => {
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+    const invitations = await auth.api.listInvitations({
+      headers,
+      query: { organizationId: ctx.session.activeOrganizationId },
+    })
+
+    return invitations
+  },
+})
+
+export const getEmployeeDetails = organizationQuery({
   args: { employeeId: v.string() },
   returns: v.union(employeeDetails, v.null()),
   handler: async (ctx, args) => {
-    const { orgId } = await requirePermission(ctx, { employee: ['list'] })
-
+    const { activeOrganizationId: orgId } = ctx.session
     const employee = await ctx.runQuery(components.betterAuth.adapter.findOne, {
       model: 'employee',
       where: [

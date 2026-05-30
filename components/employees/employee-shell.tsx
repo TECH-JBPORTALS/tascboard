@@ -3,7 +3,7 @@
 import { RiTeamLine } from '@remixicon/react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
-import { PermissionGate } from '@/components/auth/PermissionGate'
+import { Protect } from '@/components/auth/protect'
 import { PageHeader } from '@/components/ui/page-header'
 import { authClient } from '@/lib/auth-client'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
@@ -29,9 +29,9 @@ export function EmployeesShell({ children }: { children: React.ReactNode }) {
         description="Manage employees and invitations"
         actions={
           org?.id ? (
-            <PermissionGate permissions={{ employee: ['invite'] }}>
+            <Protect permissions={{ organization: ['delete'] }}>
               <InviteEmployeeDialog organizationId={org.id} />
-            </PermissionGate>
+            </Protect>
           ) : null
         }
       />
