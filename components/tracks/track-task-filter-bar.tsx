@@ -6,7 +6,6 @@ import {
   RiCloseLine,
   RiFilter3Line,
   RiLoader2Line,
-  RiPriceTag2Line,
   RiPriceTag3Line,
   RiRunLine,
   RiUserLine,
