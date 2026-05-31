@@ -70,12 +70,6 @@ const navItems = [
     fillIcon: RiMoneyDollarCircleFill,
     permissions: { organization: ['delete'] },
   },
-  {
-    label: 'Settings',
-    href: '/settings',
-    icon: RiSettings3Line,
-    fillIcon: RiSettings3Line,
-  },
 ]
 
 export function AppSidebar({
@@ -91,11 +85,7 @@ export function AppSidebar({
   return (
     <Sidebar {...props} className={cn('group', className)}>
       <SidebarHeader className="p-2 h-14  justify-center border-b">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <OrganizationSwitcher />
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <OrganizationSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

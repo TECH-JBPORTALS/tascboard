@@ -5,10 +5,10 @@ import { useQuery } from 'convex-helpers/react/cache/hooks'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { DeleteProjectSection } from '@/components/settings/delete-project-section'
 import { ProjectIconPicker } from '@/components/projects/project-icon-picker'
 import { ProjectMangerPicker } from '@/components/projects/project-manager-picker'
 import { ProjectMembersPicker } from '@/components/projects/project-members-picker'
+import { DeleteProjectSection } from '@/components/settings/delete-project-section'
 import {
   Field,
   FieldDescription,
@@ -57,7 +57,9 @@ export function ProjectGeneralSettingsPage() {
       toast.success('Project name updated')
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to update project name',
+        error instanceof Error
+          ? error.message
+          : 'Failed to update project name',
       )
     } finally {
       setIsSavingName(false)
@@ -83,7 +85,9 @@ export function ProjectGeneralSettingsPage() {
   }
 
   if (project === null) {
-    return <div className="text-sm text-muted-foreground">Project not found</div>
+    return (
+      <div className="text-sm text-muted-foreground">Project not found</div>
+    )
   }
 
   return (

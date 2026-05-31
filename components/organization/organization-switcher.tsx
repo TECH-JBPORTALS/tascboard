@@ -1,116 +1,93 @@
 'use client'
 
-import {
-  RiAddLine,
-  RiArrowDownSFill,
-  RiArrowDownSLine,
-  RiCheckLine,
-  RiExpandUpDownFill,
-} from '@remixicon/react'
+import { RiAddLine, RiArrowDownSLine } from '@remixicon/react'
+import { useMutation } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache/hooks'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
 import { parseOrganizationMetadata } from '@/lib/organization'
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '../ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
-import { SidebarMenuButton } from '../ui/sidebar'
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarLabel,
+  MenubarMenu,
+  MenubarRadioGroup,
+  MenubarRadioItem,
+  MenubarSeparator,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarTrigger,
+} from '../ui/menubar'
+import { SidebarMenuButton, SidebarMenuSkeleton } from '../ui/sidebar'
 import { OrganizationAvatar } from './organizatoin-avatar'
-
-type OrganizationListItem = {
-  id: string
-  name: string
-  slug: string
-  metadata?: string | Record<string, unknown> | null
-}
-
-type OrgComboValue = { slug: string; name: string }
 
 export function OrganizationSwitcher() {
   const router = useRouter()
   const params = useParams<{ orgSlug: string }>()
   const [isSwitching, setIsSwitching] = useState(false)
-  const { data: organizations, isPending } = authClient.useListOrganizations()
-  const { data: session } = authClient.useSession()
+  const {
+    data: organizations,
+    isPending,
+    isRefetching,
+  } = authClient.useListOrganizations()
+  const setActiveOrganization = useMutation(api.auth.setActiveOrganization)
+  const activeOrganization = useQuery(api.auth.getActiveOrganization)
 
-  const orgList = (organizations ?? []) as OrganizationListItem[]
-  const activeOrganizationId = session?.session.activeOrganizationId
-  const current =
-    orgList.find((org) => org.slug === params.orgSlug) ??
-    orgList.find((org) => org.id === activeOrganizationId) ??
-    orgList[0]
-
-  const comboValue = useMemo<OrgComboValue | null>(
-    () => (current ? { slug: current.slug, name: current.name } : null),
-    [current],
+  const current = organizations?.find(
+    (org) => org.id === activeOrganization?.id,
   )
 
-  async function switchOrganization(org: OrganizationListItem) {
-    if (org.slug === params.orgSlug) {
+  async function switchOrganization(
+    org: NonNullable<typeof organizations>[number],
+  ) {
+    if (org.slug === params.orgSlug || !org.id) {
       return
     }
 
     setIsSwitching(true)
-    const result = await authClient.organization.setActive({
-      organizationSlug: org.slug,
+    const result = await setActiveOrganization({
+      organizationId: org.id,
     })
+    if (result) {
+      router.push(`/${result.slug}`)
+      toast.info(
+        <>
+          Switched to <b>{result.name}</b>
+        </>,
+        {
+          position: 'bottom-center',
+        },
+      )
+    }
     setIsSwitching(false)
-
-    if (!result.error) {
-      router.push(`/${org.slug}`)
-      router.refresh()
-    }
   }
 
-  function handleOrganizationChange(slug: string) {
-    if (!slug) {
-      return
-    }
-    if (slug === params.orgSlug) {
-      return
-    }
-    const org = orgList.find((o) => o.slug === slug)
-
-    if (org) {
-      void switchOrganization(org)
-    }
+  if (current === undefined || isSwitching || isPending || isRefetching) {
+    return <SidebarMenuSkeleton className="w-full" />
   }
 
-  if (isPending || isSwitching) {
-    return (
-      <div className="h-9 w-full animate-pulse rounded-lg bg-sidebar-accent" />
-    )
+  if (current === null || organizations === null) {
+    router.replace('/select-organization')
+    return null
   }
 
-  if (!current || !comboValue) {
-    return (
-      <Button
-        variant="outline"
-        className="w-full justify-start"
-        render={<Link href="/create-organization" />}
-      >
-        <RiAddLine />
-        Create organization
-      </Button>
-    )
-  }
-
-  const currentMetadata = parseOrganizationMetadata(current.metadata)
+  const currentMetadata = parseOrganizationMetadata(current?.metadata)
 
   return (
-    <Popover>
-      <SidebarMenuButton
-        size={'sm'}
-        className="max-w-44 w-fit px-1 gap-1.5"
-        render={<PopoverTrigger />}
+    <MenubarMenu>
+      <MenubarTrigger
+        render={
+          <SidebarMenuButton
+            variant={'outline'}
+            className="w-full bg-sidebar-accent/50"
+          />
+        }
       >
         <OrganizationAvatar
           name={current.name}
@@ -121,41 +98,50 @@ export function OrganizationSwitcher() {
           {current.name}
         </span>
         <RiArrowDownSLine className="ml-auto text-muted-foreground" />
-      </SidebarMenuButton>
+      </MenubarTrigger>
 
-      <PopoverContent className={'max-w-[240px]! p-0'}>
-        <Command value={current.slug}>
-          <CommandInput placeholder="Search..." />
-          <CommandList>
-            <CommandEmpty>No organization found</CommandEmpty>
-
-            <CommandGroup heading={'Organizations'}>
-              {orgList.map((org) => {
-                const metadata = parseOrganizationMetadata(org.metadata)
-                return (
-                  <CommandItem
-                    onSelect={() => handleOrganizationChange(org.slug)}
-                    key={org.id}
-                    value={org.slug}
-                  >
+      <MenubarContent className={'min-w-60 backdrop-blur-sm'}>
+        <MenubarGroup>
+          <MenubarItem render={<Link href={`/${params.orgSlug}/settings`} />}>
+            Settings
+          </MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger>Switch organization</MenubarSubTrigger>
+            <MenubarSubContent className={'min-w-52 backdrop-blur-xs'}>
+              <MenubarRadioGroup
+                value={current}
+                onValueChange={(org) => void switchOrganization(org)}
+              >
+                <MenubarLabel>Your organizations</MenubarLabel>
+                {organizations.map((org) => (
+                  <MenubarRadioItem inset value={org} key={org.id}>
                     <OrganizationAvatar
                       name={org.name}
-                      imageStorageId={metadata.imageStorageId}
-                      className="size-6"
+                      imageStorageId={
+                        parseOrganizationMetadata(org.metadata).imageStorageId
+                      }
+                      className="size-5!"
                     />
-
                     {org.name}
+                  </MenubarRadioItem>
+                ))}
+              </MenubarRadioGroup>
+              <MenubarGroup>
+                <MenubarLabel>Account</MenubarLabel>
+                <MenubarItem render={<Link href={'/create-organization'} />}>
+                  <RiAddLine />
+                  Create new organization...
+                </MenubarItem>
+              </MenubarGroup>
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSeparator />
 
-                    {org.slug === current.slug && (
-                      <RiCheckLine className="ml-auto" />
-                    )}
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          <MenubarGroup>
+            <MenubarItem>Log out</MenubarItem>
+          </MenubarGroup>
+        </MenubarGroup>
+      </MenubarContent>
+    </MenubarMenu>
   )
 }

@@ -4,6 +4,7 @@ import { RiArrowRightSLine } from '@remixicon/react'
 import { useQuery } from 'convex/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import React from 'react'
 import {
   Field,
   FieldDescription,
@@ -14,9 +15,8 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
-import { Card, CardContent } from '../ui/card'
-import React from 'react'
 import { ProjectIcon } from '../projects/project-icon'
+import { Card, CardContent } from '../ui/card'
 
 const settingsSections = [
   {
