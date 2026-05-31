@@ -1,7 +1,8 @@
 'use client'
 
 import { RiAccountCircle2Line } from '@remixicon/react'
-import { useMutation, useQuery } from 'convex/react'
+import { useMutation } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache'
 import * as React from 'react'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'

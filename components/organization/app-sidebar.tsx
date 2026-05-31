@@ -14,7 +14,7 @@ import {
   RiTeamLine,
   RiTriangleFill,
 } from '@remixicon/react'
-import { useQuery } from 'convex/react'
+import { useQuery } from 'convex-helpers/react/cache'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 import React, { useMemo, useState } from 'react'
