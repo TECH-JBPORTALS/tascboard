@@ -58,7 +58,7 @@ export function InboxPage() {
   const router = useRouter()
   const selected = useQuery(api.inbox.get, { id: inboxItemId })
   const onboardingStatus = useQuery(
-    api.employees.profile.getMyOnboardingStatus,
+    api.employeeProfiles.getMyOnboardingStatus,
     {},
   )
   const markReadMutation = useMutation(api.inbox.markRead)

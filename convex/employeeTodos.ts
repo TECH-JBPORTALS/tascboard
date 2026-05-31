@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { Doc } from './_generated/dataModel'
 import { privateMutation, privateQuery } from './lib/customFunctions'
-import { EmployeeTodoPriorityValidator } from './schema'
+import { vv } from './schema'
 // GET ALL
 export const list = privateQuery({
   args: {
@@ -18,7 +18,7 @@ export const list = privateQuery({
 // GET BY ID
 export const get = privateQuery({
   args: {
-    todoId: v.id('employeeTodos'),
+    todoId: vv.id('employeeTodos'),
   },
   handler: async (ctx, { todoId }) => {
     return await ctx.db.get(todoId)
@@ -31,7 +31,7 @@ export const create = privateMutation({
     employeeId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    priority: EmployeeTodoPriorityValidator,
+    priority: vv.doc('employeeTodos').fields.priority,
   },
   handler: async (ctx, args) => {
     const title = args.title.trim()
@@ -52,7 +52,7 @@ export const create = privateMutation({
 // UPDATE
 export const update = privateMutation({
   args: {
-    todoId: v.id('employeeTodos'),
+    todoId: vv.id('employeeTodos'),
     body: v.object({
       title: v.optional(v.string()),
       description: v.optional(v.string()),
@@ -96,7 +96,7 @@ export const update = privateMutation({
 // DELETE
 export const remove = privateMutation({
   args: {
-    todoId: v.id('employeeTodos'),
+    todoId: vv.id('employeeTodos'),
   },
   handler: async (ctx, args) => {
     const todo = await ctx.db.get(args.todoId)

@@ -1,10 +1,12 @@
 import { v } from 'convex/values'
 import { privateMutation, privateQuery } from './lib/customFunctions'
-import { AttendanceValidator } from './schema'
+import { vv } from './schema'
 
 export const createAttendance = privateMutation({
-  args: AttendanceValidator.omit('createdAt', 'updatedAt'),
-  returns: v.id('attendance'),
+  args: vv
+    .doc('attendance')
+    .omit('_id', '_creationTime', 'createdAt', 'updatedAt'),
+  returns: vv.id('attendance'),
   handler: async (ctx, args) => {
     const existingAttendance = await ctx.db
       .query('attendance')
@@ -60,13 +62,18 @@ export const getAttendanceByDate = privateQuery({
 
 export const updateAttendance = privateMutation({
   args: {
-    attendanceId: v.id('attendance'),
-    body: AttendanceValidator.omit(
-      'employeeId',
-      'recordDate',
-      'createdAt',
-      'updatedAt',
-    ).partial(),
+    attendanceId: vv.id('attendance'),
+    body: vv
+      .doc('attendance')
+      .omit(
+        '_id',
+        '_creationTime',
+        'employeeId',
+        'recordDate',
+        'createdAt',
+        'updatedAt',
+      )
+      .partial(),
   },
   handler: async (ctx, args) => {
     const attendance = await ctx.db.get(args.attendanceId)
@@ -99,7 +106,7 @@ export const updateAttendance = privateMutation({
 
 export const deleteAttendance = privateMutation({
   args: {
-    attendanceId: v.id('attendance'),
+    attendanceId: vv.id('attendance'),
   },
 
   handler: async (ctx, args) => {
@@ -117,7 +124,7 @@ export const deleteAttendance = privateMutation({
 
 export const markLogout = privateMutation({
   args: {
-    attendanceId: v.id('attendance'),
+    attendanceId: vv.id('attendance'),
     logoutTime: v.number(),
   },
   handler: async (ctx, args) => {

@@ -1,5 +1,9 @@
 import { createClient, GenericCtx } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
+import {
+  requireActionCtx,
+  requireMutationCtx,
+} from '@convex-dev/better-auth/utils'
 import { BetterAuthOptions, betterAuth } from 'better-auth/minimal'
 import { organization } from 'better-auth/plugins'
 import { v } from 'convex/values'
@@ -19,76 +23,6 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
   },
 )
 
-function runAction(
-  ctx: GenericCtx<DataModel>,
-  action: typeof internal.emails.processInvitationEmail,
-  args: {
-    organizationId: string
-    email: string
-    invitationId: string
-    organizationName: string
-    inviterName: string
-  },
-): Promise<unknown>
-
-function runAction(
-  ctx: GenericCtx<DataModel>,
-  action: typeof internal.emails.processVerificationEmail,
-  args: {
-    email: string
-    verificationUrl: string
-  },
-): Promise<unknown>
-
-function runAction(
-  ctx: GenericCtx<DataModel>,
-  action:
-    | typeof internal.emails.processInvitationEmail
-    | typeof internal.emails.processVerificationEmail,
-  args:
-    | {
-        organizationId: string
-        email: string
-        invitationId: string
-        organizationName: string
-        inviterName: string
-      }
-    | {
-        email: string
-        verificationUrl: string
-      },
-) {
-  if ('runAction' in ctx && typeof ctx.runAction === 'function') {
-    return ctx.runAction(action, args)
-  }
-  throw new Error('Cannot run action in this context.')
-}
-
-function runMutation(
-  ctx: GenericCtx<DataModel>,
-  mutation: typeof internal.employeeProfiles.ensureProfileAfterInvite,
-  args: { organizationId: string; userId: string },
-): Promise<unknown>
-
-function runMutation(
-  ctx: GenericCtx<DataModel>,
-  mutation: typeof internal.employees.auth.deleteInvitationRecord,
-  args: { invitationId: string },
-): Promise<unknown>
-
-function runMutation(
-  ctx: GenericCtx<DataModel>,
-  mutation:
-    | typeof internal.employeeProfiles.ensureProfileAfterInvite
-    | typeof internal.employees.auth.deleteInvitationRecord,
-  args: { organizationId: string; userId: string } | { invitationId: string },
-) {
-  if ('runMutation' in ctx && typeof ctx.runMutation === 'function') {
-    return ctx.runMutation(mutation, args)
-  }
-  throw new Error('Cannot run mutation in this context.')
-}
-
 // Better Auth Options
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
@@ -105,7 +39,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
       async sendVerificationEmail({ user, url }) {
-        await runAction(ctx, internal.emails.processVerificationEmail, {
+        const actoinCtx = requireActionCtx(ctx)
+        await actoinCtx.runAction(internal.emails.processVerificationEmail, {
           email: user.email,
           verificationUrl: url,
         })
@@ -121,7 +56,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         ac,
         roles: { owner, employee },
         async sendInvitationEmail(data) {
-          await runAction(ctx, internal.emails.processInvitationEmail, {
+          const actionCtx = requireActionCtx(ctx)
+          await actionCtx.runAction(internal.emails.processInvitationEmail, {
             organizationId: data.organization.id,
             email: data.email,
             invitationId: data.id,
@@ -131,33 +67,33 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         },
         organizationHooks: {
           afterAcceptInvitation: async ({ invitation, user }) => {
-            await runMutation(
-              ctx,
+            const mutationCtx = requireMutationCtx(ctx)
+            await mutationCtx.runMutation(
               internal.employeeProfiles.ensureProfileAfterInvite,
-              {
-                organizationId: invitation.organizationId,
-                userId: user.id,
-              },
+              { organizationId: invitation.organizationId, userId: user.id },
             )
 
-            if ('runMutation' in ctx && typeof ctx.runMutation === 'function') {
-              await ctx.runMutation(internal.inbox.createInboxItem, {
-                organizationId: invitation.organizationId,
-                recipientUserId: user.id,
-                kind: 'onboarding',
-                title: 'Complete your employee profile',
-                snippet:
-                  'A few details to get you started — takes about 5 minutes',
-                body: 'Welcome aboard. Complete your profile below so payroll, compliance, and your team have what they need.',
-              })
-            }
+            await mutationCtx.runMutation(internal.inbox.createInboxItem, {
+              organizationId: invitation.organizationId,
+              recipientUserId: user.id,
+              kind: 'onboarding',
+              title: 'Complete your employee profile',
+              snippet:
+                'A few details to get you started — takes about 5 minutes',
+              body: 'Welcome aboard. Complete your profile below so payroll, compliance, and your team have what they need.',
+            })
           },
           afterCancelInvitation: async ({ invitation }) => {
-            await runMutation(
-              ctx,
-              internal.employees.auth.deleteInvitationRecord,
+            const mutationCtx = requireMutationCtx(ctx)
+            await mutationCtx.runMutation(
+              components.betterAuth.adapter.deleteOne,
               {
-                invitationId: invitation.id,
+                input: {
+                  model: 'invitation',
+                  where: [
+                    { field: '_id', operator: 'eq', value: invitation.id },
+                  ],
+                },
               },
             )
           },

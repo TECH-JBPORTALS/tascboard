@@ -171,12 +171,14 @@ function ProjectSidebarGroup() {
     <SidebarGroup>
       <SidebarGroupLabel>
         PROJECTS
-        <SidebarGroupAction
-          title="Create project"
-          onClick={() => setCreateOpen(true)}
-        >
-          <RiAddLargeFill />
-        </SidebarGroupAction>
+        <Protect permissions={{ project: ['create'] }}>
+          <SidebarGroupAction
+            title="Create project"
+            onClick={() => setCreateOpen(true)}
+          >
+            <RiAddLargeFill />
+          </SidebarGroupAction>
+        </Protect>
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>

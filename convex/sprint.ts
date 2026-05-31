@@ -1,16 +1,16 @@
 import { v } from 'convex/values'
 import { privateMutation, privateQuery } from './lib/customFunctions'
-import { SprintStatusValidator } from './schema'
+import { vv } from './schema'
 
 export const create = privateMutation({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
-    status: v.optional(SprintStatusValidator),
+    status: v.optional(vv.doc('sprints').fields.status),
   },
-  returns: v.id('sprints'),
+  returns: vv.id('sprints'),
   handler: async (ctx, args) => {
     const lastSprint = await ctx.db
       .query('sprints')
@@ -44,8 +44,8 @@ export const create = privateMutation({
 
 export const listByTrack = privateQuery({
   args: {
-    trackId: v.id('tracks'),
-    status: v.optional(SprintStatusValidator),
+    trackId: vv.id('tracks'),
+    status: v.optional(vv.doc('sprints').fields.status),
   },
   handler: async (ctx, args) => {
     const sprints = args.status
@@ -81,8 +81,8 @@ export const listByTrack = privateQuery({
 
 export const addTask = privateMutation({
   args: {
-    taskId: v.id('tasks'),
-    sprintId: v.id('sprints'),
+    taskId: vv.id('tasks'),
+    sprintId: vv.id('sprints'),
   },
 
   returns: v.object({
@@ -120,7 +120,7 @@ export const addTask = privateMutation({
 
 export const listTasksBySprint = privateQuery({
   args: {
-    sprintId: v.id('sprints'),
+    sprintId: vv.id('sprints'),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
@@ -138,11 +138,11 @@ export const listTasksBySprint = privateQuery({
 
 export const edit = privateMutation({
   args: {
-    sprintId: v.id('sprints'),
+    sprintId: vv.id('sprints'),
     goal: v.string(),
     startDate: v.number(),
     endDate: v.number(),
-    status: SprintStatusValidator,
+    status: vv.doc('sprints').fields.status,
   },
   handler: async (ctx, args) => {
     const sprint = await ctx.db.get(args.sprintId)
@@ -174,7 +174,7 @@ export const edit = privateMutation({
 
 export const remove = privateMutation({
   args: {
-    sprintId: v.id('sprints'),
+    sprintId: vv.id('sprints'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -188,7 +188,7 @@ export const remove = privateMutation({
 
 export const backlog = privateQuery({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
   },
   returns: v.array(v.any()),
   handler: async (ctx, args) => {
@@ -203,7 +203,7 @@ export const backlog = privateQuery({
 
 export const progress = privateQuery({
   args: {
-    sprintId: v.id('sprints'),
+    sprintId: vv.id('sprints'),
   },
   returns: v.any(),
   handler: async (ctx, args) => {
@@ -236,7 +236,7 @@ export const progress = privateQuery({
 
 export const burndownChart = privateQuery({
   args: {
-    sprintId: v.id('sprints'),
+    sprintId: vv.id('sprints'),
   },
   handler: async (ctx, args) => {
     const sprint = await ctx.db.get(args.sprintId)

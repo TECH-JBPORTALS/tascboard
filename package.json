@@ -12,7 +12,8 @@
     "test:convex": "bun test convex/__tests__ --path-ignore-patterns 'convex/__tests__/_modules.test.ts' --pass-with-no-tests",
     "test:ui": "bun test app components hooks lib --pass-with-no-tests",
     "test": "bun run test:convex && bun run test:ui",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ariakit/react": "^0.4.26",

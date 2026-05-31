@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns'
 import type { Doc } from '@/convex/_generated/dataModel'
 
-type Activity = Doc<'activities'>
+type Activity = Doc<'taskActivities'>
 
 export function formatActivityTime(activity: Activity) {
   const ts = activity.createdAt ?? activity._creationTime
@@ -9,7 +9,7 @@ export function formatActivityTime(activity: Activity) {
 }
 
 export function formatActivityMessage(activity: Activity) {
-  const actor = activity.deviceName
+  const actor = activity.actorName
 
   switch (activity.kind) {
     case 'created':

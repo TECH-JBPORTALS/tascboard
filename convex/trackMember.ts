@@ -1,10 +1,11 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const toggleMember = privateMutation({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
     employeeId: v.string(),
   },
   returns: v.null(),
@@ -35,7 +36,7 @@ export const toggleMember = privateMutation({
 
 export const setLead = privateMutation({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
     employeeId: v.string(),
   },
   returns: v.null(),
@@ -82,7 +83,7 @@ export const setLead = privateMutation({
 
 export const unsetLead = privateMutation({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
     employeeId: v.string(),
   },
   returns: v.null(),
@@ -109,7 +110,7 @@ export const unsetLead = privateMutation({
 
 export const list = privateQuery({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
     lead: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {

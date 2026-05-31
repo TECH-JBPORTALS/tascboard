@@ -1,6 +1,12 @@
+import { Infer } from 'convex/values'
 import type { MutationCtx } from '../_generated/server'
-import { TaskActivityValidator } from '../schema'
-import { actorDisplayName } from './projectActivityLog'
+import { vv } from '../schema'
+
+const taskActivityInputValidator = vv
+  .doc('taskActivities')
+  .omit('_id', '_creationTime', 'createdAt')
+
+type TaskActivityInput = Infer<typeof taskActivityInputValidator>
 
 function getStartOfToday() {
   const now = new Date()
@@ -12,7 +18,7 @@ function getStartOfToday() {
 
 export async function logTaskActivity(
   ctx: MutationCtx,
-  args: typeof TaskActivityValidator.type,
+  args: TaskActivityInput,
 ) {
   const startOfToday = getStartOfToday()
 
@@ -45,8 +51,6 @@ export async function logTaskActivity(
     createdAt: Date.now(),
   })
 }
-
-export { actorDisplayName }
 
 export function formatTaskDate(timestamp: number) {
   return new Intl.DateTimeFormat('en-US', {

@@ -1,20 +1,28 @@
 import { v } from 'convex/values'
 import { components, internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
-import { organizationMutation, privateQuery } from './lib/customFunctions'
+import {
+  organizationMutation,
+  organizationQuery,
+  privateQuery,
+} from './lib/customFunctions'
 import { getProjectMembers } from './lib/memberHelper'
 import { formatProjectDate, logProjectActivity } from './lib/projectActivityLog'
-import { ProjectValidator } from './schema'
+import { vv } from './schema'
 import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from './syncEditor'
 import { removeTrackCascade } from './track'
 
 export const create = organizationMutation({
-  args: ProjectValidator.omit(
-    'organizationId',
-    'description',
-    'createdAt',
-    'updatedAt',
-  ),
+  args: vv
+    .doc('projects')
+    .omit(
+      '_id',
+      '_creationTime',
+      'organizationId',
+      'description',
+      'createdAt',
+      'updatedAt',
+    ),
 
   handler: async (ctx, args) => {
     const { userId, activeOrganizationId: orgId, user } = ctx.session
@@ -48,13 +56,16 @@ export const create = organizationMutation({
   },
 })
 
-export const list = privateQuery({
+export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    const { activeOrganizationId: orgId } = ctx.session
+    const { activeOrganizationId } = ctx.session
+
     const projects = await ctx.db
       .query('projects')
-      .withIndex('by_organization', (q) => q.eq('organizationId', orgId!))
+      .withIndex('by_organization', (q) =>
+        q.eq('organizationId', activeOrganizationId),
+      )
       .order('desc')
       .collect()
 
@@ -72,7 +83,7 @@ export const list = privateQuery({
 
 export const get = privateQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   handler: async (ctx, args) => {
     const { activeOrganizationId: orgId } = ctx.session
@@ -80,13 +91,13 @@ export const get = privateQuery({
     if (!project || project.organizationId !== orgId) {
       return null
     }
-    const content = await ctx.runQuery(
+    const { content: description } = await ctx.runQuery(
       components.prosemirrorSync.lib.getSnapshot,
       { id: getProjectEditorId(args.projectId) },
     )
     const { members, manager } = await getProjectMembers(ctx, project._id)
     return {
-      ...{ ...project, description: content },
+      ...{ ...project, description },
       members,
       manager,
     }
@@ -95,13 +106,18 @@ export const get = privateQuery({
 
 export const update = organizationMutation({
   args: {
-    projectId: v.id('projects'),
-    body: ProjectValidator.omit(
-      'organizationId',
-      'description',
-      'createdAt',
-      'updatedAt',
-    ).partial(),
+    projectId: vv.id('projects'),
+    body: vv
+      .doc('projects')
+      .omit(
+        '_id',
+        '_creationTime',
+        'organizationId',
+        'description',
+        'createdAt',
+        'updatedAt',
+      )
+      .partial(),
   },
   handler: async (ctx, args) => {
     const { userId, user, activeOrganizationId: orgId } = ctx.session
@@ -246,7 +262,7 @@ export const update = organizationMutation({
 
 export const updateDescription = organizationMutation({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
     description: v.any(),
   },
   returns: v.null(),
@@ -270,7 +286,7 @@ export const updateDescription = organizationMutation({
 
 export const remove = organizationMutation({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.object({
     success: v.boolean(),

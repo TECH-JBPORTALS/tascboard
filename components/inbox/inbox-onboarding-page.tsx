@@ -119,7 +119,7 @@ function useInboxOnboarding({
   initialStep = 0,
   onCompleted,
 }: InboxOnboardingPanelProps) {
-  const status = useQuery(api.employees.profile.getMyOnboardingStatus, {})
+  const status = useQuery(api.employeeProfiles.getMyOnboardingStatus, {})
   const [step, setStep] = useState(
     Math.min(Math.max(initialStep, 0), LAST_STEP_INDEX),
   )
@@ -127,13 +127,13 @@ function useInboxOnboarding({
   const [certificates, setCertificates] = useState<CertificateEntry[]>([])
   const [showAccountNumber, setShowAccountNumber] = useState(false)
 
-  const saveGeneral = useMutation(api.employees.profile.saveGeneralInfo)
-  const saveGov = useMutation(api.employees.profile.saveGovernmentId)
-  const saveBank = useMutation(api.employees.profile.saveBankDetails)
-  const addCertificate = useMutation(api.employees.profile.addCertificate)
-  const removeCertificate = useMutation(api.employees.profile.removeCertificate)
+  const saveGeneral = useMutation(api.employeeProfiles.saveGeneralInfo)
+  const saveGov = useMutation(api.employeeProfiles.saveGovernmentId)
+  const saveBank = useMutation(api.employeeProfiles.saveBankDetails)
+  const addCertificate = useMutation(api.employeeProfiles.addCertificate)
+  const removeCertificate = useMutation(api.employeeProfiles.removeCertificate)
   const completeOnboarding = useMutation(
-    api.employees.profile.completeOnboarding,
+    api.employeeProfiles.completeOnboarding,
   )
   const generateUploadUrl = useMutation(api.files.generateUploadUrl)
 

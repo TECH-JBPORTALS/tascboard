@@ -1,31 +1,51 @@
 import { v } from 'convex/values'
 import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
+import { internalMutation, type MutationCtx } from './_generated/server'
 import {
-  internalMutation,
-  type MutationCtx,
-  mutation,
-  query,
-} from './_generated/server'
-import { getOrganizationContext, requireMembership } from './lib/auth'
-import { getEmployeeForUser } from './lib/employees'
-import { employeeProfileSchema } from './schema'
+  organizationInternalQuery,
+  organizationMutation,
+  organizationQuery,
+} from './lib/customFunctions'
+import { vv } from './schema'
 
+/** Controll how many certificates can be uploaded by an employee. */
 const MAX_CERTIFICATES = 5
 
-const profileReturn = employeeProfileSchema
+/** The return type for the getMyProfile query. */
+const profileReturn = vv.doc('employeeProfiles').omit('_id', '_creationTime')
 
+export const getInternalEmployeeProfile = organizationInternalQuery({
+  args: {
+    employeeId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query('employeeProfiles')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
+      .unique()
+
+    return profile ?? null
+  },
+})
+
+/**
+ * This suppose to create a profile for the user if they don't have one after they accept an invitation. only be used by the betterAuth hooks.
+ * @returns The ID of the created profile.
+ */
 export const ensureProfileAfterInvite = internalMutation({
   args: {
     organizationId: v.string(),
     userId: v.string(),
   },
-  returns: v.id('employeeProfiles'),
+  returns: vv.id('employeeProfiles'),
   handler: async (ctx, args) => {
-    const employee = await getEmployeeForUser(
-      ctx,
-      args.organizationId,
-      args.userId,
+    const employee = await ctx.runQuery(
+      components.betterAuth.employees.getByOrganizationUser,
+      {
+        organizationId: args.organizationId,
+        userId: args.userId,
+      },
     )
 
     if (!employee) {
@@ -49,7 +69,11 @@ export const ensureProfileAfterInvite = internalMutation({
   },
 })
 
-export const getMyOnboardingStatus = query({
+/**
+ * This query returns the onboarding status of the current user.
+ * @returns The onboarding status of the current user.
+ */
+export const getMyOnboardingStatus = organizationQuery({
   args: {},
   returns: v.union(
     v.object({
@@ -61,11 +85,16 @@ export const getMyOnboardingStatus = query({
     v.null(),
   ),
   handler: async (ctx) => {
-    const context = await getOrganizationContext(ctx)
-    if (!context) return null
+    const { activeOrganizationId, userId } = ctx.session
 
-    const { orgId, userId } = context
-    const employee = await getEmployeeForUser(ctx, orgId, userId)
+    const employee = await ctx.runQuery(
+      components.betterAuth.employees.getByOrganizationUser,
+      {
+        organizationId: activeOrganizationId,
+        userId: userId,
+      },
+    )
+
     if (!employee) return null
 
     const profile = await ctx.db
@@ -79,14 +108,14 @@ export const getMyOnboardingStatus = query({
       components.betterAuth.adapter.findOne,
       {
         model: 'organization',
-        where: [{ field: '_id', operator: 'eq', value: orgId }],
+        where: [{ field: '_id', operator: 'eq', value: activeOrganizationId }],
       },
     )
 
     const org = organization as { slug: string } | null
 
     return {
-      organizationId: orgId,
+      organizationId: activeOrganizationId,
       organizationSlug: org?.slug ?? '',
       onboardingStatus: profile.onboardingStatus,
       onboardingStep: profile.onboardingStep,
@@ -94,15 +123,18 @@ export const getMyOnboardingStatus = query({
   },
 })
 
-export const getMyProfile = query({
+/**
+ * This query returns the profile of the current user.
+ * @returns The profile of the current user.
+ */
+export const getMyProfile = organizationQuery({
   args: {},
   returns: v.union(profileReturn, v.null()),
   handler: async (ctx) => {
-    const { employee } = await requireMembership(ctx)
-
+    const { employee } = ctx.session
     const profile = await ctx.db
       .query('employeeProfiles')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee.id))
       .unique()
 
     if (!profile) return null
@@ -124,6 +156,12 @@ export const getMyProfile = query({
   },
 })
 
+/**
+ * This helper function is used to get or create a profile for the current user.
+ * @param ctx - The context object.
+ * @param employeeId - The ID of the employee.
+ * @returns The profile of the created or existing profile.
+ */
 async function getOrCreateMyProfile(
   ctx: MutationCtx,
   employeeId: string,
@@ -146,7 +184,13 @@ async function getOrCreateMyProfile(
   return created
 }
 
-export const saveGeneralInfo = mutation({
+/**
+ * This mutation is used to save the general information of the current user.
+ * @param ctx - The context object.
+ * @param args - The arguments object.
+ * @returns The null.
+ */
+export const saveGeneralInfo = organizationMutation({
   args: {
     firstName: v.string(),
     lastName: v.string(),
@@ -156,8 +200,8 @@ export const saveGeneralInfo = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { employee } = await requireMembership(ctx)
-    const profile = await getOrCreateMyProfile(ctx, employee._id)
+    const { employee } = ctx.session
+    const profile = await getOrCreateMyProfile(ctx, employee.id)
 
     await ctx.db.patch(profile._id, {
       firstName: args.firstName.trim(),
@@ -172,15 +216,15 @@ export const saveGeneralInfo = mutation({
   },
 })
 
-export const saveGovernmentId = mutation({
+export const saveGovernmentId = organizationMutation({
   args: {
     aadharNumber: v.string(),
     panNumber: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { employee } = await requireMembership(ctx)
-    const profile = await getOrCreateMyProfile(ctx, employee._id)
+    const { employee } = ctx.session
+    const profile = await getOrCreateMyProfile(ctx, employee.id)
 
     await ctx.db.patch(profile._id, {
       aadharNumber: args.aadharNumber.trim(),
@@ -192,7 +236,11 @@ export const saveGovernmentId = mutation({
   },
 })
 
-export const saveBankDetails = mutation({
+/**
+ * This mutation is used to save the bank details of the current user in onboarding process.
+ * @returns The null.
+ */
+export const saveBankDetails = organizationMutation({
   args: {
     bankAccountNumber: v.string(),
     bankName: v.string(),
@@ -201,8 +249,8 @@ export const saveBankDetails = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { employee } = await requireMembership(ctx)
-    const profile = await getOrCreateMyProfile(ctx, employee._id)
+    const { employee } = ctx.session
+    const profile = await getOrCreateMyProfile(ctx, employee.id)
 
     await ctx.db.patch(profile._id, {
       bankAccountNumber: args.bankAccountNumber.trim(),
@@ -216,16 +264,23 @@ export const saveBankDetails = mutation({
   },
 })
 
-export const addCertificate = mutation({
+/**
+ * This mutation is used to add a certificate to the current user's profile in onboarding process.
+ * @param storageId - The ID of the storage object.
+ * @param fileName - The name of the file.
+ * @param contentType - The content type of the file.
+ * @returns The ID of the created certificate.
+ */
+export const addCertificate = organizationMutation({
   args: {
     storageId: v.id('_storage'),
     fileName: v.string(),
     contentType: v.string(),
   },
-  returns: v.id('employeeCertificates'),
+  returns: vv.id('employeeCertificates'),
   handler: async (ctx, args) => {
-    const { orgId, employee } = await requireMembership(ctx)
-    const profile = await getOrCreateMyProfile(ctx, employee._id)
+    const { employee } = ctx.session
+    const profile = await getOrCreateMyProfile(ctx, employee.id)
 
     const existing = await ctx.db
       .query('employeeCertificates')
@@ -243,7 +298,7 @@ export const addCertificate = mutation({
 
     return await ctx.db.insert('employeeCertificates', {
       employeeProfileId: profile._id,
-      organizationId: orgId,
+      organizationId: employee.organizationId,
       storageId: args.storageId,
       fileName: args.fileName,
       contentType: args.contentType,
@@ -251,20 +306,25 @@ export const addCertificate = mutation({
   },
 })
 
-export const removeCertificate = mutation({
-  args: { certificateId: v.id('employeeCertificates') },
+/**
+ * This mutation is used to remove a certificate from the current user's profile.
+ * @param certificateId - The ID of the certificate to remove.
+ * @returns The null.
+ */
+export const removeCertificate = organizationMutation({
+  args: { certificateId: vv.id('employeeCertificates') },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { orgId, employee } = await requireMembership(ctx)
+    const { activeOrganizationId, employee } = ctx.session
     const cert = await ctx.db.get(args.certificateId)
 
-    if (!cert || cert.organizationId !== orgId) {
+    if (!cert || cert.organizationId !== activeOrganizationId) {
       throw new Error('Certificate not found.')
     }
 
     const profile = await ctx.db
       .query('employeeProfiles')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee.id))
       .unique()
 
     if (!profile || cert.employeeProfileId !== profile._id) {
@@ -276,22 +336,17 @@ export const removeCertificate = mutation({
   },
 })
 
-export const completeOnboarding = mutation({
+/**
+ * This mutation is used to complete the onboarding process for the current user.
+ * @returns The null.
+ * @throws An error if the general information, government ID details, bank details are not completed.
+ */
+export const completeOnboarding = organizationMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const { orgId, userId, employee } = await requireMembership(ctx)
-    const profile = await getOrCreateMyProfile(ctx, employee._id)
-
-    if (
-      !profile.firstName ||
-      !profile.lastName ||
-      !profile.dateOfBirth ||
-      !profile.address
-    ) {
-      throw new Error('Please complete general information first.')
-    }
-
+    const { activeOrganizationId, userId, employee } = ctx.session
+    const profile = await getOrCreateMyProfile(ctx, employee.id)
     if (!profile.aadharNumber || !profile.panNumber) {
       throw new Error('Please complete government ID details first.')
     }
@@ -314,7 +369,7 @@ export const completeOnboarding = mutation({
       .query('inboxItems')
       .withIndex('by_org_recipient_archived', (q) =>
         q
-          .eq('organizationId', orgId)
+          .eq('organizationId', activeOrganizationId)
           .eq('recipientUserId', userId)
           .eq('archived', false),
       )

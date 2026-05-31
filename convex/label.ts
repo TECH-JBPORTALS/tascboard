@@ -2,18 +2,13 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { privateMutation, privateQuery } from './lib/customFunctions'
 import { logTaskActivity } from './lib/taskActivityLog'
+import { vv } from './schema'
 
-const labelReturn = v.object({
-  _id: v.id('labels'),
-  _creationTime: v.number(),
-  name: v.string(),
-  color: v.string(),
-  projectId: v.id('projects'),
-})
+const labelReturn = vv.doc('labels')
 
 export const listByProject = privateQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.array(labelReturn),
   handler: async (ctx, { projectId }) => {
@@ -26,7 +21,7 @@ export const listByProject = privateQuery({
 
 export const listTaskLabels = privateQuery({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
   },
   returns: v.array(labelReturn),
   handler: async (ctx, { taskId }) => {
@@ -45,11 +40,11 @@ export const listTaskLabels = privateQuery({
 
 export const create = privateMutation({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
     name: v.string(),
     color: v.string(),
   },
-  returns: v.id('labels'),
+  returns: vv.id('labels'),
   handler: async (ctx, args) => {
     const trimmed = args.name.trim()
 
@@ -67,7 +62,7 @@ export const create = privateMutation({
 
 export const get = privateQuery({
   args: {
-    labelId: v.id('labels'),
+    labelId: vv.id('labels'),
   },
   returns: v.union(labelReturn, v.null()),
   handler: async (ctx, { labelId }) => {
@@ -83,7 +78,7 @@ export const get = privateQuery({
 
 export const update = privateMutation({
   args: {
-    labelId: v.id('labels'),
+    labelId: vv.id('labels'),
     body: v.object({
       name: v.optional(v.string()),
       color: v.optional(v.string()),
@@ -121,7 +116,7 @@ export const update = privateMutation({
 
 export const remove = privateMutation({
   args: {
-    labelId: v.id('labels'),
+    labelId: vv.id('labels'),
   },
   returns: v.null(),
   handler: async (ctx, { labelId }) => {
@@ -146,11 +141,11 @@ export const remove = privateMutation({
 
 export const attachToTask = privateMutation({
   args: {
-    taskId: v.id('tasks'),
-    labelId: v.id('labels'),
+    taskId: vv.id('tasks'),
+    labelId: vv.id('labels'),
     deviceName: v.string(),
   },
-  returns: v.union(v.id('taskLabels'), v.null()),
+  returns: v.union(vv.id('taskLabels'), v.null()),
   handler: async (ctx, { taskId, labelId }) => {
     const label = await ctx.db.get(labelId)
 
@@ -187,8 +182,8 @@ export const attachToTask = privateMutation({
 
 export const detachFromTask = privateMutation({
   args: {
-    taskId: v.id('tasks'),
-    labelId: v.id('labels'),
+    taskId: vv.id('tasks'),
+    labelId: vv.id('labels'),
     deviceName: v.string(),
   },
   returns: v.null(),

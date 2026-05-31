@@ -7,10 +7,10 @@ import {
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
-import { InboxValidator } from './schema'
+import { vv } from './schema'
 
 export const createInboxItem = privateInternalMutation({
-  args: InboxValidator.omit('read', 'archived'),
+  args: vv.doc('inboxItems').omit('_id', '_creationTime', 'read', 'archived'),
   handler: async (ctx, args) => {
     const insertedItemId = await ctx.db.insert('inboxItems', {
       ...args,
@@ -55,7 +55,7 @@ export const list = organizationQuery({
 })
 
 export const get = privateQuery({
-  args: { id: v.id('inboxItems') },
+  args: { id: vv.id('inboxItems') },
   handler: async (ctx, args) => {
     const { userId } = ctx.session
 
@@ -71,7 +71,7 @@ export const get = privateQuery({
 /** Latest onboarding inbox item for the active org (used after accepting an invite). */
 export const getOnboardingInboxItemId = organizationQuery({
   args: {},
-  returns: v.union(v.id('inboxItems'), v.null()),
+  returns: v.union(vv.id('inboxItems'), v.null()),
   handler: async (ctx) => {
     const { userId, activeOrganizationId: orgId } = ctx.session
 
@@ -133,7 +133,7 @@ export const archiveCount = organizationQuery({
 })
 
 export const markRead = privateMutation({
-  args: { itemId: v.id('inboxItems') },
+  args: { itemId: vv.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
     const doc = await ctx.db.get(args.itemId)
@@ -146,7 +146,7 @@ export const markRead = privateMutation({
 })
 
 export const markUnread = privateMutation({
-  args: { itemId: v.id('inboxItems') },
+  args: { itemId: vv.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { userId } = ctx.session
@@ -179,7 +179,7 @@ export const listArchived = organizationQuery({
 })
 
 export const archive = privateMutation({
-  args: { itemId: v.id('inboxItems') },
+  args: { itemId: vv.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { userId } = ctx.session
@@ -194,7 +194,7 @@ export const archive = privateMutation({
 })
 
 export const unarchive = privateMutation({
-  args: { itemId: v.id('inboxItems') },
+  args: { itemId: vv.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { userId } = ctx.session
@@ -209,7 +209,7 @@ export const unarchive = privateMutation({
 })
 
 export const permanentlyDelete = privateMutation({
-  args: { itemId: v.id('inboxItems') },
+  args: { itemId: vv.id('inboxItems') },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { userId } = ctx.session

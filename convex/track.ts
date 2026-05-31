@@ -7,11 +7,11 @@ import {
   privateQuery,
 } from './lib/customFunctions'
 import { getTrackMembers } from './lib/memberHelper'
-import { TrackValidator } from './schema'
+import { vv } from './schema'
 import { removeTaskCascade } from './task'
 // -------------------- CREATE --------------------
 export const create = organizationMutation({
-  args: TrackValidator.omit('createdAt', 'updatedAt'),
+  args: vv.doc('tracks').omit('_id', '_creationTime', 'createdAt', 'updatedAt'),
   handler: async (ctx, args) => {
     const { activeOrganizationId: orgId } = ctx.session
     const project = await ctx.db.get(args.projectId)
@@ -33,7 +33,7 @@ export const create = organizationMutation({
 // -------------------- LIST BY PROJECT --------------------
 export const listByProject = privateQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   handler: async (ctx, args) => {
     const { activeOrganizationId: orgId } = ctx.session
@@ -53,7 +53,7 @@ export const listByProject = privateQuery({
 // -------------------- GET --------------------
 export const get = privateQuery({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
   },
   handler: async (ctx, args) => {
     const track = await ctx.db.get(args.trackId)
@@ -72,8 +72,11 @@ export const get = privateQuery({
 // -------------------- UPDATE --------------------
 export const update = privateMutation({
   args: {
-    trackId: v.id('tracks'),
-    body: TrackValidator.omit('projectId', 'createdAt', 'updatedAt').partial(),
+    trackId: vv.id('tracks'),
+    body: vv
+      .doc('tracks')
+      .omit('_id', '_creationTime', 'projectId', 'createdAt', 'updatedAt')
+      .partial(),
   },
   handler: async (ctx, args) => {
     const track = await ctx.db.get(args.trackId)
@@ -148,7 +151,7 @@ export async function removeTrackCascade(
 // -------------------- REMOVE --------------------
 export const remove = privateMutation({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
   },
   handler: async (ctx, args) => {
     const track = await ctx.db.get(args.trackId)

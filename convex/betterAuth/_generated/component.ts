@@ -1528,4 +1528,59 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    employees: {
+      getByOrganizationUser: FunctionReference<
+        "query",
+        "internal",
+        { organizationId: string; userId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          active: boolean;
+          createdAt: number;
+          organizationId: string;
+          role: string;
+          userId: string;
+        } | null,
+        Name
+      >;
+    };
+    invitations: {
+      listPendingInvitations: FunctionReference<
+        "query",
+        "internal",
+        { organizationId: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          email: string;
+          expiresAt: number;
+          inviterId: string;
+          organizationId: string;
+          role?: null | string;
+          status: string;
+        }>,
+        Name
+      >;
+    };
+    users: {
+      getById: FunctionReference<
+        "query",
+        "internal",
+        { id: string },
+        {
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          email: string;
+          emailVerified: boolean;
+          image?: null | string;
+          name: string;
+          updatedAt: number;
+          userId?: null | string;
+        } | null,
+        Name
+      >;
+    };
   };

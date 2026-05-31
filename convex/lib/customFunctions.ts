@@ -1,112 +1,114 @@
 import { GenericCtx } from '@convex-dev/better-auth'
 import {
+  customCtx,
   customMutation,
   customQuery,
 } from 'convex-helpers/server/customFunctions'
 import { DataModel } from '../_generated/dataModel'
-import { internalMutation, mutation, query } from '../_generated/server'
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from '../_generated/server'
 import { authComponent, createAuth } from '../auth'
 
-async function validateSession(ctx: GenericCtx<DataModel>) {
+export async function validateSession(ctx: GenericCtx<DataModel>) {
+  const identity = await ctx.auth.getUserIdentity()
+  if (!identity) throw new Error('Unauthorized')
+
   const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
-  const authSession = await auth.api.getSession({ headers })
-  if (!authSession) throw new Error('Unauthorized')
-  return { ...authSession.session, user: authSession.user }
+
+  const session = await auth.api.getSession({ headers })
+
+  if (!session) throw new Error('User not found')
+
+  return {
+    ...session.session,
+    user: session.user,
+  }
 }
 
-/** Private Query will validate the session and returns BetterAuth session object */
-export const privateQuery = customQuery(query, {
-  args: {},
-  input: async (ctx, args) => {
-    const session = await validateSession(ctx)
-    return { ctx: { ...ctx, session }, args }
-  },
-})
+export async function validateActiveOrganization(ctx: GenericCtx<DataModel>) {
+  const session = await validateSession(ctx)
 
-/** Private Mutation will validate the session and returns BetterAuth session object */
-export const privateMutation = customMutation(mutation, {
-  args: {},
-  input: async (ctx, args) => {
-    const session = await validateSession(ctx)
-    return { ctx: { ...ctx, session }, args }
-  },
-})
+  if (!session.activeOrganizationId) throw new Error('No active organization')
+  const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
 
-/** Organization Query will validate the session and returns BetterAuth session object with the active organization id */
-export const organizationQuery = customQuery(privateQuery, {
-  args: {},
-  input: async (ctx, args, extra) => {
-    const session = await validateSession(ctx)
-    if (!session.activeOrganizationId) throw new Error('No active organization')
+  const member = await auth.api.getActiveMember({ headers })
+  if (!member) throw new Error('User not a member of the organization')
 
-    return {
-      ctx: {
-        ...ctx,
-        session: {
-          ...session,
-          activeOrganizationId: session.activeOrganizationId,
-        },
-      },
-      args,
-    }
-  },
-})
+  return {
+    ...session,
+    activeOrganizationId: session.activeOrganizationId,
+    /** Just kept the name same in all entities - but deep down it's betterAuth's member there nothing betrayed here.
+     * If you curios how table name is stored look in the convex/betterAuth/schema.ts file.
+     */
+    employee: member,
+  }
+}
 
-/** Organization Mutation will validate the session and returns BetterAuth session object with the active organization id */
-export const organizationMutation = customMutation(privateMutation, {
-  args: {},
-  input: async (ctx, args) => {
+export const privateQuery = customQuery(
+  query,
+  customCtx(async (ctx) => {
     const session = await validateSession(ctx)
-    if (!session.activeOrganizationId) throw new Error('No active organization')
-    return {
-      ctx: {
-        ...ctx,
-        session: {
-          ...session,
-          activeOrganizationId: session.activeOrganizationId,
-        },
-      },
-      args,
-    }
-  },
-})
-/** Private Internal Mutation will validate the session and returns BetterAuth session object */
-export const privateInternalMutation = customMutation(internalMutation, {
-  args: {},
-  input: async (ctx, args) => {
-    const session = await validateSession(ctx)
-    return {
-      ctx: {
-        ...ctx,
-        session,
-      },
-      args,
-    }
-  },
-})
 
-/** Organization Internal Mutation will validate the session and returns BetterAuth session object with the active organization id */
+    return { ...ctx, session }
+  }),
+)
+
+export const privateMutation = customMutation(
+  mutation,
+  customCtx(async (ctx) => {
+    const session = await validateSession(ctx)
+    return { ...ctx, session }
+  }),
+)
+
+export const privateInternalQuery = customQuery(
+  internalQuery,
+  customCtx(async (ctx) => {
+    const session = await validateSession(ctx)
+    return { ...ctx, session }
+  }),
+)
+
+export const privateInternalMutation = customMutation(
+  internalMutation,
+  customCtx(async (ctx) => {
+    const session = await validateSession(ctx)
+    return { ...ctx, session }
+  }),
+)
+
+export const organizationQuery = customQuery(
+  privateQuery,
+  customCtx(async (ctx) => {
+    const session = await validateActiveOrganization(ctx)
+    return { ...ctx, session }
+  }),
+)
+
+export const organizationMutation = customMutation(
+  privateMutation,
+  customCtx(async (ctx) => {
+    const session = await validateActiveOrganization(ctx)
+    return { ...ctx, session }
+  }),
+)
+
+export const organizationInternalQuery = customQuery(
+  privateQuery,
+  customCtx(async (ctx) => {
+    const session = await validateActiveOrganization(ctx)
+    return { ...ctx, session }
+  }),
+)
+
 export const organizationInternalMutation = customMutation(
   privateInternalMutation,
-  {
-    args: {},
-    input: async (ctx, args) => {
-      const session = await validateSession(ctx)
-
-      if (!session.activeOrganizationId) {
-        throw new Error('No active organization')
-      }
-
-      return {
-        ctx: {
-          ...ctx,
-          session: {
-            ...session,
-            activeOrganizationId: session.activeOrganizationId,
-          },
-        },
-        args,
-      }
-    },
-  },
+  customCtx(async (ctx) => {
+    const session = await validateActiveOrganization(ctx)
+    return { ...ctx, session }
+  }),
 )

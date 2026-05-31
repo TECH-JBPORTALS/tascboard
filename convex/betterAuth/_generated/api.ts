@@ -10,7 +10,10 @@
 
 import type * as adapter from "../adapter.js";
 import type * as auth from "../auth.js";
+import type * as employees from "../employees.js";
 import type * as generatedSchema from "../generatedSchema.js";
+import type * as invitations from "../invitations.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -22,7 +25,10 @@ import { anyApi, componentsGeneric } from "convex/server";
 const fullApi: ApiFromModules<{
   adapter: typeof adapter;
   auth: typeof auth;
+  employees: typeof employees;
   generatedSchema: typeof generatedSchema;
+  invitations: typeof invitations;
+  users: typeof users;
 }> = anyApi as any;
 
 /**

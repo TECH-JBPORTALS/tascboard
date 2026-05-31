@@ -6,12 +6,14 @@ import {
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
-import { DailyReportValidator } from './schema'
+import { vv } from './schema'
 
 export const create = organizationMutation({
-  args: DailyReportValidator.omit('createdAt', 'updatedAt'),
+  args: vv
+    .doc('dailyReport')
+    .omit('_id', '_creationTime', 'createdAt', 'updatedAt'),
 
-  returns: v.id('dailyReport'),
+  returns: vv.id('dailyReport'),
 
   handler: async (ctx, args) => {
     const reportId = await ctx.db.insert('dailyReport', {
@@ -32,7 +34,7 @@ export const list = organizationQuery({
 
 export const get = organizationQuery({
   args: {
-    reportId: v.id('dailyReport'),
+    reportId: vv.id('dailyReport'),
   },
 
   handler: async (ctx, args) => {
@@ -48,12 +50,11 @@ export const get = organizationQuery({
 
 export const update = organizationMutation({
   args: {
-    reportId: v.id('dailyReport'),
-    body: DailyReportValidator.omit(
-      'employeeId',
-      'createdAt',
-      'updatedAt',
-    ).partial(),
+    reportId: vv.id('dailyReport'),
+    body: vv
+      .doc('dailyReport')
+      .omit('_id', '_creationTime', 'employeeId', 'createdAt', 'updatedAt')
+      .partial(),
   },
 
   handler: async (ctx, args) => {
@@ -85,7 +86,7 @@ export const update = organizationMutation({
 
 export const remove = organizationMutation({
   args: {
-    reportId: v.id('dailyReport'),
+    reportId: vv.id('dailyReport'),
   },
 
   handler: async (ctx, args) => {
@@ -113,11 +114,11 @@ export const remove = organizationMutation({
 
 export const createTaskTag = privateMutation({
   args: {
-    reportId: v.id('dailyReport'),
-    taskId: v.id('tasks'),
+    reportId: vv.id('dailyReport'),
+    taskId: vv.id('tasks'),
   },
 
-  returns: v.id('dailyReportTaskTag'),
+  returns: vv.id('dailyReportTaskTag'),
 
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -142,14 +143,14 @@ export const createTaskTag = privateMutation({
 
 export const listTaskTags = privateQuery({
   args: {
-    reportId: v.id('dailyReport'),
+    reportId: vv.id('dailyReport'),
   },
   returns: v.array(
     v.object({
-      _id: v.id('dailyReportTaskTag'),
+      _id: vv.id('dailyReportTaskTag'),
       _creationTime: v.number(),
-      reportId: v.id('dailyReport'),
-      taskId: v.id('tasks'),
+      reportId: vv.id('dailyReport'),
+      taskId: vv.id('tasks'),
       createdAt: v.number(),
       updatedAt: v.optional(v.number()),
     }),
@@ -164,9 +165,9 @@ export const listTaskTags = privateQuery({
 
 export const updateTaskTag = privateMutation({
   args: {
-    tagId: v.id('dailyReportTaskTag'),
-    taskId: v.optional(v.id('tasks')),
-    reportId: v.optional(v.id('dailyReport')),
+    tagId: vv.id('dailyReportTaskTag'),
+    taskId: v.optional(vv.id('tasks')),
+    reportId: v.optional(vv.id('dailyReport')),
   },
 
   returns: v.null(),
@@ -223,7 +224,7 @@ export const updateTaskTag = privateMutation({
 
 export const removeTaskTag = privateMutation({
   args: {
-    tagId: v.id('dailyReportTaskTag'),
+    tagId: vv.id('dailyReportTaskTag'),
   },
 
   returns: v.null(),

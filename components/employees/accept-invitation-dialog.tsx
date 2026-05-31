@@ -2,6 +2,7 @@
 
 import { RiArrowRightLine } from '@remixicon/react'
 import { useConvex, useQuery } from 'convex/react'
+import { isAfter } from 'date-fns'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -29,19 +30,11 @@ type DerivedView =
   | 'sign_in_required'
   | 'ready'
 
-type InvitationPreview = {
-  status: string
-  email: string
-  organizationId: string
-  organizationName: string
-  organizationSlug: string
-  organizationLogo: string | null
-  expiresAt: number
-  role: string | null
-}
-
 function deriveView(
-  preview: InvitationPreview | null | undefined,
+  preview:
+    | typeof api.employees.getInvitationById._returnType
+    | null
+    | undefined,
   sessionEmail: string | undefined,
 ): DerivedView {
   if (preview === undefined) return 'loading'
@@ -49,15 +42,11 @@ function deriveView(
 
   if (preview.status === 'accepted') return 'already_handled'
 
-  if (
-    preview.status === 'canceled' ||
-    preview.status === 'cancelled' ||
-    preview.status === 'rejected'
-  ) {
+  if (preview.status === 'canceled' || preview.status === 'rejected') {
     return 'already_handled'
   }
 
-  if (preview.expiresAt < Date.now()) return 'expired'
+  if (isAfter(preview.expiresAt, new Date())) return 'expired'
 
   if (preview.status !== 'pending') return 'already_handled'
 
@@ -73,7 +62,7 @@ export function AcceptInvitationPage() {
   const router = useRouter()
   const convex = useConvex()
   const invitationId = params.invitationId
-  const preview = useQuery(api.employees.auth.getInvitationPreview, {
+  const preview = useQuery(api.employees.getInvitationById, {
     invitationId,
   })
   const { data: session } = authClient.useSession()

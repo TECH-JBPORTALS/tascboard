@@ -1,10 +1,17 @@
+import { Infer } from 'convex/values'
 import { format, isSameDay } from 'date-fns'
 import type { MutationCtx } from '../_generated/server'
-import { ProjectActivityValidator } from '../schema'
+import { vv } from '../schema'
+
+const projectActivityInputValidator = vv
+  .doc('projectActivities')
+  .omit('_id', '_creationTime', 'createdAt')
+
+type ProjectActivityInput = Infer<typeof projectActivityInputValidator>
 
 export async function logProjectActivity(
   ctx: MutationCtx,
-  args: Omit<typeof ProjectActivityValidator.type, 'createdAt'>,
+  args: ProjectActivityInput,
 ) {
   const existingActivities = await ctx.db
     .query('projectActivities')

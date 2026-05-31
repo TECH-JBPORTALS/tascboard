@@ -1,11 +1,12 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const toggleMember = privateMutation({
   args: {
     employeeId: v.string(),
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -35,7 +36,7 @@ export const toggleMember = privateMutation({
 export const setManager = privateMutation({
   args: {
     employeeId: v.string(),
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -86,7 +87,7 @@ export const setManager = privateMutation({
 export const removeManager = privateMutation({
   args: {
     employeeId: v.string(),
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -111,7 +112,7 @@ export const removeManager = privateMutation({
 })
 export const list = privateQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
     manager: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -139,7 +140,7 @@ export const list = privateQuery({
           .withIndex('by_employee', (q) =>
             q.eq('employeeId', member.employeeId),
           )
-          .unique()
+          .first()
 
         const image = profile?.profilePhotoStorageId
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
@@ -151,11 +152,11 @@ export const list = privateQuery({
           manager: member.manager,
           employee: {
             _id: profile?.employeeId ?? member.employeeId,
-            name: profile
+            name: profile?.firstName
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
               : ctx.session.user.name,
-            image: image ?? '',
-            email: ctx.session.user.email ?? '',
+            image: image,
+            email: ctx.session.user.email,
           },
         }
       }),

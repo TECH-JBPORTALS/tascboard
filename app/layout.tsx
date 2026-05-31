@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
-import { ConvexQueryCacheProvider } from 'convex-helpers/react/cache/provider'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { ConvexClientProvider } from '@/components/convex-client-provider'
 import { Toaster } from '@/components/ui/sonner'
@@ -44,14 +43,12 @@ export default async function RootLayout({
     >
       <body>
         <ConvexClientProvider initialToken={token}>
-          <ConvexQueryCacheProvider>
-            <NuqsAdapter>
-              <TooltipProvider>
-                {children}
-                <Toaster />
-              </TooltipProvider>
-            </NuqsAdapter>
-          </ConvexQueryCacheProvider>
+          <NuqsAdapter>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </NuqsAdapter>
         </ConvexClientProvider>
       </body>
     </html>

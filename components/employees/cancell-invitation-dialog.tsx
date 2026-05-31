@@ -30,7 +30,7 @@ export function CancelInvitationDialog({
     setPending(true)
     try {
       const result = await authClient.organization.cancelInvitation({
-        invitationId: invitation.id,
+        invitationId: invitation._id,
       })
 
       if (result.error) {
