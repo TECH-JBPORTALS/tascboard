@@ -171,6 +171,7 @@ export function SelectOrganizationPage() {
             variant="ghost"
             className="mt-2 w-full"
             render={<Link href="/create-organization" />}
+            nativeButton={false}
           >
             <RiAddLine />
             Create another organization
