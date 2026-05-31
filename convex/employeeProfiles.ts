@@ -11,10 +11,16 @@ import { getOrganizationContext, requireMembership } from './lib/auth'
 import { getEmployeeForUser } from './lib/employees'
 import { employeeProfileSchema } from './schema'
 
+/** Controll how many certificates can be uploaded by an employee. */
 const MAX_CERTIFICATES = 5
 
+/** The return type for the getMyProfile query. */
 const profileReturn = employeeProfileSchema
 
+/**
+ * This suppose to create a profile for the user if they don't have one after they accept an invitation. only be used by the betterAuth hooks.
+ * @returns The ID of the created profile.
+ */
 export const ensureProfileAfterInvite = internalMutation({
   args: {
     organizationId: v.string(),
@@ -49,6 +55,10 @@ export const ensureProfileAfterInvite = internalMutation({
   },
 })
 
+/**
+ * This query returns the onboarding status of the current user.
+ * @returns The onboarding status of the current user.
+ */
 export const getMyOnboardingStatus = query({
   args: {},
   returns: v.union(
@@ -94,6 +104,10 @@ export const getMyOnboardingStatus = query({
   },
 })
 
+/**
+ * This query returns the profile of the current user.
+ * @returns The profile of the current user.
+ */
 export const getMyProfile = query({
   args: {},
   returns: v.union(profileReturn, v.null()),
@@ -124,6 +138,12 @@ export const getMyProfile = query({
   },
 })
 
+/**
+ * This helper function is used to get or create a profile for the current user.
+ * @param ctx - The context object.
+ * @param employeeId - The ID of the employee.
+ * @returns The profile of the created or existing profile.
+ */
 async function getOrCreateMyProfile(
   ctx: MutationCtx,
   employeeId: string,
@@ -146,6 +166,12 @@ async function getOrCreateMyProfile(
   return created
 }
 
+/**
+ * This mutation is used to save the general information of the current user.
+ * @param ctx - The context object.
+ * @param args - The arguments object.
+ * @returns The null.
+ */
 export const saveGeneralInfo = mutation({
   args: {
     firstName: v.string(),
@@ -192,6 +218,10 @@ export const saveGovernmentId = mutation({
   },
 })
 
+/**
+ * This mutation is used to save the bank details of the current user in onboarding process.
+ * @returns The null.
+ */
 export const saveBankDetails = mutation({
   args: {
     bankAccountNumber: v.string(),
@@ -216,6 +246,13 @@ export const saveBankDetails = mutation({
   },
 })
 
+/**
+ * This mutation is used to add a certificate to the current user's profile in onboarding process.
+ * @param storageId - The ID of the storage object.
+ * @param fileName - The name of the file.
+ * @param contentType - The content type of the file.
+ * @returns The ID of the created certificate.
+ */
 export const addCertificate = mutation({
   args: {
     storageId: v.id('_storage'),
@@ -251,6 +288,11 @@ export const addCertificate = mutation({
   },
 })
 
+/**
+ * This mutation is used to remove a certificate from the current user's profile.
+ * @param certificateId - The ID of the certificate to remove.
+ * @returns The null.
+ */
 export const removeCertificate = mutation({
   args: { certificateId: v.id('employeeCertificates') },
   returns: v.null(),
@@ -276,22 +318,17 @@ export const removeCertificate = mutation({
   },
 })
 
+/**
+ * This mutation is used to complete the onboarding process for the current user.
+ * @returns The null.
+ * @throws An error if the general information, government ID details, bank details are not completed.
+ */
 export const completeOnboarding = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
     const { orgId, userId, employee } = await requireMembership(ctx)
     const profile = await getOrCreateMyProfile(ctx, employee._id)
-
-    if (
-      !profile.firstName ||
-      !profile.lastName ||
-      !profile.dateOfBirth ||
-      !profile.address
-    ) {
-      throw new Error('Please complete general information first.')
-    }
-
     if (!profile.aadharNumber || !profile.panNumber) {
       throw new Error('Please complete government ID details first.')
     }

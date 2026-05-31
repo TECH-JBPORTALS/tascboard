@@ -1,29 +1,6 @@
 import { v } from 'convex/values'
 import { privateMutation, privateQuery } from './lib/customFunctions'
 
-function collectText(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (Array.isArray(value)) return value.map(collectText).join('\n')
-  if (!value || typeof value !== 'object') return ''
-
-  const node = value as {
-    text?: unknown
-    children?: unknown
-    content?: unknown
-  }
-
-  const ownText = typeof node.text === 'string' ? node.text : ''
-  const fromChildren = collectText(node.children)
-  const fromContent = collectText(node.content)
-  return [ownText, fromChildren, fromContent].filter(Boolean).join('\n')
-}
-
-function isEmptyEditorBody(body: unknown): boolean {
-  if (body === null || body === undefined) return true
-  if (typeof body === 'string') return body.trim().length === 0
-  return collectText(body).trim().length === 0
-}
-
 export const listByTask = privateQuery({
   args: {
     taskId: v.id('tasks'),
@@ -45,9 +22,6 @@ export const create = privateMutation({
     body: v.any(),
   },
   handler: async (ctx, args) => {
-    if (isEmptyEditorBody(args.body)) {
-      throw new Error('Comment body cannot be empty')
-    }
     if (args.parentCommentId) {
       const parent = await ctx.db.get(args.parentCommentId)
       if (!parent) {
@@ -79,9 +53,7 @@ export const edit = privateMutation({
     if (comment.deviceName !== args.deviceName) {
       throw new Error('You can only edit your own comments')
     }
-    if (isEmptyEditorBody(args.body)) {
-      throw new Error('Comment body cannot be empty')
-    }
+
     if (JSON.stringify(args.body) === JSON.stringify(comment.body)) return
     await ctx.db.patch(args.commentId, {
       body: args.body,
