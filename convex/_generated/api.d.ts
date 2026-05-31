@@ -26,7 +26,6 @@ import type * as lib_customFunctions from "../lib/customFunctions.js";
 import type * as lib_memberHelper from "../lib/memberHelper.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as lib_projectActivityLog from "../lib/projectActivityLog.js";
-import type * as lib_projectAppearance from "../lib/projectAppearance.js";
 import type * as lib_taskActivityLog from "../lib/taskActivityLog.js";
 import type * as lib_taskDisplay from "../lib/taskDisplay.js";
 import type * as lib_taskKanban from "../lib/taskKanban.js";
@@ -97,7 +96,6 @@ declare const fullApi: ApiFromModules<{
   "lib/memberHelper": typeof lib_memberHelper;
   "lib/permissions": typeof lib_permissions;
   "lib/projectActivityLog": typeof lib_projectActivityLog;
-  "lib/projectAppearance": typeof lib_projectAppearance;
   "lib/taskActivityLog": typeof lib_taskActivityLog;
   "lib/taskDisplay": typeof lib_taskDisplay;
   "lib/taskKanban": typeof lib_taskKanban;

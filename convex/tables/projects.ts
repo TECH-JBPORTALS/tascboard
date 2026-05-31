@@ -1,6 +1,17 @@
 import { defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { projectColorValidator } from '../lib/projectAppearance'
+
+/** Shared across schema + mutations (import from this file or use `vv.doc('projects').fields.color`). */
+export const projectColorValidator = v.union(
+  v.literal('gray'),
+  v.literal('purple'),
+  v.literal('blue'),
+  v.literal('teal'),
+  v.literal('green'),
+  v.literal('yellow'),
+  v.literal('orange'),
+  v.literal('red'),
+)
 
 export const projects = defineTable({
   organizationId: v.string(),
