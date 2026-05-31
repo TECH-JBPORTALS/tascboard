@@ -13,23 +13,25 @@ import {
   reindexStatusColumn,
 } from './lib/taskKanban'
 import { listTasksForTrack } from './lib/taskList'
-import {
-  TaskPriorityValidator,
-  TaskStatusValidator,
-  TaskValidator,
-} from './schema'
+import { vv } from './schema'
 
 /**
  * Create Task
  */
 export const create = privateMutation({
-  args: TaskValidator.omit(
-    'taskCode',
-    'createdAt',
-    'updatedAt',
-    'createdBy',
-    'statusOrder',
-  ),
+  args: vv
+    .doc('tasks')
+    .omit(
+      '_id',
+      '_creationTime',
+      'taskCode',
+      'createdAt',
+      'updatedAt',
+      'createdBy',
+      'statusOrder',
+      'startedAt',
+      'completedAt',
+    ),
   handler: async (ctx, args) => {
     const lastTask = await ctx.db
       .query('tasks')
@@ -75,7 +77,7 @@ export const create = privateMutation({
  */
 export const get = privateQuery({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId)
@@ -108,7 +110,7 @@ export const get = privateQuery({
  */
 export const listByTrack = privateQuery({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
   },
   handler: async (ctx, args) => {
     const tasks = await ctx.db
@@ -122,8 +124,8 @@ export const listByTrack = privateQuery({
 
 export const reorderKanban = privateMutation({
   args: {
-    taskId: v.id('tasks'),
-    status: TaskStatusValidator,
+    taskId: vv.id('tasks'),
+    status: vv.doc('tasks').fields.status,
     statusOrder: v.number(),
   },
   returns: v.null(),
@@ -181,7 +183,7 @@ export const reorderKanban = privateMutation({
 
 export const listTaskEmployees = privateQuery({
   args: {
-    trackId: v.id('tracks'),
+    trackId: vv.id('tracks'),
   },
   handler: async (ctx, args) => {
     // 1. Get tasks in track
@@ -253,11 +255,11 @@ export const listTaskEmployees = privateQuery({
 
 export const list = privateQuery({
   args: {
-    trackId: v.id('tracks'),
-    sprintId: v.optional(v.id('sprints')),
-    statuses: v.optional(v.array(TaskStatusValidator)),
+    trackId: vv.id('tracks'),
+    sprintId: v.optional(vv.id('sprints')),
+    statuses: v.optional(v.array(vv.doc('tasks').fields.status)),
     assigneeIds: v.optional(v.array(v.string())),
-    labelIds: v.optional(v.array(v.id('labels'))),
+    labelIds: v.optional(v.array(vv.id('labels'))),
     noDueDate: v.optional(v.boolean()),
     dueFrom: v.optional(v.number()),
     dueTo: v.optional(v.number()),
@@ -284,14 +286,19 @@ export const list = privateQuery({
 /** Update Task */
 export const update = privateMutation({
   args: {
-    taskId: v.id('tasks'),
-    body: TaskValidator.omit(
-      'trackId',
-      'projectId',
-      'taskCode',
-      'createdAt',
-      'updatedAt',
-    ).partial(),
+    taskId: vv.id('tasks'),
+    body: vv
+      .doc('tasks')
+      .omit(
+        '_id',
+        '_creationTime',
+        'trackId',
+        'projectId',
+        'taskCode',
+        'createdAt',
+        'updatedAt',
+      )
+      .partial(),
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId)
@@ -426,7 +433,7 @@ export async function removeTaskCascade(ctx: MutationCtx, taskId: Id<'tasks'>) {
 /** REMOVE TASK */
 export const remove = privateMutation({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
   },
   handler: async (ctx, { taskId }) => {
     const task = await ctx.db.get(taskId)

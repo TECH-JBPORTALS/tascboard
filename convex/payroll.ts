@@ -4,6 +4,7 @@ import {
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const create = privateInternalMutation({
   args: {
@@ -59,7 +60,7 @@ export const listAll = privateQuery({
 
 export const get = privateQuery({
   args: {
-    id: v.id('payroll'),
+    id: vv.id('payroll'),
   },
   handler: async (ctx, args) => {
     const record = await ctx.db.get(args.id)
@@ -69,7 +70,7 @@ export const get = privateQuery({
 
 export const update = privateMutation({
   args: {
-    id: v.id('payroll'),
+    id: vv.id('payroll'),
     basicSalary: v.optional(v.float64()),
     deduction: v.optional(v.float64()),
     overtimePay: v.optional(v.float64()),
@@ -95,7 +96,7 @@ export const update = privateMutation({
 
 export const remove = privateMutation({
   args: {
-    id: v.id('payroll'),
+    id: vv.id('payroll'),
   },
   handler: async (ctx, args) => {
     const record = await ctx.db.get(args.id)

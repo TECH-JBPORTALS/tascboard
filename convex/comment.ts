@@ -1,9 +1,10 @@
 import { v } from 'convex/values'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const listByTask = privateQuery({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
   },
   handler: async (ctx, args) => {
     const comments = await ctx.db
@@ -16,8 +17,8 @@ export const listByTask = privateQuery({
 
 export const create = privateMutation({
   args: {
-    taskId: v.id('tasks'),
-    parentCommentId: v.union(v.id('comments'), v.null()),
+    taskId: vv.id('tasks'),
+    parentCommentId: v.union(vv.id('comments'), v.null()),
     deviceName: v.string(),
     body: v.any(),
   },
@@ -43,7 +44,7 @@ export const create = privateMutation({
 
 export const edit = privateMutation({
   args: {
-    commentId: v.id('comments'),
+    commentId: vv.id('comments'),
     body: v.any(),
     deviceName: v.string(),
   },
@@ -64,7 +65,7 @@ export const edit = privateMutation({
 
 export const remove = privateMutation({
   args: {
-    commentId: v.id('comments'),
+    commentId: vv.id('comments'),
     deviceName: v.string(),
   },
   handler: async (ctx, args) => {
@@ -90,7 +91,7 @@ export const remove = privateMutation({
 
 export const toggleResolution = privateMutation({
   args: {
-    commentId: v.id('comments'),
+    commentId: vv.id('comments'),
   },
   handler: async (ctx, args) => {
     const comment = await ctx.db.get(args.commentId)

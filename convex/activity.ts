@@ -1,9 +1,10 @@
 import { v } from 'convex/values'
 import { privateQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const listByTask = privateQuery({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { taskId, limit }) => {

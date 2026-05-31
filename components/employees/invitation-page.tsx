@@ -40,13 +40,7 @@ export function InvitationsPage() {
 
   const rows = useMemo<InvitationRow[]>(() => {
     if (!invitations) return []
-    return invitations.map((inv) => ({
-      id: inv.id,
-      email: inv.email,
-      role: inv.role,
-      status: inv.status,
-      expiresAt: inv.expiresAt,
-    }))
+    return invitations
   }, [invitations])
 
   const columns = useMemo(() => {

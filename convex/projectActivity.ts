@@ -1,10 +1,11 @@
 import { v } from 'convex/values'
 import { components } from './_generated/api'
 import { organizationQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const list = organizationQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -22,7 +23,7 @@ export const list = organizationQuery({
 
 export const topPerformers = organizationQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {

@@ -3,19 +3,23 @@ import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
 import { privateMutation, privateQuery } from './lib/customFunctions'
-import { LeaveRequestValidator } from './schema'
+import { vv } from './schema'
 
 const getDays = (start: number, end: number) => {
   return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
 }
 const LEAVE_QUOTA = 24
 export const raise = privateMutation({
-  args: LeaveRequestValidator.omit(
-    'status',
-    'approvedBy',
-    'createdAt',
-    'updatedAt',
-  ),
+  args: vv
+    .doc('leaveRequests')
+    .omit(
+      '_id',
+      '_creationTime',
+      'status',
+      'approvedBy',
+      'createdAt',
+      'updatedAt',
+    ),
   handler: async (ctx, args) => {
     if (args.endDate < args.startDate) {
       throw new Error('Invalid date range')
@@ -60,12 +64,11 @@ export const raise = privateMutation({
 })
 export const update = privateMutation({
   args: {
-    leaveRequestId: v.id('leaveRequests'),
-    body: LeaveRequestValidator.omit(
-      'employeeId',
-      'createdAt',
-      'updatedAt',
-    ).partial(),
+    leaveRequestId: vv.id('leaveRequests'),
+    body: vv
+      .doc('leaveRequests')
+      .omit('_id', '_creationTime', 'employeeId', 'createdAt', 'updatedAt')
+      .partial(),
   },
   handler: async (ctx, args) => {
     const leaveRequest = await ctx.db.get(args.leaveRequestId)
@@ -102,7 +105,7 @@ export const update = privateMutation({
 
 export const get = privateQuery({
   args: {
-    leaveRequestId: v.id('leaveRequests'),
+    leaveRequestId: vv.id('leaveRequests'),
   },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.leaveRequestId)
@@ -125,7 +128,7 @@ export async function removeLeaveCascade(
 
 export const remove = privateMutation({
   args: {
-    leaveRequestId: v.id('leaveRequests'),
+    leaveRequestId: vv.id('leaveRequests'),
   },
   handler: async (ctx, { leaveRequestId }) => {
     const leaveRequest = await ctx.db.get(leaveRequestId)

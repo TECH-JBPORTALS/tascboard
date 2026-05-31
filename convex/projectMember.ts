@@ -1,11 +1,12 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
 export const toggleMember = privateMutation({
   args: {
     employeeId: v.string(),
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -35,7 +36,7 @@ export const toggleMember = privateMutation({
 export const setManager = privateMutation({
   args: {
     employeeId: v.string(),
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -86,7 +87,7 @@ export const setManager = privateMutation({
 export const removeManager = privateMutation({
   args: {
     employeeId: v.string(),
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -111,7 +112,7 @@ export const removeManager = privateMutation({
 })
 export const list = privateQuery({
   args: {
-    projectId: v.id('projects'),
+    projectId: vv.id('projects'),
     manager: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {

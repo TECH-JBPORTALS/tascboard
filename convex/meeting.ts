@@ -6,17 +6,22 @@ import {
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
-import { MeetingValidator } from './schema'
+import { vv } from './schema'
 
 export const create = organizationMutation({
-  args: MeetingValidator.omit(
-    'organizationId',
-    'createdBy',
-    'createdAt',
-    'updatedAt',
-  ).extend({
-    recipients: v.array(v.string()),
-  }),
+  args: vv
+    .doc('meeting')
+    .omit(
+      '_id',
+      '_creationTime',
+      'organizationId',
+      'createdBy',
+      'createdAt',
+      'updatedAt',
+    )
+    .extend({
+      recipients: v.array(v.string()),
+    }),
   handler: async (ctx, args) => {
     const { userId, activeOrganizationId: orgId } = ctx.session
     const now = Date.now()
@@ -47,13 +52,18 @@ export const create = organizationMutation({
 })
 export const update = organizationMutation({
   args: {
-    meetingId: v.id('meeting'),
-    body: MeetingValidator.omit(
-      'organizationId',
-      'createdBy',
-      'createdAt',
-      'updatedAt',
-    ).partial(),
+    meetingId: vv.id('meeting'),
+    body: vv
+      .doc('meeting')
+      .omit(
+        '_id',
+        '_creationTime',
+        'organizationId',
+        'createdBy',
+        'createdAt',
+        'updatedAt',
+      )
+      .partial(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -100,7 +110,7 @@ export const list = organizationQuery({
 
 export const get = organizationQuery({
   args: {
-    meetingId: v.id('meeting'),
+    meetingId: vv.id('meeting'),
   },
   handler: async (ctx, args) => {
     const { activeOrganizationId: orgId } = ctx.session
@@ -115,7 +125,7 @@ export const get = organizationQuery({
 
 export const remove = organizationMutation({
   args: {
-    meetingId: v.id('meeting'),
+    meetingId: vv.id('meeting'),
   },
   handler: async (ctx, args) => {
     const { userId, activeOrganizationId: orgId } = ctx.session
@@ -160,12 +170,12 @@ export const remove = organizationMutation({
 
 export const scheduleMeeting = privateMutation({
   args: {
-    meetingId: v.id('meeting'),
+    meetingId: vv.id('meeting'),
     startTime: v.number(),
     endTime: v.number(),
     finalNotes: v.optional(v.string()),
   },
-  returns: v.id('scheduleMeeting'),
+  returns: vv.id('scheduleMeeting'),
   handler: async (ctx, args) => {
     const meeting = await ctx.db.get(args.meetingId)
     if (!meeting) {
@@ -186,7 +196,7 @@ export const scheduleMeeting = privateMutation({
 
 export const inviteAttendees = privateMutation({
   args: {
-    scheduleMeetingId: v.id('scheduleMeeting'),
+    scheduleMeetingId: vv.id('scheduleMeeting'),
     employeeIds: v.array(v.string()),
   },
   returns: v.null(),
@@ -208,7 +218,7 @@ export const inviteAttendees = privateMutation({
 
 export const sendMeetingReminders = privateInternalMutation({
   args: {
-    scheduleMeetingId: v.id('scheduleMeeting'),
+    scheduleMeetingId: vv.id('scheduleMeeting'),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -225,7 +235,7 @@ export const sendMeetingReminders = privateInternalMutation({
 
 export const recordMeetingNotes = privateMutation({
   args: {
-    scheduleMeetingId: v.id('scheduleMeeting'),
+    scheduleMeetingId: vv.id('scheduleMeeting'),
     finalNotes: v.string(),
   },
 
@@ -249,7 +259,7 @@ export const recordMeetingNotes = privateMutation({
 
 export const trackMeetingAttendance = privateQuery({
   args: {
-    scheduleMeetingId: v.id('scheduleMeeting'),
+    scheduleMeetingId: vv.id('scheduleMeeting'),
   },
   handler: async (ctx, args) => {
     const attendees = await ctx.db
@@ -265,7 +275,7 @@ export const trackMeetingAttendance = privateQuery({
 
 export const getRecipients = privateQuery({
   args: {
-    meetingId: v.id('meeting'),
+    meetingId: vv.id('meeting'),
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -277,7 +287,7 @@ export const getRecipients = privateQuery({
 
 export const getSchedules = privateQuery({
   args: {
-    meetingId: v.id('meeting'),
+    meetingId: vv.id('meeting'),
   },
   handler: async (ctx, args) => {
     return await ctx.db

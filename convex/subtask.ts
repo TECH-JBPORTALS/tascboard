@@ -1,18 +1,12 @@
 import { v } from 'convex/values'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { vv } from './schema'
 
-const subtaskReturn = v.object({
-  _id: v.id('subtasks'),
-  _creationTime: v.number(),
-  taskId: v.id('tasks'),
-  title: v.string(),
-  completed: v.boolean(),
-  order: v.number(),
-})
+const subtaskReturn = vv.doc('subtasks')
 
 export const listByTask = privateQuery({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
   },
   returns: v.array(subtaskReturn),
   handler: async (ctx, args) => {
@@ -25,11 +19,11 @@ export const listByTask = privateQuery({
 
 export const create = privateMutation({
   args: {
-    taskId: v.id('tasks'),
+    taskId: vv.id('tasks'),
     title: v.string(),
     deviceName: v.string(),
   },
-  returns: v.id('subtasks'),
+  returns: vv.id('subtasks'),
   handler: async (ctx, args) => {
     const trimmed = args.title.trim()
 
@@ -53,7 +47,7 @@ export const create = privateMutation({
 
 export const toggle = privateMutation({
   args: {
-    subtaskId: v.id('subtasks'),
+    subtaskId: vv.id('subtasks'),
     deviceName: v.string(),
   },
   handler: async (ctx, args) => {
@@ -73,7 +67,7 @@ export const toggle = privateMutation({
 
 export const rename = privateMutation({
   args: {
-    subtaskId: v.id('subtasks'),
+    subtaskId: vv.id('subtasks'),
     title: v.string(),
     deviceName: v.string(),
   },
@@ -104,7 +98,7 @@ export const rename = privateMutation({
 
 export const remove = privateMutation({
   args: {
-    subtaskId: v.id('subtasks'),
+    subtaskId: vv.id('subtasks'),
     deviceName: v.string(),
   },
   returns: v.null(),

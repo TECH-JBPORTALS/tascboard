@@ -7,13 +7,13 @@ import {
   organizationMutation,
   organizationQuery,
 } from './lib/customFunctions'
-import { employeeProfileSchema } from './schema'
+import { vv } from './schema'
 
 /** Controll how many certificates can be uploaded by an employee. */
 const MAX_CERTIFICATES = 5
 
 /** The return type for the getMyProfile query. */
-const profileReturn = employeeProfileSchema
+const profileReturn = vv.doc('employeeProfiles').omit('_id', '_creationTime')
 
 export const getInternalEmployeeProfile = organizationInternalQuery({
   args: {
@@ -38,7 +38,7 @@ export const ensureProfileAfterInvite = internalMutation({
     organizationId: v.string(),
     userId: v.string(),
   },
-  returns: v.id('employeeProfiles'),
+  returns: vv.id('employeeProfiles'),
   handler: async (ctx, args) => {
     const employee = await ctx.runQuery(
       components.betterAuth.employees.getByOrganizationUser,
@@ -277,7 +277,7 @@ export const addCertificate = organizationMutation({
     fileName: v.string(),
     contentType: v.string(),
   },
-  returns: v.id('employeeCertificates'),
+  returns: vv.id('employeeCertificates'),
   handler: async (ctx, args) => {
     const { employee } = ctx.session
     const profile = await getOrCreateMyProfile(ctx, employee.id)
@@ -312,7 +312,7 @@ export const addCertificate = organizationMutation({
  * @returns The null.
  */
 export const removeCertificate = organizationMutation({
-  args: { certificateId: v.id('employeeCertificates') },
+  args: { certificateId: vv.id('employeeCertificates') },
   returns: v.null(),
   handler: async (ctx, args) => {
     const { activeOrganizationId, employee } = ctx.session

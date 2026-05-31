@@ -3,15 +3,11 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
+import { api } from '@/convex/_generated/api'
 import { InvitationRowActions } from './invitation-row-actions'
 
-export type InvitationRow = {
-  id: string
-  email: string
-  role: string | null
-  status: string
-  expiresAt: Date
-}
+export type InvitationRow =
+  (typeof api.employees.listInvitations._returnType)[number]
 
 const baseColumns: ColumnDef<InvitationRow>[] = [
   {
