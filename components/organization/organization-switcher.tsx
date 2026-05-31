@@ -1,6 +1,12 @@
 'use client'
 
-import { RiAddLine, RiCheckLine, RiExpandUpDownFill } from '@remixicon/react'
+import {
+  RiAddLine,
+  RiArrowDownSFill,
+  RiArrowDownSLine,
+  RiCheckLine,
+  RiExpandUpDownFill,
+} from '@remixicon/react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -101,16 +107,20 @@ export function OrganizationSwitcher() {
 
   return (
     <Popover>
-      <SidebarMenuButton variant={'outline'} render={<PopoverTrigger />}>
+      <SidebarMenuButton
+        size={'sm'}
+        className="max-w-44 w-fit px-1 gap-1.5"
+        render={<PopoverTrigger />}
+      >
         <OrganizationAvatar
           name={current.name}
           imageStorageId={currentMetadata.imageStorageId}
-          className="size-6"
+          className="size-5"
         />
-        <span className="truncate text-left  text-sm font-medium">
+        <span className="truncate text-left text-xs font-medium">
           {current.name}
         </span>
-        <RiExpandUpDownFill className="ml-auto text-muted-foreground" />
+        <RiArrowDownSLine className="ml-auto text-muted-foreground" />
       </SidebarMenuButton>
 
       <PopoverContent className={'max-w-[240px]! p-0'}>
@@ -118,6 +128,7 @@ export function OrganizationSwitcher() {
           <CommandInput placeholder="Search..." />
           <CommandList>
             <CommandEmpty>No organization found</CommandEmpty>
+
             <CommandGroup heading={'Organizations'}>
               {orgList.map((org) => {
                 const metadata = parseOrganizationMetadata(org.metadata)

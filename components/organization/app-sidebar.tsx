@@ -75,7 +75,6 @@ const navItems = [
     href: '/settings',
     icon: RiSettings3Line,
     fillIcon: RiSettings3Line,
-    permissions: { organization: ['delete'] },
   },
 ]
 

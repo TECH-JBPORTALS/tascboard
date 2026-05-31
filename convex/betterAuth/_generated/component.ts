@@ -1582,5 +1582,12 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      update: FunctionReference<
+        "mutation",
+        "internal",
+        { body: { image?: null | string; name?: string }; userId: string },
+        any,
+        Name
+      >;
     };
   };

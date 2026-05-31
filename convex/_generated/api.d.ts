@@ -70,6 +70,7 @@ import type * as taskKanbanMigration from "../taskKanbanMigration.js";
 import type * as taskMember from "../taskMember.js";
 import type * as track from "../track.js";
 import type * as trackMember from "../trackMember.js";
+import type * as userSettings from "../userSettings.js";
 
 import type {
   ApiFromModules,
@@ -140,6 +141,7 @@ declare const fullApi: ApiFromModules<{
   taskMember: typeof taskMember;
   track: typeof track;
   trackMember: typeof trackMember;
+  userSettings: typeof userSettings;
 }>;
 
 /**

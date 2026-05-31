@@ -9,7 +9,7 @@ import { OrganizationAccessProvider } from '@/components/organization/organizati
 import { api } from '@/convex/_generated/api'
 import { findOrganizationBySlug } from '@/lib/organization-membership'
 
-function OrganizationRouteSkeleton() {
+export function OrganizationRouteSkeleton() {
   return (
     <div className="flex h-svh flex-col items-center justify-center gap-3 p-6">
       <RiTBoxLine className="size-16 text-primary dark:text-muted-foreground" />
