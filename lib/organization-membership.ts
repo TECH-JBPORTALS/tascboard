@@ -1,5 +1,4 @@
 import { api } from '@/convex/_generated/api'
-import { Doc } from '@/convex/betterAuth/_generated/dataModel'
 
 export type OrganizationListItem = {
   id: string

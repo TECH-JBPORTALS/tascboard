@@ -9,7 +9,6 @@ import {
   RiMoneyDollarCircleFill,
   RiMoneyDollarCircleLine,
   RiRouteLine,
-  RiSettings3Line,
   RiTeamFill,
   RiTeamLine,
   RiTriangleFill,

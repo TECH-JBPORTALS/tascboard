@@ -1,8 +1,6 @@
 import type { RemixiconComponentType } from '@remixicon/react'
 import {
   RiAlarmWarningLine,
-  RiArrowDownSLine,
-  RiArrowUpSLine,
   RiBarChartFill,
   RiCheckboxBlankCircleLine,
   RiCheckboxCircleFill,

@@ -10,7 +10,6 @@ import { toast } from 'sonner'
 import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
 import { parseOrganizationMetadata } from '@/lib/organization'
-import { Button } from '../ui/button'
 import {
   MenubarContent,
   MenubarGroup,
