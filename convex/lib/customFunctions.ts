@@ -1,5 +1,7 @@
 import { GenericCtx } from '@convex-dev/better-auth'
+import { User } from 'better-auth'
 import {
+  customCtx,
   customMutation,
   customQuery,
 } from 'convex-helpers/server/customFunctions'
@@ -8,20 +10,30 @@ import { internalMutation, mutation, query } from '../_generated/server'
 import { authComponent, createAuth } from '../auth'
 
 async function validateSession(ctx: GenericCtx<DataModel>) {
+  const identity = await ctx.auth.getUserIdentity()
+  if (!identity) throw new Error('Unauthorized')
+
   const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
-  const authSession = await auth.api.getSession({ headers })
-  if (!authSession) throw new Error('Unauthorized')
-  return { ...authSession.session, user: authSession.user }
+
+  const session = await auth.api.getSession({ headers })
+
+  if (!session) throw new Error('User not found')
+
+  return {
+    ...session.session,
+    user: session.user,
+  }
 }
 
 /** Private Query will validate the session and returns BetterAuth session object */
-export const privateQuery = customQuery(query, {
-  args: {},
-  input: async (ctx, args) => {
+export const privateQuery = customQuery(
+  query,
+  customCtx(async (ctx) => {
     const session = await validateSession(ctx)
-    return { ctx: { ...ctx, session }, args }
-  },
-})
+
+    return { ...ctx, session }
+  }),
+)
 
 /** Private Mutation will validate the session and returns BetterAuth session object */
 export const privateMutation = customMutation(mutation, {

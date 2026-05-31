@@ -1,8 +1,7 @@
 'use client'
 
 import { RiAccountCircle2Line } from '@remixicon/react'
-import { useMutation } from 'convex/react'
-import { useQuery } from 'convex-helpers/react/cache'
+import { useMutation, useQuery } from 'convex/react'
 import * as React from 'react'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
@@ -124,7 +123,7 @@ export function useProjectMembers(projectId: Id<'projects'>) {
     projectId,
   })
 
-  const employees = useQuery(api.employees.auth.list)
+  const employees = useQuery(api.auth.listEmployees)
 
   const remainingEmployees = employees?.filter(
     (employee) => !members?.some((member) => member.employeeId === employee.id),

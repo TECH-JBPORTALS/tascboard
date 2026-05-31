@@ -45,12 +45,3 @@ export async function requireMembership(ctx: GenericCtx<DataModel>) {
 
   return { orgId, userId, employee }
 }
-
-export async function requirePermission(
-  ctx: GenericCtx<DataModel>,
-  permissions: PermissionRequest,
-) {
-  const { orgId, userId, employee } = await requireMembership(ctx)
-
-  return { orgId, userId, employee }
-}

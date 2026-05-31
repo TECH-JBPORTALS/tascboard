@@ -8,6 +8,7 @@ import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
 import { query } from './_generated/server'
 import authConfig from './auth.config'
+import { organizationQuery } from './lib/customFunctions'
 import authSchema from './schema'
 
 // Better Auth Component
@@ -221,5 +222,13 @@ export const getActiveMemberRole = query({
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
 
     return await auth.api.getActiveMemberRole({ headers })
+  },
+})
+
+export const listEmployees = organizationQuery({
+  args: {},
+  handler: async (ctx) => {
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+    return (await auth.api.listMembers({ headers })).members
   },
 })

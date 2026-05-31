@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { AuthGate } from '@/components/auth-gate'
 import { isAuthenticated } from '@/lib/auth-server'
 
 export default async function Layout({
@@ -12,5 +13,5 @@ export default async function Layout({
     const currentPath = headerStore.get('x-current-path') ?? '/'
     redirect(`/sign-in?redirect=${encodeURIComponent(currentPath)}`)
   }
-  return children
+  return <AuthGate>{children}</AuthGate>
 }

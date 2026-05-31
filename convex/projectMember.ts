@@ -139,7 +139,7 @@ export const list = privateQuery({
           .withIndex('by_employee', (q) =>
             q.eq('employeeId', member.employeeId),
           )
-          .unique()
+          .first()
 
         const image = profile?.profilePhotoStorageId
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
@@ -151,11 +151,11 @@ export const list = privateQuery({
           manager: member.manager,
           employee: {
             _id: profile?.employeeId ?? member.employeeId,
-            name: profile
+            name: profile?.firstName
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
               : ctx.session.user.name,
-            image: image ?? '',
-            email: ctx.session.user.email ?? '',
+            image: image,
+            email: ctx.session.user.email,
           },
         }
       }),

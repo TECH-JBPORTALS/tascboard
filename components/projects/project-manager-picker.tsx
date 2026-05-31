@@ -111,10 +111,10 @@ export function ProjectMangerPicker({
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.name}
-                      imageUrl={employee.image}
+                      name={employee.user.name}
+                      imageUrl={employee.user.image}
                     />
-                    {employee.name}
+                    {employee.user.name}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -131,7 +131,7 @@ export function useProjectMembers(projectId: Id<'projects'>) {
     projectId,
   })
 
-  const employees = useQuery(api.employees.auth.list)
+  const employees = useQuery(api.auth.listEmployees)
 
   const remainingEmployees = employees?.filter((employee) => {
     const existingMember = members?.find(

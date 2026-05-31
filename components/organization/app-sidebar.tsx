@@ -14,7 +14,7 @@ import {
   RiTeamLine,
   RiTriangleFill,
 } from '@remixicon/react'
-import { useQuery } from 'convex-helpers/react/cache'
+import { useQuery } from 'convex/react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 import React, { useMemo, useState } from 'react'
@@ -171,12 +171,14 @@ function ProjectSidebarGroup() {
     <SidebarGroup>
       <SidebarGroupLabel>
         PROJECTS
-        <SidebarGroupAction
-          title="Create project"
-          onClick={() => setCreateOpen(true)}
-        >
-          <RiAddLargeFill />
-        </SidebarGroupAction>
+        <Protect permissions={{ project: ['create'] }}>
+          <SidebarGroupAction
+            title="Create project"
+            onClick={() => setCreateOpen(true)}
+          >
+            <RiAddLargeFill />
+          </SidebarGroupAction>
+        </Protect>
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>

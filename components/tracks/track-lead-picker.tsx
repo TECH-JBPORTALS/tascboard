@@ -142,10 +142,10 @@ export function TrackLeadPicker({
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.name}
-                      imageUrl={employee.image}
+                      name={employee.user.name}
+                      imageUrl={employee.user.image}
                     />
-                    {employee.name}
+                    {employee.user.name}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -193,12 +193,12 @@ export function TrackLeadDraftPicker({
             name={
               'employee' in currentLead
                 ? currentLead.employee.name
-                : currentLead.name
+                : currentLead.user.name
             }
             imageUrl={
               'employee' in currentLead
                 ? currentLead.employee.image
-                : currentLead.image
+                : currentLead.user.image
             }
           />
         ) : (
@@ -208,7 +208,7 @@ export function TrackLeadDraftPicker({
           {currentLead
             ? 'employee' in currentLead
               ? currentLead.employee.name
-              : currentLead.name
+              : currentLead.user.name
             : 'Lead'}
         </span>
       </PopoverTrigger>
@@ -249,10 +249,10 @@ export function TrackLeadDraftPicker({
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.name}
-                      imageUrl={employee.image}
+                      name={employee.user.name}
+                      imageUrl={employee.user.image}
                     />
-                    {employee.name}
+                    {employee.user.name}
                     {leadEmployeeId === employee.id && (
                       <RiCheckFill className="ml-auto size-4" />
                     )}
@@ -273,7 +273,7 @@ export function useTrackMemberGroups(
 ) {
   const trackMembers = useQuery(api.trackMember.list, { trackId })
   const projectMembers = useQuery(api.projectMember.list, { projectId })
-  const employees = useQuery(api.employees.auth.list)
+  const employees = useQuery(api.employees.listEmployees)
 
   const trackMemberIds = new Set(
     (trackMembers ?? []).map((member) => member.employeeId),

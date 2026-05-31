@@ -136,10 +136,10 @@ export function TrackMembersPicker({
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.name}
-                      imageUrl={employee.image}
+                      name={employee.user.name}
+                      imageUrl={employee.user.image}
                     />
-                    {employee.name}
+                    {employee.user.name}
                   </CommandItem>
                 ))}
               </CommandGroup>

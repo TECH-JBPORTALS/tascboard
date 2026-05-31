@@ -2,7 +2,6 @@ import { v } from 'convex/values'
 import { components } from './_generated/api'
 import { query } from './_generated/server'
 import { authComponent, createAuth } from './auth'
-import { requirePermission } from './lib/auth'
 import { organizationQuery } from './lib/customFunctions'
 
 const employeeProfileDetails = v.object({
