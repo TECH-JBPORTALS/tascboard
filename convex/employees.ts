@@ -19,11 +19,12 @@ export const list = organizationQuery({
 export const listInvitations = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
-    const invitations = await auth.api.listInvitations({
-      headers,
-      query: { organizationId: ctx.session.activeOrganizationId },
-    })
+    const invitations = await ctx.runQuery(
+      components.betterAuth.invitations.listPendingInvitations,
+      {
+        organizationId: ctx.session.activeOrganizationId,
+      },
+    )
 
     return invitations
   },

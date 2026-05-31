@@ -1,6 +1,5 @@
 import type { MutationCtx } from '../_generated/server'
 import { TaskActivityValidator } from '../schema'
-import { actorDisplayName } from './projectActivityLog'
 
 function getStartOfToday() {
   const now = new Date()
@@ -45,8 +44,6 @@ export async function logTaskActivity(
     createdAt: Date.now(),
   })
 }
-
-export { actorDisplayName }
 
 export function formatTaskDate(timestamp: number) {
   return new Intl.DateTimeFormat('en-US', {

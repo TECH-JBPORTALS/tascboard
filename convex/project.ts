@@ -1,7 +1,11 @@
 import { v } from 'convex/values'
 import { components, internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
-import { organizationMutation, privateQuery } from './lib/customFunctions'
+import {
+  organizationMutation,
+  organizationQuery,
+  privateQuery,
+} from './lib/customFunctions'
 import { getProjectMembers } from './lib/memberHelper'
 import { formatProjectDate, logProjectActivity } from './lib/projectActivityLog'
 import { ProjectValidator } from './schema'
@@ -48,13 +52,16 @@ export const create = organizationMutation({
   },
 })
 
-export const list = privateQuery({
+export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    const { activeOrganizationId: orgId } = ctx.session
+    const { activeOrganizationId } = ctx.session
+
     const projects = await ctx.db
       .query('projects')
-      .withIndex('by_organization', (q) => q.eq('organizationId', orgId!))
+      .withIndex('by_organization', (q) =>
+        q.eq('organizationId', activeOrganizationId),
+      )
       .order('desc')
       .collect()
 
@@ -80,13 +87,13 @@ export const get = privateQuery({
     if (!project || project.organizationId !== orgId) {
       return null
     }
-    const content = await ctx.runQuery(
+    const { content: description } = await ctx.runQuery(
       components.prosemirrorSync.lib.getSnapshot,
       { id: getProjectEditorId(args.projectId) },
     )
     const { members, manager } = await getProjectMembers(ctx, project._id)
     return {
-      ...{ ...project, description: content },
+      ...{ ...project, description },
       members,
       manager,
     }

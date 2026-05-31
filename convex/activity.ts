@@ -1,5 +1,4 @@
 import { v } from 'convex/values'
-import { requireIdentity } from './lib/auth'
 import { privateQuery } from './lib/customFunctions'
 
 export const listByTask = privateQuery({
@@ -8,8 +7,6 @@ export const listByTask = privateQuery({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { taskId, limit }) => {
-    await requireIdentity(ctx)
-
     const take = Math.min(limit ?? 50, 100)
     const activities = await ctx.db
       .query('taskActivities')

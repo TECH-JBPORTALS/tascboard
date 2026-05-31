@@ -1,9 +1,12 @@
+import { GenericCtx } from '@convex-dev/better-auth'
 import { ProsemirrorSync } from '@convex-dev/prosemirror-sync'
 import { v } from 'convex/values'
 import { components } from './_generated/api'
-import type { Id } from './_generated/dataModel'
-import { internalMutation, MutationCtx, QueryCtx } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import type { DataModel, Id } from './_generated/dataModel'
+import {
+  organizationInternalMutation,
+  validateActiveOrganization,
+} from './lib/customFunctions'
 
 const prosemirrorSync = new ProsemirrorSync(components.prosemirrorSync)
 const PROJECT_EDITOR_PREFIX = 'project-'
@@ -14,29 +17,10 @@ function parseProjectEditorId(id: string): Id<'projects'> {
   if (!id.startsWith(PROJECT_EDITOR_PREFIX)) {
     throw new Error('Invalid project editor id')
   }
-
-  const projectId = id.slice(PROJECT_EDITOR_PREFIX.length)
-
-  if (!projectId) {
-    throw new Error('Invalid project editor id')
-  }
-
-  return projectId as Id<'projects'>
+  return id.slice(PROJECT_EDITOR_PREFIX.length) as Id<'projects'>
 }
 
-type SyncAccessCtx = QueryCtx | MutationCtx
-
-async function assertProjectEditorAccess(ctx: SyncAccessCtx, id: string) {
-  await requireIdentity(ctx)
-  const { orgId } = await requireOrganization(ctx)
-  const projectId = parseProjectEditorId(id)
-  const project = await ctx.db.get(projectId)
-
-  if (!project || project.organizationId !== orgId) {
-    throw new Error('Not found')
-  }
-}
-
+// TODO Add authorization checks for the sync editor.
 export const {
   getSnapshot,
   submitSnapshot,
@@ -44,15 +28,24 @@ export const {
   getSteps,
   submitSteps,
 } = prosemirrorSync.syncApi({
-  checkRead: assertProjectEditorAccess,
-  checkWrite: assertProjectEditorAccess,
+  async checkWrite(ctx, id) {
+    const { activeOrganizationId } = await validateActiveOrganization(
+      ctx as GenericCtx<DataModel>,
+    )
+    const projectId = parseProjectEditorId(id)
+    const project = await ctx.db.get(projectId)
+    if (!project || project.organizationId !== activeOrganizationId) {
+      throw new Error('Not found')
+    }
+    return void 0
+  },
 })
 
 export function getProjectEditorId(projectId: Id<'projects'>) {
   return `${PROJECT_EDITOR_PREFIX}${projectId}`
 }
 
-export const createEditor = internalMutation({
+export const createEditor = organizationInternalMutation({
   args: { id: v.string(), content: v.any() },
   returns: v.null(),
   handler: async (ctx, args) => {

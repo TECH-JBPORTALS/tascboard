@@ -1,34 +1,18 @@
 import { v } from 'convex/values'
 import { components } from './_generated/api'
-import type { Doc, Id } from './_generated/dataModel'
-import { type QueryCtx, query } from './_generated/server'
-import { requireIdentity, requireOrganization } from './lib/auth'
+import { organizationQuery } from './lib/customFunctions'
 
-async function assertProjectAccess(
-  ctx: QueryCtx,
-  projectId: Id<'projects'>,
-): Promise<{ orgId: string; project: Doc<'projects'> }> {
-  await requireIdentity(ctx)
-  const { orgId } = await requireOrganization(ctx)
-  const project = await ctx.db.get(projectId)
-  if (!project || project.organizationId !== orgId) {
-    throw new Error('Not found')
-  }
-  return { orgId, project }
-}
-
-export const list = query({
+export const list = organizationQuery({
   args: {
     projectId: v.id('projects'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { project } = await assertProjectAccess(ctx, args.projectId)
     const limit = Math.min(args.limit ?? 50, 100)
 
     const activities = await ctx.db
       .query('projectActivities')
-      .withIndex('by_project', (q) => q.eq('projectId', project._id))
+      .withIndex('by_project', (q) => q.eq('projectId', args.projectId))
       .order('desc')
       .take(limit)
 
@@ -36,18 +20,17 @@ export const list = query({
   },
 })
 
-export const topPerformers = query({
+export const topPerformers = organizationQuery({
   args: {
     projectId: v.id('projects'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { project } = await assertProjectAccess(ctx, args.projectId)
     const limit = Math.min(args.limit ?? 5, 10)
 
     const tasks = await ctx.db
       .query('tasks')
-      .withIndex('by_project', (q) => q.eq('projectId', project._id))
+      .withIndex('by_project', (q) => q.eq('projectId', args.projectId))
       .collect()
 
     if (tasks.length === 0) {

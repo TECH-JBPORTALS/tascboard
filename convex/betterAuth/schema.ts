@@ -1,4 +1,5 @@
 import { defineSchema } from 'convex/server'
+import { typedV } from 'convex-helpers/validators'
 import { tables } from './generatedSchema'
 
 // Don't add custom fields or change types to the generated schema
@@ -23,3 +24,5 @@ const schema = defineSchema({
 })
 
 export default schema
+
+export const vv = typedV(schema)
