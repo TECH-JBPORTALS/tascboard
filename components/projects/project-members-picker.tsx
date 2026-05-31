@@ -123,7 +123,7 @@ export function useProjectMembers(projectId: Id<'projects'>) {
     projectId,
   })
 
-  const employees = useQuery(api.auth.listEmployees)
+  const employees = useQuery(api.employees.list)
 
   const remainingEmployees = employees?.filter(
     (employee) => !members?.some((member) => member.employeeId === employee.id),

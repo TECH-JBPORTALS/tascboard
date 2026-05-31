@@ -273,7 +273,7 @@ export function useTrackMemberGroups(
 ) {
   const trackMembers = useQuery(api.trackMember.list, { trackId })
   const projectMembers = useQuery(api.projectMember.list, { projectId })
-  const employees = useQuery(api.employees.listEmployees)
+  const employees = useQuery(api.employees.list)
 
   const trackMemberIds = new Set(
     (trackMembers ?? []).map((member) => member.employeeId),
@@ -301,7 +301,7 @@ export function useTrackMemberGroups(
 
 function useTrackLeadDraftCandidates(projectId: Id<'projects'>) {
   const projectMembers = useQuery(api.projectMember.list, { projectId })
-  const employees = useQuery(api.employees.auth.list)
+  const employees = useQuery(api.employees.list)
 
   const projectMemberIds = new Set(
     (projectMembers ?? []).map((member) => member.employeeId),

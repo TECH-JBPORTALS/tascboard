@@ -157,7 +157,7 @@ export function TaskMembersPicker({
 function useTaskMemberGroups(taskId: Id<'tasks'>, trackId: Id<'tracks'>) {
   const taskMembers = useQuery(api.taskMember.list, { taskId })
   const trackMembers = useQuery(api.trackMember.list, { trackId })
-  const employees = useQuery(api.employees.auth.list)
+  const employees = useQuery(api.employees.list)
 
   const taskMemberIds = new Set(
     (taskMembers ?? []).map((member) => member.employeeId),

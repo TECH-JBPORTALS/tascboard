@@ -29,7 +29,6 @@ type TaskDetailsPageProps = {
 }
 
 export function TaskDetailsPage({ orgSlug, task }: TaskDetailsPageProps) {
-  const updateDescription = useMutation(api.task.updateDescription)
   const updateTask = useMutation(api.task.update)
   const { open, toggle, hydrated } = useTaskDetailPanel()
   const isRightBarOpen = hydrated ? open : false
@@ -51,7 +50,7 @@ export function TaskDetailsPage({ orgSlug, task }: TaskDetailsPageProps) {
   async function saveDescription(nextMarkdown: string) {
     if (nextMarkdown === savedDescriptionRef.current) return
     savedDescriptionRef.current = nextMarkdown
-    await updateDescription({ taskId: task._id, description: nextMarkdown })
+    await updateTask({ taskId: task._id, body: { description: nextMarkdown } })
   }
 
   const track = task.track

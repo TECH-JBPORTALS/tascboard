@@ -4,44 +4,12 @@ import { query } from './_generated/server'
 import { authComponent, createAuth } from './auth'
 import { organizationQuery } from './lib/customFunctions'
 
-const employeeProfileDetails = v.object({
-  firstName: v.union(v.string(), v.null()),
-  lastName: v.union(v.string(), v.null()),
-  dateOfBirth: v.union(v.string(), v.null()),
-  address: v.union(v.string(), v.null()),
-  aadharNumber: v.union(v.string(), v.null()),
-  panNumber: v.union(v.string(), v.null()),
-  bankAccountNumber: v.union(v.string(), v.null()),
-  bankName: v.union(v.string(), v.null()),
-  ifscCode: v.union(v.string(), v.null()),
-  branchName: v.union(v.string(), v.null()),
-  onboardingStatus: v.union(v.literal('pending'), v.literal('completed')),
-  onboardingStep: v.number(),
-})
-
-const employeeDetails = v.object({
-  id: v.string(),
-  userId: v.string(),
-  name: v.string(),
-  email: v.string(),
-  image: v.union(v.string(), v.null()),
-  role: v.string(),
-  active: v.boolean(),
-  createdAt: v.number(),
-  profile: v.union(employeeProfileDetails, v.null()),
-})
-
-export const listEmployees = organizationQuery({
+export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
     const employees = await auth.api.listMembers({
       headers,
-      query: {
-        filterField: 'role',
-        filterOperator: 'eq',
-        filterValue: 'employee',
-      },
     })
 
     return employees.members
@@ -63,7 +31,6 @@ export const listInvitations = organizationQuery({
 
 export const getEmployeeDetails = organizationQuery({
   args: { employeeId: v.string() },
-  returns: v.union(employeeDetails, v.null()),
   handler: async (ctx, args) => {
     const { activeOrganizationId: orgId } = ctx.session
     const employee = await ctx.runQuery(components.betterAuth.adapter.findOne, {

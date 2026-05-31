@@ -12,7 +12,7 @@ export function EmployeesPage() {
   const { allowed } = usePermission({
     organization: ['delete'],
   })
-  const employees = useQuery(api.employees.listEmployees, allowed ? {} : 'skip')
+  const employees = useQuery(api.employees.list, allowed ? {} : 'skip')
 
   const rows = useMemo<EmployeeRow[]>(() => {
     if (!employees) return []
