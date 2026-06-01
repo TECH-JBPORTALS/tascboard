@@ -1,8 +1,13 @@
 'use client'
 
-import { RiAddFill, RiArrowGoBackLine } from '@remixicon/react'
+import { RiAddFill } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import * as React from 'react'
+import {
+  LabelCreateColorStep,
+  LabelCreateNewItem,
+  LabelDot,
+} from '@/components/labels/label-create-popover'
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -20,23 +25,13 @@ import {
 import { api } from '@/convex/_generated/api'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { useActor } from '@/hooks/use-actor'
-import { DEFAULT_LABEL_COLOR, LABEL_COLOR_OPTIONS } from '@/lib/label-colors'
-import { cn } from '@/lib/utils'
+import { DEFAULT_LABEL_COLOR } from '@/lib/label-colors'
 
 type TaskLabelPickerProps = {
   taskId: Id<'tasks'>
   projectId: Id<'projects'>
   projectName: string
   attachedLabels: Doc<'labels'>[]
-}
-
-function LabelDot({ color, className }: { color: string; className?: string }) {
-  return (
-    <span
-      className={cn('size-2 shrink-0 rounded-full', className)}
-      style={{ backgroundColor: color }}
-    />
-  )
 }
 
 export function TaskLabelPicker({
@@ -89,29 +84,21 @@ export function TaskLabelPicker({
     setOpen(false)
   }
 
-  function handleCreateStep(name: string) {
-    setPendingCreateName(name)
-  }
-
   async function handleSelectCreateColor(color: string) {
     if (!pendingCreateName) return
     setCreateColor(color)
     await handleCreate(pendingCreateName, color)
   }
 
-  function formatColorName(name: string) {
-    return name.charAt(0).toUpperCase() + name.slice(1)
-  }
-
   return (
-    <div className="space-x-1 flex">
+    <div className="flex space-x-1">
       <div className="flex flex-wrap gap-1.5">
         {attachedLabels.map((label) => (
           <Button
             key={label._id}
             type="button"
-            variant={'outline'}
-            size={'xs'}
+            variant="outline"
+            size="xs"
             className="rounded-full"
             onClick={() => void handleToggle(label)}
           >
@@ -156,34 +143,12 @@ export function TaskLabelPicker({
             <CommandList>
               <CommandEmpty>No labels found</CommandEmpty>
               {pendingCreateName ? (
-                <CommandGroup
-                  heading={`Pick a color for "${pendingCreateName}"`}
-                >
-                  {LABEL_COLOR_OPTIONS.map((color) => (
-                    <CommandItem
-                      key={color.id}
-                      value={`color-${color.id}`}
-                      onSelect={() => void handleSelectCreateColor(color.value)}
-                    >
-                      <LabelDot color={color.value} className="size-2.5" />
-                      <span className="flex-1">
-                        {formatColorName(color.id)}
-                      </span>
-                      {createColor === color.value ? (
-                        <span className="text-xs text-muted-foreground">
-                          Selected
-                        </span>
-                      ) : null}
-                    </CommandItem>
-                  ))}
-                  <CommandItem
-                    value="create-back"
-                    onSelect={() => setPendingCreateName(null)}
-                    className="text-xs text-muted-foreground"
-                  >
-                    <RiArrowGoBackLine className={'size-2.5'} /> Back
-                  </CommandItem>
-                </CommandGroup>
+                <LabelCreateColorStep
+                  pendingCreateName={pendingCreateName}
+                  createColor={createColor}
+                  onSelectColor={(color) => void handleSelectCreateColor(color)}
+                  onBack={() => setPendingCreateName(null)}
+                />
               ) : (
                 <CommandGroup>
                   {filtered.map((label) => (
@@ -202,21 +167,12 @@ export function TaskLabelPicker({
                     </CommandItem>
                   ))}
                   {trimmed && !exactMatch ? (
-                    <CommandItem
-                      value={`create-${trimmed}`}
-                      onSelect={() => handleCreateStep(trimmed)}
-                      className="bg-muted/50 overflow-hidden"
-                    >
-                      <LabelDot color={createColor} className="size-2.5" />
-                      <span className="flex-1 text-nowrap text-xs">
-                        Create new{' '}
-                        <span className="font-semibold">{projectName}</span>{' '}
-                        label:{' '}
-                        <span className="text-muted-foreground font-semibold">
-                          &quot;{trimmed}&quot;
-                        </span>
-                      </span>
-                    </CommandItem>
+                    <LabelCreateNewItem
+                      trimmed={trimmed}
+                      projectName={projectName}
+                      createColor={createColor}
+                      onCreateStep={setPendingCreateName}
+                    />
                   ) : null}
                 </CommandGroup>
               )}

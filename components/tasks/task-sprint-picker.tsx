@@ -1,6 +1,6 @@
 'use client'
 
-import { RiCloseCircleLine, RiRunLine, RiTextBlock } from '@remixicon/react'
+import { RiCloseCircleLine, RiRunLine } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import * as React from 'react'
 import { TaskCommandPopover } from '@/components/tasks/task-command-popover'

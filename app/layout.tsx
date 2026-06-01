@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { ConvexClientProvider } from '@/components/convex-client-provider'
+import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { getToken } from '@/lib/auth-server'
@@ -35,21 +36,29 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
-        'font-sans antialiased dark',
+        'font-sans antialiased',
         jetbrainsMono.variable,
         ibmPlexSans.variable,
       )}
     >
       <body>
-        <ConvexClientProvider initialToken={token}>
-          <NuqsAdapter>
-            <TooltipProvider>
-              {children}
-              <Toaster />
-            </TooltipProvider>
-          </NuqsAdapter>
-        </ConvexClientProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ConvexClientProvider initialToken={token}>
+            <NuqsAdapter>
+              <TooltipProvider>
+                {children}
+                <Toaster />
+              </TooltipProvider>
+            </NuqsAdapter>
+          </ConvexClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

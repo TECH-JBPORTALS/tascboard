@@ -10,7 +10,7 @@ import { v } from 'convex/values'
 import { ac, employee, owner } from '../lib/permissions'
 import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
-import { query } from './_generated/server'
+import { mutation, query } from './_generated/server'
 import authConfig from './auth.config'
 import authSchema from './schema'
 
@@ -28,7 +28,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   return {
     appName: 'Tascboard',
     baseURL: {
-      allowedHosts: ['*.vercel.app', '*.convex.site'],
+      allowedHosts: ['localhost:3000', '*.vercel.app', '*.convex.site'],
       fallback: process.env.SITE_URL!,
     },
     trustedOrigins: ['*.vercel.app', '*.convex.site'],
@@ -141,13 +141,32 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
 export const listOrganizations = query(async (ctx) => {
   const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
 
-  return await auth.api.listOrganizations({ headers })
+  const organizations = await auth.api.listOrganizations({ headers })
+
+  return organizations.map((organization) => ({
+    id: organization.id,
+    name: organization.name,
+    slug: organization.slug,
+    metadata: organization.metadata,
+  }))
 })
 
 export const getActiveOrganization = query(async (ctx) => {
   const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
 
   return await auth.api.getFullOrganization({ headers })
+})
+
+export const setActiveOrganization = mutation({
+  args: { organizationId: v.string() },
+  handler: async (ctx, args) => {
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+
+    return await auth.api.setActiveOrganization({
+      headers,
+      body: { organizationId: args.organizationId },
+    })
+  },
 })
 
 export const getActiveMemberRole = query({

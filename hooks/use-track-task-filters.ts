@@ -14,7 +14,6 @@ import {
   getTrackTaskView,
   hasActiveFilters,
   type TaskListFilterArgs,
-  type TrackTaskFilterType,
   type TrackTaskFilterUrlState,
   type TrackTaskView,
   trackTaskFilterParsers,

@@ -2,10 +2,7 @@
 
 import {
   RiAddLine,
-  RiCalendarView,
-  RiKanbanView,
   RiKanbanView2,
-  RiRunFill,
   RiRunLine,
   RiTableView,
 } from '@remixicon/react'

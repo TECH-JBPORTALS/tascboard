@@ -39,7 +39,11 @@
       "complexity": { "noUselessTypeConstraint": "error" },
       "correctness": {
         "noNextAsyncClientComponent": "warn",
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "error",
+        "noUnusedImports": {
+          "fix": "safe",
+          "level": "error"
+        }
       },
       "performance": {
         "noImgElement": "warn",
