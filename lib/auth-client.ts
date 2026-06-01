@@ -8,7 +8,6 @@ import {
   owner,
   PermissionRequest,
 } from '@/lib/permissions'
-import { sentinelClient } from '@better-auth/infra/client'
 
 export const authClient = createAuthClient({
   plugins: [
@@ -17,7 +16,6 @@ export const authClient = createAuthClient({
       ac,
       roles: { owner, employee },
     }),
-    sentinelClient()
   ],
 })
 

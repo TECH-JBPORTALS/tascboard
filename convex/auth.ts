@@ -1,6 +1,5 @@
 import { createClient, GenericCtx } from '@convex-dev/better-auth'
 import { convex } from '@convex-dev/better-auth/plugins'
-import {dash} from "@better-auth/infra"
 import {
   requireActionCtx,
   requireMutationCtx,
@@ -125,7 +124,6 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           }),
         },
       }),
-      dash(),
     ],
   } satisfies BetterAuthOptions
 }
