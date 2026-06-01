@@ -3,13 +3,17 @@
 import { RiSubtractLine } from '@remixicon/react'
 import { useMutation } from 'convex/react'
 import * as React from 'react'
-import { TaskCommandPopover } from '@/components/tasks/task-command-popover'
+import { TaskPriorityPickerCommand } from '@/components/tasks/command/task-priority-picker.command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import {
   type TaskPriority,
   taskPriorityConfig,
-  taskPriorityOrder,
 } from '@/lib/task-utils'
 import { cn } from '@/lib/utils'
 
@@ -36,38 +40,30 @@ export function TaskPriorityPicker({
   const [open, setOpen] = React.useState(false)
   const updateTaskMutation = useMutation(api.task.update)
 
-  const options = taskPriorityOrder.map((priority) => {
-    const config = taskPriorityConfig[priority]
-    return {
-      value: priority,
-      label: config.label,
-      shortcut: config.shortcut,
-      icon: <TaskPriorityIcon priority={priority} />,
-    }
-  })
-
   const handleSelect = (priority: TaskPriority) => {
     if (mode.onSelect) {
       mode.onSelect(priority)
-      return
-    }
-    if (mode.taskId) {
+    } else if (mode.taskId) {
       void updateTaskMutation({ taskId: mode.taskId, body: { priority } })
     }
+    setOpen(false)
   }
 
   return (
-    <TaskCommandPopover
-      open={open}
-      onOpenChange={setOpen}
-      trigger={trigger}
-      placeholder={placeholder}
-      shortcutKey="P"
-      options={options}
-      value={value}
-      onSelect={handleSelect}
-      className={className}
-    />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={trigger} />
+      <PopoverContent
+        className={cn('w-56 p-0', className)}
+        align="start"
+        sideOffset={4}
+      >
+        <TaskPriorityPickerCommand
+          value={value}
+          onSelect={handleSelect}
+          placeholder={placeholder}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
 

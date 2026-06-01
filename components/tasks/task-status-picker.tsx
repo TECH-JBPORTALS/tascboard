@@ -2,14 +2,15 @@
 
 import { useMutation } from 'convex/react'
 import * as React from 'react'
-import { TaskCommandPopover } from '@/components/tasks/task-command-popover'
+import { TaskStatusPickerCommand } from '@/components/tasks/command/task-status-picker.command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
-import {
-  type TaskStatus,
-  taskStatusConfig,
-  taskStatusOrder,
-} from '@/lib/task-utils'
+import { type TaskStatus, taskStatusConfig } from '@/lib/task-utils'
 import { cn } from '@/lib/utils'
 
 type TaskStatusPickerBaseProps = {
@@ -35,38 +36,30 @@ export function TaskStatusPicker({
   const [open, setOpen] = React.useState(false)
   const updateTaskMutation = useMutation(api.task.update)
 
-  const options = taskStatusOrder.map((status) => {
-    const config = taskStatusConfig[status]
-    return {
-      value: status,
-      label: config.label,
-      shortcut: config.shortcut,
-      icon: <TaskStatusIcon status={status} className="size-3.5" />,
-    }
-  })
-
   const handleSelect = (status: TaskStatus) => {
     if (mode.onSelect) {
       mode.onSelect(status)
-      return
-    }
-    if (mode.taskId) {
+    } else if (mode.taskId) {
       void updateTaskMutation({ taskId: mode.taskId, body: { status } })
     }
+    setOpen(false)
   }
 
   return (
-    <TaskCommandPopover
-      open={open}
-      onOpenChange={setOpen}
-      trigger={trigger}
-      placeholder={placeholder}
-      shortcutKey="S"
-      options={options}
-      value={value}
-      onSelect={handleSelect}
-      className={className}
-    />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={trigger} />
+      <PopoverContent
+        className={cn('w-56 p-0', className)}
+        align="start"
+        sideOffset={4}
+      >
+        <TaskStatusPickerCommand
+          value={value}
+          onSelect={handleSelect}
+          placeholder={placeholder}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
 

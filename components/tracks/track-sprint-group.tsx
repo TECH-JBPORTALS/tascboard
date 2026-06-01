@@ -11,7 +11,7 @@ import { SprintGoalInput } from '@/components/tracks/sprint-goal-input'
 import {
   SprintStatusIcon,
   SprintStatusPicker,
-} from '@/components/tracks/sprint-status-picker'
+} from '@/components/sprints/sprint-status-picker'
 import { useTrackTaskFiltersContext } from '@/components/tracks/track-task-filters-context'
 import { Button } from '@/components/ui/button'
 import {

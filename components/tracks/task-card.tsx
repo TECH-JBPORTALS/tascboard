@@ -5,6 +5,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { RiAddFill, RiDraggable } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import * as React from 'react'
+import { useTaskActionsContext } from '@/components/tasks/task-actions-provider'
+import { TaskContextMenu } from '@/components/tasks/task-context-menu'
 import { TaskLabelPicker } from '@/components/tasks/task-label-picker'
 import { TaskMembersPicker } from '@/components/tasks/task-members-picker'
 import {
@@ -54,7 +56,7 @@ function ChipTrigger({
   )
 }
 
-export function TaskCard({
+function TaskCardContent({
   task,
   projectId,
   projectName,
@@ -64,6 +66,7 @@ export function TaskCard({
   const labels = useQuery(api.label.listTaskLabels, { taskId: task._id })
   const sprintLabel = useSprintDisplayLabel(task.trackId, task.sprintId)
   const [title, setTitle] = React.useState(task.title)
+  const { setStatus, setSprint } = useTaskActionsContext()
 
   React.useEffect(() => {
     setTitle(task.title)
@@ -99,6 +102,7 @@ export function TaskCard({
       style={style}
       size="sm"
       className={cn(
+        'group/card',
         isDragging && 'opacity-0',
         isOver && 'ring-2 ring-ring/40',
         className,
@@ -131,8 +135,8 @@ export function TaskCard({
 
             <div className="flex items-start gap-0.5">
               <TaskStatusPicker
-                taskId={task._id}
                 value={task.status}
+                onSelect={setStatus}
                 trigger={
                   <ChipTrigger
                     aria-label="Change status"
@@ -171,9 +175,9 @@ export function TaskCard({
               />
 
               <TaskSprintPicker
-                taskId={task._id}
                 trackId={task.trackId}
                 value={task.sprintId}
+                onSelect={setSprint}
                 trigger={
                   <ChipTrigger aria-label="Change sprint">
                     <TaskSprintIcon className="size-3" />
@@ -199,5 +203,13 @@ export function TaskCard({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+export function TaskCard(props: TaskCardProps) {
+  return (
+    <TaskContextMenu task={props.task}>
+      <TaskCardContent {...props} />
+    </TaskContextMenu>
   )
 }
