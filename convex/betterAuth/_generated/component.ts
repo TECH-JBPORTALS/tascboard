@@ -1544,6 +1544,21 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      getInOrganization: FunctionReference<
+        "query",
+        "internal",
+        { employeeId: string; organizationId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          active: boolean;
+          createdAt: number;
+          organizationId: string;
+          role: string;
+          userId: string;
+        } | null,
+        Name
+      >;
       getUserByEmployeeId: FunctionReference<
         "query",
         "internal",
@@ -1561,8 +1576,62 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        { organizationId: string },
+        Array<{
+          _id: string;
+          active: boolean;
+          createdAt: number;
+          role: string;
+          user: {
+            _id: string;
+            createdAt: number;
+            email: string;
+            image?: null | string;
+            name: string;
+            updatedAt: number;
+            userId?: null | string;
+          };
+          userId: string;
+        }>,
+        Name
+      >;
+      removeFromOrganization: FunctionReference<
+        "mutation",
+        "internal",
+        { employeeId: string },
+        null,
+        Name
+      >;
+      setActive: FunctionReference<
+        "mutation",
+        "internal",
+        { active: boolean; employeeId: string },
+        null,
+        Name
+      >;
     };
     invitations: {
+      getById: FunctionReference<
+        "query",
+        "internal",
+        { invitationId: string },
+        {
+          createdAt: number;
+          email: string;
+          expiresAt: number;
+          id: string;
+          inviterId: string;
+          organizationId: string;
+          organizationName: string;
+          organizationSlug: string;
+          role: string | null;
+          status: string;
+        } | null,
+        Name
+      >;
       listPendingInvitations: FunctionReference<
         "query",
         "internal",
