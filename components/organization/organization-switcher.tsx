@@ -55,7 +55,6 @@ export function OrganizationSwitcher() {
     })
     if (result) {
       router.push(`/${result.slug}`)
-      
     }
     setIsSwitching(false)
   }

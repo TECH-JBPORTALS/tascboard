@@ -1,12 +1,11 @@
 'use client'
 
-import { RiTBoxLine } from "@remixicon/react"
+import { RiTBoxLine } from '@remixicon/react'
 
 export function OrganizationRouteSkeleton() {
   return (
     <div className="flex h-svh flex-col items-center justify-center gap-3 p-6">
-      <RiTBoxLine
-       className="size-16 text-primary dark:text-muted-foreground" />
+      <RiTBoxLine className="size-16 text-primary dark:text-muted-foreground" />
       <div className="flex">
         <span className="text-muted-foreground text-sm">
           Loading workspace...
