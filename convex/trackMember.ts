@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { privateMutation, privateQuery } from './lib/customFunctions'
 import { vv } from './schema'
+import { components } from './_generated/api'
 
 export const toggleMember = privateMutation({
   args: {
@@ -140,19 +141,25 @@ export const list = privateQuery({
           )
           .unique()
 
+        const user = await ctx.runQuery(
+          components.betterAuth.employees.getUserByEmployeeId,
+          { employeeId: member.employeeId },
+        )
+
         const image = profile?.profilePhotoStorageId
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
-          : ''
+          : user?.image
+
         return {
           _id: member._id,
           employeeId: member.employeeId,
           lead: member.lead,
           employee: {
             _id: profile?.employeeId ?? member.employeeId,
-            name: profile
+            name: profile?.firstName
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : ctx.session.user.name,
-            email: ctx.session.user.email ?? '',
+              : user?.name,
+            email: user?.email ?? '',
             image: image ?? '',
           },
         }

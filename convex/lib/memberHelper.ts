@@ -1,6 +1,62 @@
 import type { Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 
+type ActiveEmployee = {
+  id?: string
+  _id?: string
+  role?: string
+}
+
+export function getActiveEmployeeId(session: { employee: unknown }): string {
+  const employee = session.employee as ActiveEmployee
+  const id = employee.id ?? employee._id
+  if (!id) {
+    throw new Error('Active employee not found')
+  }
+  return id
+}
+
+export function isOrgOwner(session: { employee: unknown }): boolean {
+  const employee = session.employee as ActiveEmployee
+  return employee.role === 'owner'
+}
+
+export async function getMemberProjectIds(
+  ctx: QueryCtx,
+  employeeId: string,
+): Promise<Set<Id<'projects'>>> {
+  const memberships = await ctx.db
+    .query('projectMember')
+    .withIndex('by_employee', (q) => q.eq('employeeId', employeeId))
+    .collect()
+
+  return new Set(memberships.map((membership) => membership.projectId))
+}
+
+export async function getMemberTrackIds(
+  ctx: QueryCtx,
+  employeeId: string,
+): Promise<Set<Id<'tracks'>>> {
+  const memberships = await ctx.db
+    .query('trackMember')
+    .withIndex('by_employee', (q) => q.eq('employeeId', employeeId))
+    .collect()
+
+  return new Set(memberships.map((membership) => membership.trackId))
+}
+
+export async function getMemberTaskIds(
+  ctx: QueryCtx,
+  employeeId: string,
+): Promise<Set<Id<'tasks'>>> {
+  const memberships = await ctx.db
+    .query('taskMember')
+    .withIndex('by_employee', (q) => q.eq('employeeId', employeeId))
+    .collect()
+
+  return new Set(memberships.map((membership) => membership.taskId))
+}
+
 export async function getProjectMembers(
   ctx: QueryCtx,
   projectId: Id<'projects'>,

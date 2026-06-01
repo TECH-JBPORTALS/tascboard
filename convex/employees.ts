@@ -52,28 +52,22 @@ export const getEmployeeDetails = organizationQuery({
       active: boolean
     }
 
-    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: 'user',
-      where: [{ field: '_id', operator: 'eq', value: member.userId }],
-    })
-
     const profile = await ctx.db
       .query('employeeProfiles')
       .withIndex('by_employee', (q) => q.eq('employeeId', member._id))
       .unique()
 
-    const memberUser = user as {
-      name?: string
-      email?: string
-      image?: string | null
-    } | null
+    const user = await ctx.runQuery(
+      components.betterAuth.employees.getUserByEmployeeId,
+      { employeeId: member._id },
+    )
 
     return {
       id: member._id,
       userId: member.userId,
-      name: memberUser?.name ?? 'Unknown',
-      email: memberUser?.email ?? '',
-      image: memberUser?.image ?? null,
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      image: user?.image ?? null,
       role: member.role,
       active: member.active,
       createdAt: member.createdAt,

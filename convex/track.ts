@@ -2,10 +2,16 @@ import type { Doc, Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
 import {
   organizationMutation,
+  organizationQuery,
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
-import { getTrackMembers } from './lib/memberHelper'
+import {
+  getActiveEmployeeId,
+  getMemberTrackIds,
+  getTrackMembers,
+  isOrgOwner,
+} from './lib/memberHelper'
 import { vv } from './schema'
 import { removeTaskCascade } from './task'
 // -------------------- CREATE --------------------
@@ -30,7 +36,7 @@ export const create = organizationMutation({
 })
 
 // -------------------- LIST BY PROJECT --------------------
-export const listByProject = privateQuery({
+export const listByProject = organizationQuery({
   args: {
     projectId: vv.id('projects'),
   },
@@ -42,10 +48,18 @@ export const listByProject = privateQuery({
       throw new Error('Not found')
     }
 
-    return await ctx.db
+    const tracks = await ctx.db
       .query('tracks')
       .withIndex('by_project', (q) => q.eq('projectId', args.projectId))
       .collect()
+
+    if (isOrgOwner(ctx.session)) {
+      return tracks
+    }
+
+    const employeeId = getActiveEmployeeId(ctx.session)
+    const memberTrackIds = await getMemberTrackIds(ctx, employeeId)
+    return tracks.filter((track) => memberTrackIds.has(track._id))
   },
 })
 

@@ -1544,6 +1544,23 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      getUserByEmployeeId: FunctionReference<
+        "query",
+        "internal",
+        { employeeId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          email: string;
+          emailVerified: boolean;
+          image?: null | string;
+          name: string;
+          updatedAt: number;
+          userId?: null | string;
+        } | null,
+        Name
+      >;
     };
     invitations: {
       listPendingInvitations: FunctionReference<

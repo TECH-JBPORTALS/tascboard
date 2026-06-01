@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as __tests___testAuthSession from "../__tests__/testAuthSession.js";
 import type * as activity from "../activity.js";
 import type * as attendance from "../attendance.js";
 import type * as auth from "../auth.js";
@@ -79,6 +80,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "__tests__/testAuthSession": typeof __tests___testAuthSession;
   activity: typeof activity;
   attendance: typeof attendance;
   auth: typeof auth;

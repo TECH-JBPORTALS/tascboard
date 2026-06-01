@@ -2,8 +2,17 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
-import { privateMutation, privateQuery } from './lib/customFunctions'
-import { getTrackMembers } from './lib/memberHelper'
+import {
+  organizationQuery,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
+import {
+  getActiveEmployeeId,
+  getMemberTaskIds,
+  getTrackMembers,
+  isOrgOwner,
+} from './lib/memberHelper'
 import { formatTaskDate, logTaskActivity } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
 import {
@@ -108,7 +117,7 @@ export const get = privateQuery({
 /**
  * List Tasks by Track
  */
-export const listByTrack = privateQuery({
+export const listByTrack = organizationQuery({
   args: {
     trackId: vv.id('tracks'),
   },
@@ -118,7 +127,15 @@ export const listByTrack = privateQuery({
       .withIndex('by_track', (q) => q.eq('trackId', args.trackId))
       .collect()
 
-    return tasks.toSorted(compareTaskStatusOrder)
+    const sorted = tasks.toSorted(compareTaskStatusOrder)
+
+    if (isOrgOwner(ctx.session)) {
+      return sorted
+    }
+
+    const employeeId = getActiveEmployeeId(ctx.session)
+    const memberTaskIds = await getMemberTaskIds(ctx, employeeId)
+    return sorted.filter((task) => memberTaskIds.has(task._id))
   },
 })
 
@@ -253,7 +270,7 @@ export const listTaskEmployees = privateQuery({
   },
 })
 
-export const list = privateQuery({
+export const list = organizationQuery({
   args: {
     trackId: vv.id('tracks'),
     sprintId: v.optional(vv.id('sprints')),
@@ -270,7 +287,7 @@ export const list = privateQuery({
     const assigneeIds = args.assigneeIds
     const labelIds = args.labelIds
 
-    return await listTasksForTrack(ctx, {
+    const tasks = await listTasksForTrack(ctx, {
       trackId: args.trackId,
       sprintId: args.sprintId,
       statuses,
@@ -280,6 +297,14 @@ export const list = privateQuery({
       dueFrom: args.dueFrom,
       dueTo: args.dueTo,
     })
+
+    if (isOrgOwner(ctx.session)) {
+      return tasks
+    }
+
+    const employeeId = getActiveEmployeeId(ctx.session)
+    const memberTaskIds = await getMemberTaskIds(ctx, employeeId)
+    return tasks.filter((task) => memberTaskIds.has(task._id))
   },
 })
 
