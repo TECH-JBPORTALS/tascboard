@@ -1,6 +1,6 @@
 'use client'
 
-import { RiArrowLeftFill, RiUserSettingsLine } from '@remixicon/react'
+import { RiArrowLeftSLine, RiUserSettingsLine } from '@remixicon/react'
 import Link from 'next/link'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import {
@@ -38,7 +38,7 @@ export function SettingsSidebar() {
               size="sm"
               className="w-fit rounded-full font-medium"
             >
-              <RiArrowLeftFill />
+              <RiArrowLeftSLine />
               Back to app
             </SidebarMenuButton>
           </SidebarMenuItem>

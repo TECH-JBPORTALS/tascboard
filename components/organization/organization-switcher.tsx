@@ -6,7 +6,6 @@ import { useQuery } from 'convex-helpers/react/cache/hooks'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
 import { parseOrganizationMetadata } from '@/lib/organization'
@@ -56,14 +55,7 @@ export function OrganizationSwitcher() {
     })
     if (result) {
       router.push(`/${result.slug}`)
-      toast.info(
-        <>
-          Switched to <b>{result.name}</b>
-        </>,
-        {
-          position: 'bottom-center',
-        },
-      )
+      
     }
     setIsSwitching(false)
   }
@@ -73,7 +65,7 @@ export function OrganizationSwitcher() {
   }
 
   if (current === null || organizations === null) {
-    router.replace('/select-organization')
+    router.replace('/')
     return null
   }
 
@@ -141,7 +133,13 @@ export function OrganizationSwitcher() {
             <MenubarItem
               nativeButton={false}
               onClick={() =>
-                void authClient.signOut().then(() => window.location.reload())
+                void authClient.signOut({
+                  fetchOptions: {
+                    onSuccess: () => {
+                      window.location.href = '/sign-in'
+                    },
+                  },
+                })
               }
             >
               Log out

@@ -1,18 +1,21 @@
-import { OrgSlugGuard } from '@/components/organization/org-slug-guard'
+import { redirect } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
-import { preloadAuthQuery } from '@/lib/auth-server'
+import { fetchAuthQuery } from '@/lib/auth-server'
+import {
+  organizationPath,
+  resolveOrganizationDestination,
+} from '@/lib/organization-membership'
 
 export default async function Page() {
-  const [preloadedOrganizatoinsQuery, preloadedActiveOrganizationQuery] =
-    await Promise.all([
-      preloadAuthQuery(api.auth.listOrganizations),
-      preloadAuthQuery(api.auth.getActiveOrganization),
-    ])
+  const [organizations, activeOrganization] = await Promise.all([
+    fetchAuthQuery(api.auth.listOrganizations),
+    fetchAuthQuery(api.auth.getActiveOrganization),
+  ])
 
-  return (
-    <OrgSlugGuard
-      preloadedOrganizationsQuery={preloadedOrganizatoinsQuery}
-      preloadedActiveOrganizationQuery={preloadedActiveOrganizationQuery}
-    />
+  const organizationDestination = resolveOrganizationDestination(
+    organizations,
+    activeOrganization?.id,
   )
+
+  redirect(organizationPath(organizationDestination))
 }
