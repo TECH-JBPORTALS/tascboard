@@ -15,19 +15,30 @@ import {
   sprintStatusConfig,
   sprintStatusOrder,
 } from '@/lib/track-utils'
+import { useOptionalSprintActionsContext } from '../sprint-actions-provider'
 import { SprintStatusIcon } from '../sprint-status-picker'
 
 type SprintStatusPickerCommandProps = {
-  value: SprintStatus
-  onSelect: (status: SprintStatus) => void
+  value?: SprintStatus
+  onSelect?: (status: SprintStatus) => void
   placeholder?: string
 }
 
 export function SprintStatusPickerCommand({
-  value,
-  onSelect,
+  value: valueProp,
+  onSelect: onSelectProp,
   placeholder = 'Change status…',
-}: SprintStatusPickerCommandProps) {
+}: SprintStatusPickerCommandProps = {}) {
+  const context = useOptionalSprintActionsContext()
+  const value = valueProp ?? context?.sprint.status
+  const onSelect = onSelectProp ?? context?.setStatus
+
+  if (value == null || onSelect == null) {
+    throw new Error(
+      'SprintStatusPickerCommand requires value and onSelect via props or SprintActionsProvider',
+    )
+  }
+
   return (
     <Command>
       <CommandInput placeholder={placeholder} />
