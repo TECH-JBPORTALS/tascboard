@@ -17,7 +17,9 @@ type Props = {
 
 export function MeetingCardItem({ meeting }: Props) {
   const { orgSlug } = useParams<{ orgSlug: string }>()
-  const recipients = useQuery(api.meeting.getRecipients, { meetingId: meeting._id })
+  const recipients = useQuery(api.meeting.getRecipients, {
+    meetingId: meeting._id,
+  })
   const employees = useQuery(api.employees.list)
 
   const empMap = React.useMemo(() => {
@@ -52,22 +54,22 @@ export function MeetingCardItem({ meeting }: Props) {
   return (
     <Link
       href={`/${orgSlug}/meetings/${meeting._id}`}
-      className='group flex items-center gap-6 px-5 py-4 transition-colors hover:bg-muted/30 first:rounded-t-xl last:rounded-b-xl'
+      className="group flex items-center gap-6 px-5 py-4 transition-colors hover:bg-muted/30 first:rounded-t-xl last:rounded-b-xl"
     >
       {/* LEFT — Title + avatars */}
-      <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
-        <p className='truncate text-sm font-semibold leading-tight'>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <p className="truncate text-sm font-semibold leading-tight">
           {meeting.title}
         </p>
         {recipients === undefined ? (
-          <div className='flex gap-1'>
+          <div className="flex gap-1">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className='size-6 rounded-full' />
+              <Skeleton key={i} className="size-6 rounded-full" />
             ))}
           </div>
         ) : (
-          <div className='flex items-center gap-1'>
-            <span className='flex -space-x-1.5'>
+          <div className="flex items-center gap-1">
+            <span className="flex -space-x-1.5">
               {shown.map((r) => {
                 const e = empMap.get(r.employeeId)
                 return (
@@ -75,13 +77,13 @@ export function MeetingCardItem({ meeting }: Props) {
                     key={r.employeeId}
                     name={e?.name ?? '?'}
                     imageUrl={e?.image}
-                    className='size-6 ring-2 ring-card'
+                    className="size-6 ring-2 ring-card"
                   />
                 )
               })}
             </span>
             {overflow > 0 && (
-              <span className='ml-1 text-xs text-muted-foreground'>
+              <span className="ml-1 text-xs text-muted-foreground">
                 +{overflow}
               </span>
             )}
@@ -90,35 +92,35 @@ export function MeetingCardItem({ meeting }: Props) {
       </div>
 
       {/* MIDDLE — Event date + status */}
-      <div className='hidden w-56 shrink-0 flex-col gap-0.5 sm:flex'>
-        <p className='text-xs font-medium text-muted-foreground'>Event date</p>
-        <div className='flex items-center gap-1.5'>
+      <div className="hidden w-56 shrink-0 flex-col gap-0.5 sm:flex">
+        <p className="text-xs font-medium text-muted-foreground">Event date</p>
+        <div className="flex items-center gap-1.5">
           <span className={`size-1.5 rounded-full ${statusDot}`} />
           <span className={`text-xs font-medium ${statusText}`}>
             {statusConfig.label}
           </span>
-          <span className='text-xs text-muted-foreground'>
+          <span className="text-xs text-muted-foreground">
             · {format(new Date(meeting.startTime), 'MMM d, yyyy')}
           </span>
         </div>
       </div>
 
       {/* EVENT TIME */}
-      <div className='hidden w-44 shrink-0 flex-col gap-0.5 sm:flex'>
-        <p className='text-xs font-medium text-muted-foreground'>Event time</p>
-        <p className='text-xs text-muted-foreground'>
+      <div className="hidden w-44 shrink-0 flex-col gap-0.5 sm:flex">
+        <p className="text-xs font-medium text-muted-foreground">Event time</p>
+        <p className="text-xs text-muted-foreground">
           {format(new Date(meeting.startTime), 'hh:mm a')} –{' '}
           {format(new Date(meeting.endTime), 'hh:mm a')}
         </p>
       </div>
 
       {/* CREATED AT */}
-      <div className='hidden w-36 shrink-0 flex-col gap-0.5 sm:flex'>
-        <p className='text-xs font-medium text-muted-foreground'>Created</p>
-        <p className='text-xs text-muted-foreground'>
+      <div className="hidden w-36 shrink-0 flex-col gap-0.5 sm:flex">
+        <p className="text-xs font-medium text-muted-foreground">Created</p>
+        <p className="text-xs text-muted-foreground">
           {format(new Date(meeting.createdAt), 'MMM d, yyyy')}
         </p>
-        <p className='text-xs text-muted-foreground'>
+        <p className="text-xs text-muted-foreground">
           {format(new Date(meeting.createdAt), 'hh:mm a')}
         </p>
       </div>

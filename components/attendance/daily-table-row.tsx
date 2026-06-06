@@ -72,9 +72,7 @@ export function DailyTableRow({ employee, onEdit, record, recordDate }: Props) {
 
   // Check Out only for present/late/half-day — never for on leave
   const canCheckOut =
-    record !== undefined &&
-    !record.logoutTime &&
-    record.status !== 'on leave'
+    record !== undefined && !record.logoutTime && record.status !== 'on leave'
 
   return (
     <TableRow>
@@ -97,10 +95,7 @@ export function DailyTableRow({ employee, onEdit, record, recordDate }: Props) {
         ) : (
           <div className="flex items-center gap-2">
             {/* Present — solid blue (primary) */}
-            <Button
-              size="sm"
-              onClick={() => void mark('present')}
-            >
+            <Button size="sm" onClick={() => void mark('present')}>
               Present
             </Button>
             {/* On Leave — orange outline */}

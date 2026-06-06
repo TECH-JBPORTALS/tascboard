@@ -23,15 +23,33 @@ export function NumField({ label, onChange, value }: NumInput) {
   )
 }
 
-export function Step2View({ s1, s2, setS2 }: { s1: S1; s2: S2; setS2: (v: S2) => void }) {
+export function Step2View({
+  s1,
+  s2,
+  setS2,
+}: {
+  s1: S1
+  s2: S2
+  setS2: (v: S2) => void
+}) {
   return (
     <div className="flex flex-col gap-4">
       <div>
         <p className="font-semibold">Earnings</p>
-        <p className="text-sm text-muted-foreground">{s1.employeeName} · {s1.employeeRole}</p>
+        <p className="text-sm text-muted-foreground">
+          {s1.employeeName} · {s1.employeeRole}
+        </p>
       </div>
-      <NumField label="Basic Salary" value={s2.basicSalary} onChange={(v) => setS2({ ...s2, basicSalary: v })} />
-      <NumField label="Overtime Pay" value={s2.overtimePay} onChange={(v) => setS2({ ...s2, overtimePay: v })} />
+      <NumField
+        label="Basic Salary"
+        value={s2.basicSalary}
+        onChange={(v) => setS2({ ...s2, basicSalary: v })}
+      />
+      <NumField
+        label="Overtime Pay"
+        value={s2.overtimePay}
+        onChange={(v) => setS2({ ...s2, overtimePay: v })}
+      />
     </div>
   )
 }
@@ -41,18 +59,38 @@ export function Step3View({ s3, setS3 }: { s3: S3; setS3: (v: S3) => void }) {
     <div className="flex flex-col gap-4">
       <div>
         <p className="font-semibold">Deductions</p>
-        <p className="text-sm text-muted-foreground">Add deductions and optional bonus.</p>
+        <p className="text-sm text-muted-foreground">
+          Add deductions and optional bonus.
+        </p>
       </div>
-      <NumField label="Total Deduction" value={s3.deduction} onChange={(v) => setS3({ ...s3, deduction: v })} />
+      <NumField
+        label="Total Deduction"
+        value={s3.deduction}
+        onChange={(v) => setS3({ ...s3, deduction: v })}
+      />
       <Separator />
       <div className="flex items-center gap-2">
-        <Checkbox id="bonus-toggle" checked={s3.addBonus} onCheckedChange={(v) => setS3({ ...s3, addBonus: !!v })} />
-        <Label className="cursor-pointer" htmlFor="bonus-toggle">Add Bonus / Incentive</Label>
+        <Checkbox
+          id="bonus-toggle"
+          checked={s3.addBonus}
+          onCheckedChange={(v) => setS3({ ...s3, addBonus: !!v })}
+        />
+        <Label className="cursor-pointer" htmlFor="bonus-toggle">
+          Add Bonus / Incentive
+        </Label>
       </div>
       {s3.addBonus && (
         <>
-          <NumField label="Bonus" value={s3.bonus} onChange={(v) => setS3({ ...s3, bonus: v })} />
-          <NumField label="Incentive" value={s3.incentive} onChange={(v) => setS3({ ...s3, incentive: v })} />
+          <NumField
+            label="Bonus"
+            value={s3.bonus}
+            onChange={(v) => setS3({ ...s3, bonus: v })}
+          />
+          <NumField
+            label="Incentive"
+            value={s3.incentive}
+            onChange={(v) => setS3({ ...s3, incentive: v })}
+          />
         </>
       )}
     </div>

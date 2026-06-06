@@ -1,23 +1,23 @@
 'use client'
 
-import { RiArrowLeftLine, RiDeleteBinLine } from "@remixicon/react";
-import { useMutation, useQuery } from "convex/react";
-import { useParams, useRouter } from "next/navigation";
-import * as React from "react";
+import { RiArrowLeftLine, RiDeleteBinLine } from '@remixicon/react'
+import { useMutation, useQuery } from 'convex/react'
+import { useParams, useRouter } from 'next/navigation'
+import * as React from 'react'
 
-import { toast } from "sonner";
+import { toast } from 'sonner'
 
-import { TitleInput } from "@/components/title-input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import type { RecurrenceDay, RecurrenceType } from "@/lib/meeting-types";
+import { TitleInput } from '@/components/title-input'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
+import type { RecurrenceDay, RecurrenceType } from '@/lib/meeting-types'
 
-import { MeetingAttendanceDialog } from "./meeting-attendance-dialog";
-import { MeetingAttendeePicker } from "./meeting-attendee-picker";
-import { MeetingDetailNotes } from "./meeting-detail-notes";
-import { MeetingDetailProperties } from "./meeting-detail-properties";
+import { MeetingAttendanceDialog } from './meeting-attendance-dialog'
+import { MeetingAttendeePicker } from './meeting-attendee-picker'
+import { MeetingDetailNotes } from './meeting-detail-notes'
+import { MeetingDetailProperties } from './meeting-detail-properties'
 
 export function MeetingDetailPage() {
   const { orgSlug, meetingId } = useParams<{
@@ -47,7 +47,10 @@ export function MeetingDetailPage() {
   const [selectedAttendees, setSelectedAttendees] = React.useState<string[]>([])
 
   const empMap = React.useMemo(() => {
-    const m = new Map<string, { name: string; image: string | null; role?: string }>()
+    const m = new Map<
+      string,
+      { name: string; image: string | null; role?: string }
+    >()
     for (const e of employees ?? []) {
       m.set(e.id, {
         name: e.user?.name ?? e.user?.email ?? 'Unknown',
@@ -75,7 +78,7 @@ export function MeetingDetailPage() {
   // ── early returns AFTER all hooks ──
   if (meeting === undefined) {
     return (
-      <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Loading...
       </div>
     )
@@ -83,7 +86,7 @@ export function MeetingDetailPage() {
 
   if (meeting === null) {
     return (
-      <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Meeting not found.
       </div>
     )
@@ -170,7 +173,10 @@ export function MeetingDetailPage() {
   }
 
   const handleSaveNotes = async () => {
-    if (!latestId) { toast.error('No scheduled session found'); return }
+    if (!latestId) {
+      toast.error('No scheduled session found')
+      return
+    }
     setNotesSaving(true)
     try {
       await recordNotes({
@@ -194,47 +200,46 @@ export function MeetingDetailPage() {
   return (
     <>
       {/* Header */}
-      <div className='sticky top-0 z-10 flex h-[var(--header-height)] shrink-0 items-center gap-3 border-b border-border bg-sidebar px-4 backdrop-blur supports-backdrop-filter:bg-sidebar/80'>
+      <div className="sticky top-0 z-10 flex h-[var(--header-height)] shrink-0 items-center gap-3 border-b border-border bg-sidebar px-4 backdrop-blur supports-backdrop-filter:bg-sidebar/80">
         <Button
-          variant='ghost'
-          size='sm'
-          className='gap-1.5 text-muted-foreground'
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-muted-foreground"
           onClick={() => router.push(`/${orgSlug}/meetings`)}
         >
-          <RiArrowLeftLine className='size-3.5' />
+          <RiArrowLeftLine className="size-3.5" />
           Meetings
         </Button>
-        <span className='text-muted-foreground/40'>/</span>
-        <span className='truncate text-sm font-medium'>{meeting.title}</span>
-        <div className='ml-auto'>
+        <span className="text-muted-foreground/40">/</span>
+        <span className="truncate text-sm font-medium">{meeting.title}</span>
+        <div className="ml-auto">
           <Button
-            variant='outline'
-            size='sm'
-            className='text-destructive hover:text-destructive'
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
             onClick={handleDelete}
           >
-            <RiDeleteBinLine className='mr-1.5 size-3.5' />
+            <RiDeleteBinLine className="mr-1.5 size-3.5" />
             Delete
           </Button>
         </div>
       </div>
 
-      <ScrollArea className='flex-1'>
-        <div className='mx-auto max-w-3xl space-y-6 px-6 py-8'>
-
+      <ScrollArea className="flex-1">
+        <div className="mx-auto max-w-3xl space-y-6 px-6 py-8">
           <TitleInput
             value={meeting.title}
-            placeholder='Meeting title'
+            placeholder="Meeting title"
             onSave={handleSaveTitle}
-            aria-label='Meeting title'
+            aria-label="Meeting title"
           />
 
           <TitleInput
             value={meeting.description ?? ''}
-            placeholder='Add a description...'
+            placeholder="Add a description..."
             onSave={handleSaveDescription}
-            className='text-sm! font-normal! pb-0!'
-            aria-label='Meeting description'
+            className="text-sm! font-normal! pb-0!"
+            aria-label="Meeting description"
           />
 
           <MeetingDetailProperties
@@ -252,24 +257,24 @@ export function MeetingDetailPage() {
             onRecurrenceDaysChange={handleRecurrenceDaysChange}
           />
 
-          <div className='space-y-3'>
-            <h2 className='text-sm font-semibold'>Attendees</h2>
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold">Attendees</h2>
             <MeetingAttendeePicker
               selected={selectedAttendees}
               onToggle={toggleAttendee}
             />
             {selectedAttendees.length > 0 && (
-              <div className='flex flex-wrap gap-2 pt-1'>
+              <div className="flex flex-wrap gap-2 pt-1">
                 {selectedAttendees.map((id) => {
                   const e = empMap.get(id)
                   return (
                     <div
                       key={id}
-                      className='flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs'
+                      className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs"
                     >
-                      <span className='font-medium'>{e?.name ?? id}</span>
+                      <span className="font-medium">{e?.name ?? id}</span>
                       {e?.role && (
-                        <span className='text-muted-foreground'>{e.role}</span>
+                        <span className="text-muted-foreground">{e.role}</span>
                       )}
                     </div>
                   )
@@ -285,7 +290,6 @@ export function MeetingDetailPage() {
             saving={notesSaving}
             hasSchedule={!!latestId}
           />
-
         </div>
       </ScrollArea>
 

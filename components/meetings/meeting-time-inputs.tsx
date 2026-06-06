@@ -29,8 +29,8 @@ function MeetingTimePicker({ timestamp, onChange, label }: PickerProps) {
   }
 
   return (
-    <div className='grid gap-2'>
-      <Label className='text-xs text-muted-foreground'>{label}</Label>
+    <div className="grid gap-2">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
       <TimePickerInput
         hour={date.getHours()}
         minute={date.getMinutes()}
@@ -57,16 +57,16 @@ export function MeetingTimeInputs({
 }: MeetingTimeInputsProps) {
   if (timeOnly) {
     return (
-      <div className='grid grid-cols-2 gap-3'>
+      <div className="grid grid-cols-2 gap-3">
         <MeetingTimePicker
           timestamp={startTime}
           onChange={onStartChange}
-          label='Start Time'
+          label="Start Time"
         />
         <MeetingTimePicker
           timestamp={endTime}
           onChange={onEndChange}
-          label='End Time'
+          label="End Time"
         />
       </div>
     )
@@ -89,9 +89,13 @@ function FullDateTimePicker({
   onEndChange,
 }: Omit<MeetingTimeInputsProps, 'timeOnly'>) {
   return (
-    <div className='grid grid-cols-2 gap-3'>
-      <FullPicker timestamp={startTime} onChange={onStartChange} label='Start' />
-      <FullPicker timestamp={endTime} onChange={onEndChange} label='End' />
+    <div className="grid grid-cols-2 gap-3">
+      <FullPicker
+        timestamp={startTime}
+        onChange={onStartChange}
+        label="Start"
+      />
+      <FullPicker timestamp={endTime} onChange={onEndChange} label="End" />
     </div>
   )
 }
@@ -123,27 +127,23 @@ function FullPicker({
   }
 
   return (
-    <div className='grid gap-2'>
-      <Label className='text-xs text-muted-foreground'>{label}</Label>
+    <div className="grid gap-2">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
       <Popover open={dateOpen} onOpenChange={setDateOpen}>
         <PopoverTrigger
           render={
             <Button
-              type='button'
-              variant='outline'
-              className='w-full justify-start gap-2 font-normal text-xs'
+              type="button"
+              variant="outline"
+              className="w-full justify-start gap-2 font-normal text-xs"
             >
-              <RiCalendarLine className='size-3.5 shrink-0' />
+              <RiCalendarLine className="size-3.5 shrink-0" />
               {format(date, 'MMM d, yyyy')}
             </Button>
           }
         />
-        <PopoverContent className='w-auto p-0' align='start' sideOffset={4}>
-          <Calendar
-            mode='single'
-            selected={date}
-            onSelect={handleDateSelect}
-          />
+        <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
+          <Calendar mode="single" selected={date} onSelect={handleDateSelect} />
         </PopoverContent>
       </Popover>
       <TimePickerInput

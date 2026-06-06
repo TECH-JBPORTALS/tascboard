@@ -35,14 +35,14 @@ export function LeaveTab({ records, employees, leaveRequests }: Props) {
   )
 
   return (
-    <div className='flex flex-col'>
+    <div className="flex flex-col">
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6'>
-        <div className='flex items-center gap-1 rounded-lg border p-0.5'>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6">
+        <div className="flex items-center gap-1 rounded-lg border p-0.5">
           {FILTERS.map((f) => (
             <button
               key={f.value}
-              type='button'
+              type="button"
               onClick={() => setFilter(f.value)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 filter === f.value
@@ -51,7 +51,7 @@ export function LeaveTab({ records, employees, leaveRequests }: Props) {
               }`}
             >
               {f.label}
-              <span className='ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px]'>
+              <span className="ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px]">
                 {f.value === 'all'
                   ? (records ?? []).length
                   : (records ?? []).filter((r) => r.status === f.value).length}
@@ -59,13 +59,13 @@ export function LeaveTab({ records, employees, leaveRequests }: Props) {
             </button>
           ))}
         </div>
-        <div className='flex items-center gap-2'>
-          <Button size='sm' variant='outline'>
-            <RiFilePdfLine className='size-4' />
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline">
+            <RiFilePdfLine className="size-4" />
             Export
           </Button>
-          <Button size='sm' onClick={() => setRaiseOpen(true)}>
-            <RiAddLargeFill className='size-4' />
+          <Button size="sm" onClick={() => setRaiseOpen(true)}>
+            <RiAddLargeFill className="size-4" />
             Raise Leave
           </Button>
         </div>
@@ -73,9 +73,9 @@ export function LeaveTab({ records, employees, leaveRequests }: Props) {
 
       {/* Content */}
       {records === undefined ? (
-        <div className='space-y-2 p-4 md:p-6'>
+        <div className="space-y-2 p-4 md:p-6">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className='h-12 w-full' />
+            <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
       ) : (

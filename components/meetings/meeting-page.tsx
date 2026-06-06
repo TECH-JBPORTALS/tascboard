@@ -17,23 +17,23 @@ export function MeetingPage() {
   const state = useMeetingState()
 
   return (
-    <div className='flex flex-1 flex-col'>
+    <div className="flex flex-1 flex-col">
       <PageHeader
         icon={<RiCalendarLine />}
-        title='Meetings'
+        title="Meetings"
         actions={
-          <div className='flex items-center gap-2'>
-            <div className='relative'>
-              <RiSearchLine className='absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground' />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <RiSearchLine className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                className='h-8 w-44 pl-8 text-sm'
-                placeholder='Search meetings...'
+                className="h-8 w-44 pl-8 text-sm"
+                placeholder="Search meetings..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button size='sm' onClick={state.openCreate}>
-              <RiAddLine className='mr-1.5 size-3.5' />
+            <Button size="sm" onClick={state.openCreate}>
+              <RiAddLine className="mr-1.5 size-3.5" />
               New Meeting
             </Button>
           </div>
@@ -41,14 +41,14 @@ export function MeetingPage() {
       />
 
       {/* Cards */}
-      <div className='flex-1 overflow-auto p-4'>
-        <MeetingListTable
-          meetings={meetings}
-          search={search}
-        />
+      <div className="flex-1 overflow-auto p-4">
+        <MeetingListTable meetings={meetings} search={search} />
       </div>
 
-      <CreateMeetingDialog open={state.createOpen} onClose={state.closeCreate} />
+      <CreateMeetingDialog
+        open={state.createOpen}
+        onClose={state.closeCreate}
+      />
     </div>
   )
 }

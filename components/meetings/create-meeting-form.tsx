@@ -1,5 +1,6 @@
 'use client'
 
+import { RiCalendarLine } from '@remixicon/react'
 import { format } from 'date-fns'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
@@ -20,12 +21,11 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  RECURRENCE_LABELS,
   type MeetingFormValues,
+  RECURRENCE_LABELS,
   type RecurrenceDay,
   type RecurrenceType,
 } from '@/lib/meeting-types'
-import { RiCalendarLine } from '@remixicon/react'
 import { MeetingAttendeePicker } from './meeting-attendee-picker'
 import { MeetingRecurrenceDays } from './meeting-recurrence-days'
 import { MeetingTimeInputs } from './meeting-time-inputs'
@@ -49,7 +49,7 @@ function Field({
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ''}`}>
-      <Label className='text-xs text-muted-foreground'>{label}</Label>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
   )
@@ -83,7 +83,12 @@ export function CreateMeetingForm({ values, onChange }: Props) {
     if (!next) return
     const startDate = new Date(next)
     const existingStart = new Date(values.startTime)
-    startDate.setHours(existingStart.getHours(), existingStart.getMinutes(), 0, 0)
+    startDate.setHours(
+      existingStart.getHours(),
+      existingStart.getMinutes(),
+      0,
+      0,
+    )
     const diff = values.endTime - values.startTime
     onChange('startTime', startDate.getTime())
     onChange('endTime', startDate.getTime() + diff)
@@ -91,29 +96,28 @@ export function CreateMeetingForm({ values, onChange }: Props) {
   }
 
   return (
-    <div className='grid grid-cols-2 gap-x-4 gap-y-4'>
-
+    <div className="grid grid-cols-2 gap-x-4 gap-y-4">
       {/* Title — full width */}
-      <Field label='Title' className='col-span-2'>
+      <Field label="Title" className="col-span-2">
         <Input
-          placeholder='Meeting title'
+          placeholder="Meeting title"
           value={values.title}
           onChange={(e) => onChange('title', e.target.value)}
         />
       </Field>
 
       {/* Description — full width */}
-      <Field label='Description' className='col-span-2'>
+      <Field label="Description" className="col-span-2">
         <Textarea
-          placeholder='What is this meeting about?'
+          placeholder="What is this meeting about?"
           value={values.description}
           onChange={(e) => onChange('description', e.target.value)}
-          className='min-h-[72px] resize-none'
+          className="min-h-[72px] resize-none"
         />
       </Field>
 
       {/* Attendees — full width */}
-      <Field label='Attendees' className='col-span-2'>
+      <Field label="Attendees" className="col-span-2">
         <MeetingAttendeePicker
           selected={values.recipients}
           onToggle={toggleAttendee}
@@ -121,7 +125,7 @@ export function CreateMeetingForm({ values, onChange }: Props) {
       </Field>
 
       {/* Recurrence — left col */}
-      <Field label='Recurrence'>
+      <Field label="Recurrence">
         <Select
           value={values.recurrenceType}
           onValueChange={handleRecurrenceChange}
@@ -141,23 +145,23 @@ export function CreateMeetingForm({ values, onChange }: Props) {
 
       {/* Date — right col (only if not recurring) */}
       {!isRecurring ? (
-        <Field label='Date'>
+        <Field label="Date">
           <Popover open={dateOpen} onOpenChange={setDateOpen}>
             <PopoverTrigger
               render={
                 <Button
-                  type='button'
-                  variant='outline'
-                  className='w-full justify-start gap-2 font-normal'
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start gap-2 font-normal"
                 >
-                  <RiCalendarLine className='size-4 shrink-0' />
+                  <RiCalendarLine className="size-4 shrink-0" />
                   {format(new Date(values.startTime), 'MMM d, yyyy')}
                 </Button>
               }
             />
-            <PopoverContent className='w-auto p-0' align='start' sideOffset={4}>
+            <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
               <Calendar
-                mode='single'
+                mode="single"
                 selected={new Date(values.startTime)}
                 onSelect={handleDateSelect}
               />
@@ -167,7 +171,7 @@ export function CreateMeetingForm({ values, onChange }: Props) {
       ) : (
         /* Recurrence days — right col when weekly */
         values.recurrenceType === 'weekly' && (
-          <Field label='Days' className='col-span-2'>
+          <Field label="Days" className="col-span-2">
             <MeetingRecurrenceDays
               selected={values.recurrenceDays}
               onToggle={toggleDay}
@@ -177,7 +181,10 @@ export function CreateMeetingForm({ values, onChange }: Props) {
       )}
 
       {/* Time inputs — full width */}
-      <Field label={isRecurring ? 'Time' : 'Start & End Time'} className='col-span-2'>
+      <Field
+        label={isRecurring ? 'Time' : 'Start & End Time'}
+        className="col-span-2"
+      >
         <MeetingTimeInputs
           startTime={values.startTime}
           endTime={values.endTime}
@@ -188,14 +195,13 @@ export function CreateMeetingForm({ values, onChange }: Props) {
       </Field>
 
       {/* Meeting link — full width */}
-      <Field label='Meeting Link' className='col-span-2'>
+      <Field label="Meeting Link" className="col-span-2">
         <Input
-          placeholder='https://meet.google.com/...'
+          placeholder="https://meet.google.com/..."
           value={values.meetingLink}
           onChange={(e) => onChange('meetingLink', e.target.value)}
         />
       </Field>
-
     </div>
   )
 }

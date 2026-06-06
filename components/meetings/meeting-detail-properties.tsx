@@ -16,9 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getMeetingStatus, STATUS_CONFIG, RECURRENCE_LABELS, type RecurrenceDay, type RecurrenceType } from '@/lib/meeting-types'
-import { TimePickerInput } from './time-picker'
+import {
+  getMeetingStatus,
+  RECURRENCE_LABELS,
+  type RecurrenceDay,
+  type RecurrenceType,
+  STATUS_CONFIG,
+} from '@/lib/meeting-types'
 import { MeetingRecurrenceDays } from './meeting-recurrence-days'
+import { TimePickerInput } from './time-picker'
 
 interface Props {
   startTime: number
@@ -106,13 +112,11 @@ export function MeetingDetailProperties({
   const canEditRecurrence = !!onRecurrenceTypeChange
 
   return (
-    <div className='flex flex-col gap-3 border-y border-border py-4'>
-
+    <div className="flex flex-col gap-3 border-y border-border py-4">
       {/* Row 1 — status, date, recurrence, created, link */}
-      <div className='flex flex-wrap items-center gap-x-5 gap-y-2'>
-
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         {/* Status */}
-        <div className='flex items-center gap-1.5'>
+        <div className="flex items-center gap-1.5">
           <span className={`size-1.5 rounded-full ${dotClass}`} />
           <span className={`text-xs font-medium ${textClass}`}>
             {statusConfig.label}
@@ -120,50 +124,56 @@ export function MeetingDetailProperties({
         </div>
 
         {/* Date */}
-        <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
-          <RiCalendarLine className='size-3.5' />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <RiCalendarLine className="size-3.5" />
           <span>{format(startDate, 'MMM d, yyyy')}</span>
         </div>
 
         {/* Recurrence */}
-        <div className='flex items-center gap-1.5'>
-          <RiRepeatLine className='size-3.5 text-muted-foreground' />
+        <div className="flex items-center gap-1.5">
+          <RiRepeatLine className="size-3.5 text-muted-foreground" />
           {canEditRecurrence ? (
             <Select
               value={recurrenceType}
               onValueChange={handleRecurrenceChange}
             >
-              <SelectTrigger className='h-6 gap-1 border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus:ring-0 hover:text-foreground'>
+              <SelectTrigger className="h-6 gap-1 border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus:ring-0 hover:text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(RECURRENCE_LABELS) as RecurrenceType[]).map((k) => (
-                  <SelectItem key={k} value={k} className='text-xs'>
-                    {RECURRENCE_LABELS[k]}
-                  </SelectItem>
-                ))}
+                {(Object.keys(RECURRENCE_LABELS) as RecurrenceType[]).map(
+                  (k) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {RECURRENCE_LABELS[k]}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
           ) : (
-            <span className='text-xs text-muted-foreground'>{recurrenceLabel}</span>
+            <span className="text-xs text-muted-foreground">
+              {recurrenceLabel}
+            </span>
           )}
         </div>
 
         {/* Created at */}
-        <div className='flex items-center gap-1.5 text-xs text-muted-foreground'>
-          <RiAddCircleLine className='size-3.5' />
-          <span>Created {format(new Date(createdAt), 'MMM d, yyyy · hh:mm a')}</span>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <RiAddCircleLine className="size-3.5" />
+          <span>
+            Created {format(new Date(createdAt), 'MMM d, yyyy · hh:mm a')}
+          </span>
         </div>
 
         {/* Meeting link */}
         {meetingLink ? (
           <a
             href={meetingLink}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='flex items-center gap-1.5 text-xs text-blue-400 hover:underline'
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
           >
-            <RiLinksLine className='size-3.5' />
+            <RiLinksLine className="size-3.5" />
             <span>Join meeting</span>
           </a>
         ) : null}
@@ -171,27 +181,24 @@ export function MeetingDetailProperties({
 
       {/* Weekly day picker */}
       {recurrenceType === 'weekly' && canEditRecurrence && (
-        <MeetingRecurrenceDays
-          selected={recurrenceDays}
-          onToggle={toggleDay}
-        />
+        <MeetingRecurrenceDays selected={recurrenceDays} onToggle={toggleDay} />
       )}
 
       {/* Row 2 — time pickers + attendance button */}
-      <div className='flex items-center gap-3'>
-        <RiTimeLine className='size-3.5 shrink-0 text-muted-foreground' />
+      <div className="flex items-center gap-3">
+        <RiTimeLine className="size-3.5 shrink-0 text-muted-foreground" />
 
         {canEdit ? (
-          <div className='flex items-center gap-2'>
-            <div className='w-32'>
+          <div className="flex items-center gap-2">
+            <div className="w-32">
               <TimePickerInput
                 hour={startDate.getHours()}
                 minute={startDate.getMinutes()}
                 onChange={handleStartChange}
               />
             </div>
-            <span className='text-xs text-muted-foreground'>–</span>
-            <div className='w-32'>
+            <span className="text-xs text-muted-foreground">–</span>
+            <div className="w-32">
               <TimePickerInput
                 hour={endDate.getHours()}
                 minute={endDate.getMinutes()}
@@ -200,23 +207,22 @@ export function MeetingDetailProperties({
             </div>
           </div>
         ) : (
-          <span className='text-xs text-muted-foreground'>
+          <span className="text-xs text-muted-foreground">
             {format(startDate, 'hh:mm a')} – {format(endDate, 'hh:mm a')}
           </span>
         )}
 
         {hasSchedule ? (
           <Button
-            variant='outline'
-            size='sm'
-            className='ml-auto h-7 text-xs'
+            variant="outline"
+            size="sm"
+            className="ml-auto h-7 text-xs"
             onClick={onTrackAttendance}
           >
             Track attendance
           </Button>
         ) : null}
       </div>
-
     </div>
   )
 }

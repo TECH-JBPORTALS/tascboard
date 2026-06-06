@@ -89,19 +89,19 @@ export function MeetingAttendanceDialog({
 
   return (
     <Dialog open={!!scheduleMeetingId} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className='max-w-sm'>
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Track Attendance</DialogTitle>
         </DialogHeader>
-        <div className='flex flex-col gap-1 py-1'>
+        <div className="flex flex-col gap-1 py-1">
           {!recipients || !employees ? (
-            <div className='flex flex-col gap-2'>
+            <div className="flex flex-col gap-2">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className='h-10 w-full' />
+                <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
           ) : recipientIds.length === 0 ? (
-            <p className='py-4 text-center text-sm text-muted-foreground'>
+            <p className="py-4 text-center text-sm text-muted-foreground">
               No attendees invited to this meeting
             </p>
           ) : (
@@ -111,7 +111,7 @@ export function MeetingAttendanceDialog({
               return (
                 <label
                   key={id}
-                  className='flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/40'
+                  className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/40"
                 >
                   <Checkbox
                     checked={selected.includes(id)}
@@ -120,16 +120,16 @@ export function MeetingAttendanceDialog({
                   <UserAvatar
                     name={name}
                     imageUrl={emp?.image}
-                    className='size-7 shrink-0'
+                    className="size-7 shrink-0"
                   />
-                  <span className='text-sm'>{name}</span>
+                  <span className="text-sm">{name}</span>
                 </label>
               )
             })
           )}
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={loading}>

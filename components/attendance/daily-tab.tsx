@@ -25,12 +25,16 @@ type Props = {
 
 export function DailyTab({ date, onPrev, onNext, records, employees }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<AttendanceStatus | 'all'>('all')
+  const [statusFilter, setStatusFilter] = useState<AttendanceStatus | 'all'>(
+    'all',
+  )
 
   const isLoading = records === undefined || employees === undefined
 
   const filteredEmployees = (employees ?? []).filter((emp) => {
-    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = emp.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
     if (!matchesSearch) return false
     if (statusFilter === 'all') return true
     const record = records?.find((r) => r.employeeId === emp.id)

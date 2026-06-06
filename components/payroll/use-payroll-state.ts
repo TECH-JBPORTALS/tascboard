@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
-import {  useEffect , useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import { getMonth, getYear, type PayrollRecord } from '@/lib/payroll-types'
@@ -65,7 +65,9 @@ export function usePayrollState() {
   )
 
   const records = useMemo(() => {
-    const dbRecords = (rawRecords ?? []).map((r) => toPayrollRecord(r, employees))
+    const dbRecords = (rawRecords ?? []).map((r) =>
+      toPayrollRecord(r, employees),
+    )
     // only show local records that aren't already persisted in DB
     const onlyLocal = localRecords.filter((r) => !dbIds.has(r.id))
     return [...dbRecords, ...onlyLocal]
@@ -114,11 +116,26 @@ export function usePayrollState() {
   }
 
   return {
-    activeRecord, addOpen, employees, filtered,
-    handleAdd, handleDelete, handleDownload, handleEdit,
+    activeRecord,
+    addOpen,
+    employees,
+    filtered,
+    handleAdd,
+    handleDelete,
+    handleDownload,
+    handleEdit,
     isLoading: rawRecords === undefined,
-    payslipOpen, records, search, selectedMonth, selectedYear,
-    setAddOpen, setPayslipOpen, setSearch, setSelectedMonth,
-    setSelectedYear, setSheetOpen, sheetOpen,
+    payslipOpen,
+    records,
+    search,
+    selectedMonth,
+    selectedYear,
+    setAddOpen,
+    setPayslipOpen,
+    setSearch,
+    setSelectedMonth,
+    setSelectedYear,
+    setSheetOpen,
+    sheetOpen,
   }
 }

@@ -65,7 +65,10 @@ export function defaultFormValues(): MeetingFormValues {
 
 export type MeetingStatus = 'live' | 'upcoming' | 'completed'
 
-export function getMeetingStatus(startTime: number, endTime: number): MeetingStatus {
+export function getMeetingStatus(
+  startTime: number,
+  endTime: number,
+): MeetingStatus {
   const now = Date.now()
   if (now >= startTime && now <= endTime) return 'live'
   if (now < startTime) return 'upcoming'

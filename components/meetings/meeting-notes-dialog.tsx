@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, } from 'convex/react'
+import { useMutation } from 'convex/react'
 import * as React from 'react'
 import { toast } from 'sonner'
 import { api } from '@/convex/_generated/api'
@@ -25,7 +25,6 @@ export function MeetingNotesDialog({
   scheduleMeetingId,
   onClose,
 }: MeetingNotesDialogProps) {
-
   const recordNotes = useMutation(api.meeting.recordMeetingNotes)
   const [notes, setNotes] = React.useState('')
   const [loading, setLoading] = React.useState(false)
@@ -53,23 +52,23 @@ export function MeetingNotesDialog({
 
   return (
     <Dialog open={!!scheduleMeetingId} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className='max-w-md'>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Meeting Notes</DialogTitle>
         </DialogHeader>
-        <div className='flex flex-col gap-2 py-1'>
-          <Label className='text-xs text-muted-foreground'>
+        <div className="flex flex-col gap-2 py-1">
+          <Label className="text-xs text-muted-foreground">
             Record notes from this meeting session
           </Label>
           <Textarea
-            placeholder='Write meeting notes, action items, decisions made...'
+            placeholder="Write meeting notes, action items, decisions made..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className='min-h-[160px] resize-none'
+            className="min-h-[160px] resize-none"
           />
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={loading}>

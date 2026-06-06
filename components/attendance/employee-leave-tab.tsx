@@ -1,12 +1,12 @@
 'use client'
 
 import { RiAddLine } from '@remixicon/react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
 import { DataTable } from '@/components/data-table'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
-import type { ColumnDef } from '@tanstack/react-table'
 import type { EnrichedLeave, LeaveStatus } from '@/lib/attendance-types'
 import { EmployeeRaiseLeaveDialog } from './employee-raise-leave-dialog'
 
@@ -36,7 +36,9 @@ const TYPE_COLOR: Record<string, string> = {
 
 function fmt(ts: number) {
   return new Date(ts).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   })
 }
 
@@ -45,7 +47,9 @@ const employeeLeaveColumns: ColumnDef<EnrichedLeave, unknown>[] = [
     id: 'type',
     header: 'Leave Type',
     cell: ({ row }) => (
-      <span className={`text-sm font-medium capitalize ${TYPE_COLOR[row.original.leaveType] ?? ''}`}>
+      <span
+        className={`text-sm font-medium capitalize ${TYPE_COLOR[row.original.leaveType] ?? ''}`}
+      >
         {row.original.leaveType}
       </span>
     ),
@@ -54,15 +58,22 @@ const employeeLeaveColumns: ColumnDef<EnrichedLeave, unknown>[] = [
     id: 'duration',
     header: 'Duration',
     cell: ({ row }) => {
-      const days = Math.ceil((row.original.endDate - row.original.startDate) / 86_400_000) + 1
-      return <span className='text-sm'>{days} {days === 1 ? 'day' : 'days'}</span>
+      const days =
+        Math.ceil(
+          (row.original.endDate - row.original.startDate) / 86_400_000,
+        ) + 1
+      return (
+        <span className="text-sm">
+          {days} {days === 1 ? 'day' : 'days'}
+        </span>
+      )
     },
   },
   {
     id: 'dates',
     header: 'Dates',
     cell: ({ row }) => (
-      <span className='text-xs text-muted-foreground'>
+      <span className="text-xs text-muted-foreground">
         {fmt(row.original.startDate)} → {fmt(row.original.endDate)}
       </span>
     ),
@@ -71,7 +82,7 @@ const employeeLeaveColumns: ColumnDef<EnrichedLeave, unknown>[] = [
     id: 'reason',
     header: 'Reason',
     cell: ({ row }) => (
-      <p className='max-w-[200px] truncate text-xs text-muted-foreground'>
+      <p className="max-w-[200px] truncate text-xs text-muted-foreground">
         {row.original.reason}
       </p>
     ),
@@ -80,7 +91,10 @@ const employeeLeaveColumns: ColumnDef<EnrichedLeave, unknown>[] = [
     id: 'status',
     header: 'Status',
     cell: ({ row }) => (
-      <Badge variant={STATUS_VARIANT[row.original.status] ?? 'secondary'} className='capitalize'>
+      <Badge
+        variant={STATUS_VARIANT[row.original.status] ?? 'secondary'}
+        className="capitalize"
+      >
         {row.original.status}
       </Badge>
     ),
@@ -96,14 +110,14 @@ export function EmployeeLeaveTab({ records, employeeId }: Props) {
   )
 
   return (
-    <div className='flex flex-col'>
+    <div className="flex flex-col">
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6'>
-        <div className='flex items-center gap-1 rounded-lg border p-0.5'>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6">
+        <div className="flex items-center gap-1 rounded-lg border p-0.5">
           {FILTERS.map((f) => (
             <button
               key={f.value}
-              type='button'
+              type="button"
               onClick={() => setFilter(f.value)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 filter === f.value
@@ -112,7 +126,7 @@ export function EmployeeLeaveTab({ records, employeeId }: Props) {
               }`}
             >
               {f.label}
-              <span className='ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px]'>
+              <span className="ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px]">
                 {f.value === 'all'
                   ? (records ?? []).length
                   : (records ?? []).filter((r) => r.status === f.value).length}
@@ -120,21 +134,21 @@ export function EmployeeLeaveTab({ records, employeeId }: Props) {
             </button>
           ))}
         </div>
-        <Button size='sm' onClick={() => setOpen(true)}>
-          <RiAddLine className='size-4' />
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <RiAddLine className="size-4" />
           Raise Leave
         </Button>
       </div>
 
       {/* Content */}
       {records === undefined ? (
-        <div className='space-y-2 p-4 md:p-6'>
+        <div className="space-y-2 p-4 md:p-6">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className='h-12 w-full' />
+            <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
       ) : (
-        <div className='p-4 md:p-6'>
+        <div className="p-4 md:p-6">
           <DataTable columns={employeeLeaveColumns} data={filtered} />
         </div>
       )}

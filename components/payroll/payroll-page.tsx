@@ -1,6 +1,10 @@
 'use client'
 
-import { RiAddLine, RiDownloadLine, RiMoneyDollarCircleLine } from '@remixicon/react'
+import {
+  RiAddLine,
+  RiDownloadLine,
+  RiMoneyDollarCircleLine,
+} from '@remixicon/react'
 import { format } from 'date-fns'
 import { AddPayrollDialog } from '@/components/payroll/add-payroll-dialog'
 import { exportPayrollCsv } from '@/components/payroll/payroll-export'

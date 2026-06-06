@@ -21,9 +21,13 @@ interface CreateMeetingDialogProps {
   onClose: () => void
 }
 
-export function CreateMeetingDialog({ open, onClose }: CreateMeetingDialogProps) {
+export function CreateMeetingDialog({
+  open,
+  onClose,
+}: CreateMeetingDialogProps) {
   const createMeeting = useMutation(api.meeting.create)
-  const [values, setValues] = React.useState<MeetingFormValues>(defaultFormValues)
+  const [values, setValues] =
+    React.useState<MeetingFormValues>(defaultFormValues)
   const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
@@ -36,10 +40,20 @@ export function CreateMeetingDialog({ open, onClose }: CreateMeetingDialogProps)
   ) => setValues((prev) => ({ ...prev, [key]: value }))
 
   const handleSubmit = async () => {
-    if (!values.title.trim()) { toast.error('Meeting title is required'); return }
-    if (values.recipients.length === 0) { toast.error('Add at least one attendee'); return }
-    if (values.recurrenceType === 'weekly' && values.recurrenceDays.length === 0) {
-      toast.error('Select at least one day for weekly recurrence'); return
+    if (!values.title.trim()) {
+      toast.error('Meeting title is required')
+      return
+    }
+    if (values.recipients.length === 0) {
+      toast.error('Add at least one attendee')
+      return
+    }
+    if (
+      values.recurrenceType === 'weekly' &&
+      values.recurrenceDays.length === 0
+    ) {
+      toast.error('Select at least one day for weekly recurrence')
+      return
     }
     setLoading(true)
     try {
@@ -64,17 +78,17 @@ export function CreateMeetingDialog({ open, onClose }: CreateMeetingDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className='flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0'>
-        <DialogHeader className='shrink-0 border-b border-border px-6 py-4'>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
           <DialogTitle>Schedule Meeting</DialogTitle>
         </DialogHeader>
-        <ScrollArea className='flex-1'>
-          <div className='px-6 py-4'>
+        <ScrollArea className="flex-1">
+          <div className="px-6 py-4">
             <CreateMeetingForm values={values} onChange={handleChange} />
           </div>
         </ScrollArea>
-        <DialogFooter className='shrink-0 border-t border-border px-6 py-4'>
-          <Button variant='outline' onClick={onClose} disabled={loading}>
+        <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>

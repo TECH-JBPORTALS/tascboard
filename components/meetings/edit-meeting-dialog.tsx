@@ -45,7 +45,8 @@ export function EditMeetingDialog({
         description: meeting.description ?? '',
         meetingLink: meeting.meetingLink,
         recurrenceType: meeting.recurrenceType,
-        recurrenceDays: meeting.recurrenceDays as MeetingFormValues['recurrenceDays'],
+        recurrenceDays:
+          meeting.recurrenceDays as MeetingFormValues['recurrenceDays'],
         startTime: meeting.startTime,
         endTime: meeting.endTime,
         recipients: recipients.map((r) => r.employeeId),
@@ -91,21 +92,21 @@ export function EditMeetingDialog({
 
   return (
     <Dialog open={!!meetingId} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className='max-w-lg'>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Meeting</DialogTitle>
         </DialogHeader>
-        <div className='max-h-[60vh] overflow-y-auto py-1 pr-1'>
+        <div className="max-h-[60vh] overflow-y-auto py-1 pr-1">
           {values ? (
             <CreateMeetingForm values={values} onChange={handleChange} />
           ) : (
-            <div className='flex items-center justify-center py-12 text-sm text-muted-foreground'>
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
               Loading...
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading || !values}>

@@ -15,11 +15,11 @@ type Props = {
 
 export function MeetingTabs({ active, onChange }: Props) {
   return (
-    <div className='flex items-center gap-0 border-b'>
+    <div className="flex items-center gap-0 border-b">
       {TABS.map((t) => (
         <button
           key={t.value}
-          type='button'
+          type="button"
           onClick={() => onChange(t.value)}
           className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
             active === t.value

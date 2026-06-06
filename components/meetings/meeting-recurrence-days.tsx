@@ -1,7 +1,11 @@
 'use client'
 
+import {
+  ALL_DAYS,
+  RECURRENCE_DAY_LABELS,
+  type RecurrenceDay,
+} from '@/lib/meeting-types'
 import { cn } from '@/lib/utils'
-import { ALL_DAYS, RECURRENCE_DAY_LABELS, type RecurrenceDay } from '@/lib/meeting-types'
 
 interface MeetingRecurrenceDaysProps {
   selected: RecurrenceDay[]
@@ -13,13 +17,13 @@ export function MeetingRecurrenceDays({
   onToggle,
 }: MeetingRecurrenceDaysProps) {
   return (
-    <div className='flex flex-wrap gap-1.5 pt-1'>
+    <div className="flex flex-wrap gap-1.5 pt-1">
       {ALL_DAYS.map((day) => {
         const isSelected = selected.includes(day)
         return (
           <button
             key={day}
-            type='button'
+            type="button"
             onClick={() => onToggle(day)}
             className={cn(
               'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',

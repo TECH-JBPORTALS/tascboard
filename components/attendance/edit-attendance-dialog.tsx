@@ -2,6 +2,8 @@
 
 import { useMutation } from 'convex/react'
 import { useEffect, useState } from 'react'
+
+import { TimePickerInput } from '@/components/meetings/time-picker'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,7 +22,6 @@ import {
 } from '@/components/ui/select'
 import { api } from '@/convex/_generated/api'
 import type { AttendanceRecord, AttendanceStatus } from '@/lib/attendance-types'
-import { TimePickerInput } from '@/components/meetings/time-picker'
 
 type Props = {
   record: AttendanceRecord | null
@@ -76,23 +77,25 @@ export function EditAttendanceDialog({ record, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-sm'>
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Edit Attendance</DialogTitle>
         </DialogHeader>
-        <div className='space-y-4 py-2'>
-          <div className='space-y-1.5'>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
             <Label>Status</Label>
             <Select
               value={status}
-              onValueChange={(v) => setStatus((v ?? 'present') as AttendanceStatus)}
+              onValueChange={(v) =>
+                setStatus((v ?? 'present') as AttendanceStatus)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s} className='capitalize'>
+                  <SelectItem key={s} value={s} className="capitalize">
                     {s}
                   </SelectItem>
                 ))}
@@ -100,26 +103,33 @@ export function EditAttendanceDialog({ record, open, onOpenChange }: Props) {
             </Select>
           </div>
 
-          <div className='space-y-1.5'>
+          <div className="space-y-1.5">
             <Label>Check In</Label>
             <TimePickerInput
               hour={loginHour}
               minute={loginMinute}
-              onChange={(h, m) => { setLoginHour(h); setLoginMinute(m) }}
+              onChange={(h, m) => {
+                setLoginHour(h)
+                setLoginMinute(m)
+              }}
             />
           </div>
 
-          <div className='space-y-1.5'>
+          <div className="space-y-1.5">
             <Label>Check Out</Label>
             <TimePickerInput
               hour={logoutHour}
               minute={logoutMinute}
-              onChange={(h, m) => { setLogoutHour(h); setLogoutMinute(m); setHasLogout(true) }}
+              onChange={(h, m) => {
+                setLogoutHour(h)
+                setLogoutMinute(m)
+                setHasLogout(true)
+              }}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave}>Save</Button>

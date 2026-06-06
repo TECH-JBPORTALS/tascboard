@@ -1,9 +1,6 @@
 'use client'
 
-import {
-  RiArrowDownSLine,
-  RiSearchLine,
-} from '@remixicon/react'
+import { RiArrowDownSLine, RiSearchLine } from '@remixicon/react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import {

@@ -1,7 +1,7 @@
 'use client'
 
-import { cn } from '@/lib/utils'
 import { getMeetingStatus, STATUS_CONFIG } from '@/lib/meeting-types'
+import { cn } from '@/lib/utils'
 
 interface MeetingStatusBadgeProps {
   startTime: number
@@ -26,9 +26,9 @@ export function MeetingStatusBadge({
       )}
     >
       {status === 'live' && (
-        <span className='relative flex size-1.5'>
-          <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75' />
-          <span className='relative inline-flex size-1.5 rounded-full bg-red-500' />
+        <span className="relative flex size-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-red-500" />
         </span>
       )}
       {config.label}

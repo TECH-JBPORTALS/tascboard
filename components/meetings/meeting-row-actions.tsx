@@ -51,27 +51,27 @@ export function MeetingRowActions({
       <DropdownMenuTrigger
         render={
           <Button
-            variant='ghost'
-            size='sm'
-            className='size-7 p-0 opacity-0 group-hover:opacity-100'
+            variant="ghost"
+            size="sm"
+            className="size-7 p-0 opacity-0 group-hover:opacity-100"
           >
-            <RiMoreLine className='size-4' />
+            <RiMoreLine className="size-4" />
           </Button>
         }
       />
-      <DropdownMenuContent align='end' className='w-44'>
+      <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem onClick={onEdit}>
-          <RiEditLine className='mr-2 size-3.5' />
+          <RiEditLine className="mr-2 size-3.5" />
           Edit meeting
         </DropdownMenuItem>
         {scheduleMeetingId && (
           <>
             <DropdownMenuItem onClick={onAttendance}>
-              <RiCheckLine className='mr-2 size-3.5' />
+              <RiCheckLine className="mr-2 size-3.5" />
               Track attendance
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onNotes}>
-              <RiFileTextLine className='mr-2 size-3.5' />
+              <RiFileTextLine className="mr-2 size-3.5" />
               Add notes
             </DropdownMenuItem>
           </>
@@ -79,9 +79,9 @@ export function MeetingRowActions({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleDelete}
-          className='text-destructive focus:text-destructive'
+          className="text-destructive focus:text-destructive"
         >
-          <RiDeleteBinLine className='mr-2 size-3.5' />
+          <RiDeleteBinLine className="mr-2 size-3.5" />
           Delete meeting
         </DropdownMenuItem>
       </DropdownMenuContent>

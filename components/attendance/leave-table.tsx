@@ -8,7 +8,7 @@ type Props = { records: EnrichedLeave[] }
 
 export function LeaveTable({ records }: Props) {
   return (
-    <div className='p-4 md:p-6'>
+    <div className="p-4 md:p-6">
       <DataTable columns={leaveColumns} data={records} />
     </div>
   )

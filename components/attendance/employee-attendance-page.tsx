@@ -7,20 +7,30 @@ import { useAttendanceState } from '@/components/attendance/use-attendance-state
 import { api } from '@/convex/_generated/api'
 import {
   type EnrichedLeave,
-  type LeaveRequest,
   getEndOfDay,
   getEndOfMonth,
   getStartOfDay,
   getStartOfMonth,
+  type LeaveRequest,
 } from '@/lib/attendance-types'
+
 import { EmployeeDailyTab } from './employee-daily-tab'
 import { EmployeeLeaveTab } from './employee-leave-tab'
 import { EmployeeMonthlyTab } from './employee-monthly-tab'
 
 export function EmployeeAttendancePage() {
   const profile = useQuery(api.employeeProfiles.getMyProfile)
-  const { activeTab, setActiveTab, date, prevDay, nextDay, year, month, prevMonth, nextMonth } =
-    useAttendanceState()
+  const {
+    activeTab,
+    setActiveTab,
+    date,
+    prevDay,
+    nextDay,
+    year,
+    month,
+    prevMonth,
+    nextMonth,
+  } = useAttendanceState()
 
   const employeeId = profile?.employeeId ?? ''
 
@@ -33,10 +43,16 @@ export function EmployeeAttendancePage() {
   const monthlyRecords = useQuery(
     api.attendance.listTodayAttendance,
     employeeId
-      ? { startOfDay: getStartOfMonth(year, month), endOfDay: getEndOfMonth(year, month) }
+      ? {
+          startOfDay: getStartOfMonth(year, month),
+          endOfDay: getEndOfMonth(year, month),
+        }
       : 'skip',
   )
-  const leaveRequests = useQuery(api.leaveRequest.list, employeeId ? {} : 'skip')
+  const leaveRequests = useQuery(
+    api.leaveRequest.list,
+    employeeId ? {} : 'skip',
+  )
 
   const myDaily = useMemo(
     () => (dailyRecords ?? []).filter((r) => r.employeeId === employeeId),

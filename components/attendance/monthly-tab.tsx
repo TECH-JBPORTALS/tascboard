@@ -39,13 +39,23 @@ export function MonthlyTab({
     <div className="flex flex-col">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6">
         <div className="flex items-center gap-2">
-          <MonthlyNav year={year} month={month} onPrev={onPrev} onNext={onNext} />
-          <AttendanceSearchBar searchTerm={searchTerm} onSearch={setSearchTerm} />
+          <MonthlyNav
+            year={year}
+            month={month}
+            onPrev={onPrev}
+            onNext={onNext}
+          />
+          <AttendanceSearchBar
+            searchTerm={searchTerm}
+            onSearch={setSearchTerm}
+          />
         </div>
         <Button
           size="sm"
           variant="outline"
-          onClick={() => exportMonthlyPDF(records ?? [], employees ?? [], year, month)}
+          onClick={() =>
+            exportMonthlyPDF(records ?? [], employees ?? [], year, month)
+          }
         >
           <RiFilePdfLine className="size-4" />
           Export PDF

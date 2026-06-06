@@ -1,15 +1,15 @@
 'use client'
 
-import * as React from 'react'
 import { RiTimeLine } from '@remixicon/react'
-import { cn } from '@/lib/utils'
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 // Generate slots every 15 minutes in 12hr format
 type Slot = { label: string; hour: number; minute: number }
@@ -80,7 +80,9 @@ export function TimePickerInput({
   React.useEffect(() => {
     if (!open) return
     const timer = setTimeout(() => {
-      const el = listRef.current?.querySelector('[data-selected=true]') as HTMLElement
+      const el = listRef.current?.querySelector(
+        '[data-selected=true]',
+      ) as HTMLElement
       el?.scrollIntoView({ block: 'center', behavior: 'instant' })
     }, 10)
     return () => clearTimeout(timer)
@@ -131,22 +133,18 @@ export function TimePickerInput({
       <PopoverTrigger
         render={
           <Button
-            type='button'
-            variant='outline'
-            className='w-full justify-start gap-2 font-normal text-sm'
+            type="button"
+            variant="outline"
+            className="w-full justify-start gap-2 font-normal text-sm"
           >
-            <RiTimeLine className='size-3.5 shrink-0 text-muted-foreground' />
+            <RiTimeLine className="size-3.5 shrink-0 text-muted-foreground" />
             <span>{currentLabel}</span>
           </Button>
         }
       />
-      <PopoverContent
-        className='w-44 p-0'
-        align='start'
-        sideOffset={4}
-      >
+      <PopoverContent className="w-44 p-0" align="start" sideOffset={4}>
         {/* Typeable input at top */}
-        <div className='border-b border-border p-2'>
+        <div className="border-b border-border p-2">
           <Input
             value={inputVal}
             onChange={handleInputChange}
@@ -160,7 +158,7 @@ export function TimePickerInput({
             autoFocus
           />
           {inputError && (
-            <p className='mt-1 text-[11px] text-destructive'>
+            <p className="mt-1 text-[11px] text-destructive">
               Invalid time. Try "9:00am" or "14:30"
             </p>
           )}
@@ -169,7 +167,7 @@ export function TimePickerInput({
         {/* 15-min interval slot list */}
         <div
           ref={listRef}
-          className='h-52 overflow-y-auto'
+          className="h-52 overflow-y-auto"
           style={{ scrollbarWidth: 'none' }}
         >
           {SLOTS.map((slot) => {
@@ -177,7 +175,7 @@ export function TimePickerInput({
             return (
               <button
                 key={slot.label}
-                type='button'
+                type="button"
                 data-selected={isSelected}
                 onClick={() => handleSlotSelect(slot)}
                 className={cn(
@@ -205,7 +203,5 @@ interface LegacyProps {
 }
 
 export function TimePicker({ hour, minute, onChange }: LegacyProps) {
-  return (
-    <TimePickerInput hour={hour} minute={minute} onChange={onChange} />
-  )
+  return <TimePickerInput hour={hour} minute={minute} onChange={onChange} />
 }
