@@ -1,26 +1,21 @@
 'use client'
 
-import { RiCloseCircleLine, RiRunLine } from '@remixicon/react'
+import { RiRunLine } from '@remixicon/react'
 import { useMutation, useQuery } from 'convex/react'
 import * as React from 'react'
-import { TaskCommandPopover } from '@/components/tasks/task-command-popover'
-import { SprintStatusIcon } from '@/components/tracks/sprint-status-picker'
+import { TaskSprintPickerCommand } from '@/components/tasks/command/task-sprint-picker.command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
+import { type SprintPickerValue } from '@/lib/task-sprint-utils'
 import { formatSprintLabel } from '@/lib/track-utils'
 import { cn } from '@/lib/utils'
 
-const NO_SPRINT_VALUE = '__no_sprint__'
-
-export type SprintPickerValue = Id<'sprints'> | null
-
-function toPickerValue(sprintId: SprintPickerValue | undefined): string {
-  return sprintId ?? NO_SPRINT_VALUE
-}
-
-function fromPickerValue(selected: string): SprintPickerValue {
-  return selected === NO_SPRINT_VALUE ? null : (selected as Id<'sprints'>)
-}
+export type { SprintPickerValue }
 
 type TaskSprintPickerBaseProps = {
   trackId: Id<'tracks'>
@@ -53,59 +48,36 @@ export function TaskSprintPicker({
   ...mode
 }: TaskSprintPickerProps) {
   const [open, setOpen] = React.useState(false)
-  const sprints = useQuery(api.sprint.listByTrack, { trackId })
   const updateTask = useMutation(api.task.update)
 
-  const options = React.useMemo(() => {
-    const sprintOptions =
-      sprints?.map((sprint) => ({
-        value: sprint._id,
-        label: formatSprintLabel(sprint.sprintNumber),
-        keywords: sprint.goal,
-        icon: <SprintStatusIcon status={sprint.status} className="size-3.5" />,
-      })) ?? []
-
-    return [
-      {
-        value: NO_SPRINT_VALUE,
-        label: 'No sprint',
-        keywords: 'backlog unassigned',
-        icon: <RiCloseCircleLine className="size-3.5 text-muted-foreground" />,
-      },
-      ...sprintOptions,
-    ]
-  }, [sprints])
-
-  const handleSelect = (selected: string) => {
-    const sprintId = fromPickerValue(selected)
-
+  const handleSelect = (sprintId: SprintPickerValue) => {
     if (mode.onSelect) {
       mode.onSelect(sprintId)
-      return
-    }
-
-    if (mode.taskId) {
+    } else if (mode.taskId) {
       void updateTask({
         taskId: mode.taskId,
         body: { sprintId },
       })
     }
+    setOpen(false)
   }
 
   return (
-    <TaskCommandPopover
-      open={open}
-      onOpenChange={setOpen}
-      trigger={trigger}
-      placeholder={placeholder}
-      shortcutKey="R"
-      options={options}
-      value={toPickerValue(value)}
-      onSelect={handleSelect}
-      align={align}
-      className={className}
-      emptyMessage="No sprints found"
-    />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={trigger} />
+      <PopoverContent
+        className={cn('w-56 p-0', className)}
+        align={align}
+        sideOffset={4}
+      >
+        <TaskSprintPickerCommand
+          trackId={trackId}
+          value={value}
+          onSelect={handleSelect}
+          placeholder={placeholder}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
 

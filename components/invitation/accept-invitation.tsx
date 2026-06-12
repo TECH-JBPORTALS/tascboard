@@ -2,6 +2,7 @@
 
 import { RiTBoxLine } from '@remixicon/react'
 import { isBefore } from 'date-fns'
+import Link from 'next/link'
 import { useState } from 'react'
 import { api } from '@/convex/_generated/api'
 import { Button } from '../ui/button'
@@ -91,12 +92,20 @@ export function AcceptInvitation({
 
   // Show accepted invitation
   if (invitation.status === 'accepted') {
+    const orgHref = invitation.organizationSlug
+      ? `/${invitation.organizationSlug}`
+      : '/'
     return (
       <InvitationStateCard
         title="Invitation accepted"
         description="This invitation has already been accepted."
         footer={
-          <Button variant={'outline'} className={'w-full'}>
+          <Button
+            variant="outline"
+            className="w-full"
+            render={<Link href={orgHref} />}
+            nativeButton={false}
+          >
             Go to dashboard
           </Button>
         }

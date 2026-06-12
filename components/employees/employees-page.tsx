@@ -17,7 +17,7 @@ export function EmployeesPage() {
   const rows = useMemo<EmployeeRow[]>(() => {
     if (!employees) return []
     return employees.map((employee) => ({
-      id: employee.id,
+      id: employee._id,
       name: employee.user.name,
       email: employee.user.email,
       image: employee.user.image ?? '',

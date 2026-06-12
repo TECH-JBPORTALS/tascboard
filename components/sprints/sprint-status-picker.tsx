@@ -1,13 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { TaskCommandPopover } from '@/components/tasks/task-command-popover'
-import {
-  type SprintStatus,
-  sprintStatusConfig,
-  sprintStatusOrder,
-} from '@/lib/track-utils'
+import { SprintStatusPickerCommand } from '@/components/sprints/commands/sprint-status-picker.command'
+import { type SprintStatus, sprintStatusConfig } from '@/lib/track-utils'
 import { cn } from '@/lib/utils'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 
 type SprintStatusPickerProps = {
   value: SprintStatus
@@ -26,28 +23,26 @@ export function SprintStatusPicker({
 }: SprintStatusPickerProps) {
   const [open, setOpen] = React.useState(false)
 
-  const options = sprintStatusOrder.map((status) => {
-    const config = sprintStatusConfig[status]
-    return {
-      value: status,
-      label: config.label,
-      shortcut: config.shortcut,
-      icon: <SprintStatusIcon status={status} className="size-3.5" />,
-    }
-  })
+  const handleSelect = (status: SprintStatus) => {
+    onSelect(status)
+    setOpen(false)
+  }
 
   return (
-    <TaskCommandPopover
-      open={open}
-      onOpenChange={setOpen}
-      trigger={trigger}
-      placeholder={placeholder}
-      shortcutKey="S"
-      options={options}
-      value={value}
-      onSelect={onSelect}
-      className={className}
-    />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={trigger} />
+      <PopoverContent
+        className={cn('w-56 p-0', className)}
+        align="start"
+        sideOffset={4}
+      >
+        <SprintStatusPickerCommand
+          value={value}
+          onSelect={handleSelect}
+          placeholder={placeholder}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
 

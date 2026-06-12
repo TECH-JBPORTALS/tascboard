@@ -3,6 +3,8 @@
 import { RiAddFill, RiCalendarTodoFill } from '@remixicon/react'
 import { format, isAfter } from 'date-fns'
 import Link from 'next/link'
+import { useTaskActionsContext } from '@/components/tasks/task-actions-provider'
+import { TaskContextMenu } from '@/components/tasks/task-context-menu'
 import { TaskDueDatePicker } from '@/components/tasks/task-due-date-picker'
 import { TaskMembersPicker } from '@/components/tasks/task-members-picker'
 import {
@@ -48,7 +50,7 @@ function RowTrigger({
   )
 }
 
-export function TaskRow({
+function TaskRowContent({
   task,
   className,
   showMembers = true,
@@ -56,11 +58,13 @@ export function TaskRow({
 }: TaskRowProps) {
   const href = useTaskHref(task._id)
   const sprintLabel = useSprintDisplayLabel(task.trackId, task.sprintId)
+  const { setStatus, setSprint, setDueDate, clearDueDate } =
+    useTaskActionsContext()
 
   return (
     <div
       className={cn(
-        'group flex h-9 items-center gap-2 px-3 text-sm hover:bg-muted/40',
+        'group flex h-9 group-data-popup-open/context-menu-trigger:bg-muted group-data-popup-open/context-menu-trigger:ring-1 group-data-popup-open/context-menu-trigger:ring-muted-foreground/30 items-center gap-2 px-3 text-sm hover:bg-muted/40',
         className,
       )}
     >
@@ -82,8 +86,8 @@ export function TaskRow({
       </Link>
 
       <TaskStatusPicker
-        taskId={task._id}
         value={task.status}
+        onSelect={setStatus}
         trigger={
           <RowTrigger className="size-6" aria-label="Change status">
             <TaskStatusIcon status={task.status} className="size-4" />
@@ -100,8 +104,9 @@ export function TaskRow({
 
       {showSprint && (
         <TaskSprintPicker
-          taskId={task._id}
+          trackId={task.trackId}
           value={task.sprintId}
+          onSelect={setSprint}
           trigger={
             <RowTrigger
               variant={task.sprintId ? 'outline' : 'ghost'}
@@ -121,13 +126,13 @@ export function TaskRow({
               )}
             </RowTrigger>
           }
-          trackId={task.trackId}
         />
       )}
 
       <TaskDueDatePicker
-        taskId={task._id}
         dueDate={task.dueDate}
+        onSelect={setDueDate}
+        onClear={clearDueDate}
         trigger={
           <RowTrigger
             className="hidden h-6 gap-1 px-1.5 text-xs text-muted-foreground sm:inline-flex"
@@ -157,5 +162,13 @@ export function TaskRow({
         {format(task.createdAt, 'MMM d')}
       </span>
     </div>
+  )
+}
+
+export function TaskRow(props: TaskRowProps) {
+  return (
+    <TaskContextMenu task={props.task}>
+      <TaskRowContent {...props} />
+    </TaskContextMenu>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { Authenticated, AuthLoading, Unauthenticated } from 'convex/react'
-import { ConvexQueryCacheProvider } from 'convex-helpers/react/cache/provider'
 import type { ReactNode } from 'react'
 import { OrganizationRouteSkeleton } from './organization/org-route-skeleton'
 
@@ -12,9 +11,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       <AuthLoading>
         <OrganizationRouteSkeleton />
       </AuthLoading>
-      <Authenticated>
-        <ConvexQueryCacheProvider>{children}</ConvexQueryCacheProvider>
-      </Authenticated>
+      <Authenticated>{children}</Authenticated>
       <Unauthenticated>Unauthenticated</Unauthenticated>
     </>
   )

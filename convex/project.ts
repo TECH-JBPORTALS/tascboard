@@ -1,12 +1,18 @@
 import { v } from 'convex/values'
 import { components, internal } from './_generated/api'
-import type { Doc } from './_generated/dataModel'
+import type { Doc, Id } from './_generated/dataModel'
 import {
   organizationMutation,
   organizationQuery,
   privateQuery,
 } from './lib/customFunctions'
-import { getProjectMembers } from './lib/memberHelper'
+import {
+  getActiveEmployeeId,
+  getMemberProjectIds,
+  getMemberTrackIds,
+  getProjectMembers,
+  isOrgOwner,
+} from './lib/memberHelper'
 import { formatProjectDate, logProjectActivity } from './lib/projectActivityLog'
 import { vv } from './schema'
 import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from './syncEditor'
@@ -60,6 +66,7 @@ export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
     const { activeOrganizationId } = ctx.session
+    const bypassMembership = isOrgOwner(ctx.session)
 
     const projects = await ctx.db
       .query('projects')
@@ -69,14 +76,32 @@ export const list = organizationQuery({
       .order('desc')
       .collect()
 
+    let visibleProjects = projects
+    let memberTrackIds: Set<Id<'tracks'>> | null = null
+
+    if (!bypassMembership) {
+      const employeeId = getActiveEmployeeId(ctx.session)
+      const memberProjectIds = await getMemberProjectIds(ctx, employeeId)
+      visibleProjects = projects.filter((project) =>
+        memberProjectIds.has(project._id),
+      )
+      memberTrackIds = await getMemberTrackIds(ctx, employeeId)
+    }
+
     return await Promise.all(
-      projects.map(async (project) => ({
-        ...project,
-        tracks: await ctx.db
+      visibleProjects.map(async (project) => {
+        const tracks = await ctx.db
           .query('tracks')
           .withIndex('by_project', (q) => q.eq('projectId', project._id))
-          .collect(),
-      })),
+          .collect()
+
+        return {
+          ...project,
+          tracks: bypassMembership
+            ? tracks
+            : tracks.filter((track) => memberTrackIds!.has(track._id)),
+        }
+      }),
     )
   },
 })

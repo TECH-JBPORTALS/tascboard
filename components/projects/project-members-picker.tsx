@@ -48,7 +48,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
               <UserAvatar
                 key={member.employeeId}
                 className="size-4"
-                name={member.employee.name}
+                name={member.employee.name ?? ''}
                 imageUrl={member.employee.image}
               />
             ))}
@@ -81,7 +81,7 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
                   className="w-full"
                 >
                   <UserAvatar
-                    name={member.employee.name}
+                    name={member.employee.name ?? ''}
                     imageUrl={member.employee.image}
                     className="size-5"
                   />

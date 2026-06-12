@@ -1,20 +1,11 @@
 'use client'
 
-import { RiCalendarCloseLine, RiCalendarLine } from '@remixicon/react'
 import { useMutation } from 'convex/react'
-import { addDays, endOfWeek, format, startOfDay } from 'date-fns'
+import { startOfDay } from 'date-fns'
 import * as React from 'react'
+import { TaskDueDatePickerCommand } from '@/components/tasks/command/task-due-date-picker.command'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandShortcut,
-} from '@/components/ui/command'
 import {
   Popover,
   PopoverContent,
@@ -23,38 +14,6 @@ import {
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import { cn } from '@/lib/utils'
-
-type DueDatePreset = {
-  id: string
-  label: string
-  getDate: () => Date
-  shortcut?: string
-}
-
-function buildPresets(): DueDatePreset[] {
-  const today = startOfDay(new Date())
-
-  return [
-    {
-      id: 'tomorrow',
-      label: 'Tomorrow',
-      shortcut: '1',
-      getDate: () => addDays(today, 1),
-    },
-    {
-      id: 'end-of-week',
-      label: 'End of this week',
-      shortcut: '2',
-      getDate: () => endOfWeek(today, { weekStartsOn: 1 }),
-    },
-    {
-      id: 'one-week',
-      label: 'In one week',
-      shortcut: '3',
-      getDate: () => addDays(today, 7),
-    },
-  ]
-}
 
 type TaskDueDatePickerBaseProps = {
   dueDate?: number | null
@@ -94,7 +53,6 @@ export function TaskDueDatePicker({
   )
   const updateTaskMutation = useMutation(api.task.update)
 
-  const presets = buildPresets()
   const hasDueDate = hasDueDateProp ?? dueDate != null
 
   const applyDate = async (date: Date) => {
@@ -150,49 +108,13 @@ export function TaskDueDatePicker({
             }}
           />
         ) : (
-          <Command>
-            <CommandInput
-              placeholder="Try: tomorrow, 7 days…"
-              className="h-8 border-0 bg-transparent shadow-none"
-            />
-            <CommandList>
-              <CommandEmpty>No matching date</CommandEmpty>
-              <CommandGroup>
-                {hasDueDate && (
-                  <CommandItem
-                    value="remove due date"
-                    onSelect={() => void clearDueDate()}
-                  >
-                    <RiCalendarCloseLine className="size-3.5 text-muted-foreground" />
-                    <span className="flex-1">Remove due date</span>
-                  </CommandItem>
-                )}
-                <CommandItem
-                  value="custom date picker"
-                  onSelect={() => setShowCalendar(true)}
-                >
-                  <RiCalendarLine className="size-3.5 text-muted-foreground" />
-                  <span className="flex-1">Custom…</span>
-                </CommandItem>
-                {presets.map((preset) => {
-                  const date = preset.getDate()
-                  return (
-                    <CommandItem
-                      key={preset.id}
-                      value={`${preset.label} ${format(date, 'MMM d')}`}
-                      onSelect={() => void applyDate(date)}
-                    >
-                      <RiCalendarLine className="size-3.5 text-muted-foreground" />
-                      <span className="flex-1">{preset.label}</span>
-                      <CommandShortcut>
-                        {format(date, 'EEE, d MMM')}
-                      </CommandShortcut>
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+          <TaskDueDatePickerCommand
+            dueDate={dueDate}
+            hasDueDate={hasDueDate}
+            onSelectDate={(date) => void applyDate(date)}
+            onClear={() => void clearDueDate()}
+            onCustom={() => setShowCalendar(true)}
+          />
         )}
         {showCalendar ? (
           <div className="border-t p-2">
