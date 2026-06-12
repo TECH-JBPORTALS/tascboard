@@ -1,8 +1,14 @@
 import { v } from 'convex/values'
-import { privateMutation, privateQuery } from './lib/customFunctions'
+import { eachDayOfInterval } from 'date-fns'
+import { components } from './_generated/api'
+import {
+  organizationQuery,
+  privateMutation,
+  privateQuery,
+} from './lib/customFunctions'
 import { vv } from './schema'
 
-export const createAttendance = privateMutation({
+export default privateMutation({
   args: vv
     .doc('attendance')
     .omit('_id', '_creationTime', 'createdAt', 'updatedAt'),
@@ -143,20 +149,61 @@ export const markLogout = privateMutation({
   },
 })
 
-export const listTodayAttendance = privateQuery({
+export const listForEmployeesInDateRange = organizationQuery({
   args: {
-    startOfDay: v.number(),
-    endOfDay: v.number(),
+    start: v.number(),
+    end: v.number(),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('attendance')
-      .filter((q) =>
-        q.and(
-          q.gte(q.field('recordDate'), args.startOfDay),
-          q.lte(q.field('recordDate'), args.endOfDay),
-        ),
-      )
-      .collect()
+  handler: async (ctx, { start, end }) => {
+    const organizationId = ctx.session.activeOrganizationId
+
+    // 1. Get all employees in the organization
+    const employees = await ctx.runQuery(components.betterAuth.employees.list, {
+      organizationId,
+      role: 'employee',
+    })
+
+    const weekOfDays = eachDayOfInterval({
+      start,
+      end,
+    })
+
+    const employeesAttendance = await Promise.all(
+      employees.flatMap(async (employee) => {
+        return {
+          employee,
+          attendance: await Promise.all(
+            weekOfDays.map(async (day) => {
+              const attendanceForTheDay = await ctx.db
+                .query('attendance')
+                .withIndex('by_employee_and_date', (q) =>
+                  q
+                    .eq('employeeId', employee._id)
+                    .eq('recordDate', day.getTime()),
+                )
+                .first()
+
+              if (!attendanceForTheDay) {
+                return {
+                  date: day.getTime(),
+                  loginTime: null,
+                  logoutTime: null,
+                  status: null,
+                }
+              }
+
+              return {
+                date: day.getTime(),
+                loginTime: attendanceForTheDay.loginTime,
+                logoutTime: attendanceForTheDay.logoutTime,
+                status: attendanceForTheDay.status,
+              }
+            }),
+          ),
+        }
+      }),
+    )
+
+    return employeesAttendance
   },
 })

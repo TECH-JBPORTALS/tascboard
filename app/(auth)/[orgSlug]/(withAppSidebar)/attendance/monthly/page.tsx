@@ -1,11 +1,9 @@
-import { Attendance } from '@/components/daily-attendance'
 import { AttendanceHeader } from '@/components/common/attendance-header'
 
-export default function Page() {
+export default function MonthlyAttendancePage() {
   return (
     <div>
       <AttendanceHeader />
-      <Attendance />
     </div>
   )
 }

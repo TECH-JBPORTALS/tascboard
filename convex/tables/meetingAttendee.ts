@@ -6,4 +6,6 @@ export const meetingAttendee = defineTable({
   employeeId: v.string(),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
-}).index('by_schedule', ['scheduleMeetingId'])
+})
+  .index('by_schedule', ['scheduleMeetingId'])
+  .index('by_employee', ['employeeId'])

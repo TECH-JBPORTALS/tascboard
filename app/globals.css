@@ -48,6 +48,14 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   --color-brand: var(--brand);
   --color-highlight: var(--highlight);
+  --color-pattern: var(--pattern);
+  --pattern: repeating-linear-gradient(
+    45deg,
+    #e5e5f7,
+    #e5e5f7 10px,
+    #444cf7 10px,
+    #444cf7 20px
+  );
 }
 
 :root {
@@ -132,5 +140,15 @@
   }
   html {
     @apply font-sans;
+  }
+
+  .pattern {
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-background),
+      var(--color-background) 5px,
+      var(--color-accent) 5px,
+      var(--color-accent) 6px
+    );
   }
 }
