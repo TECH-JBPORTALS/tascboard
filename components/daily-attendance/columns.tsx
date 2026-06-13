@@ -67,6 +67,12 @@ export const getColumns = (
             format(day, 'EEEE').toLowerCase(),
           )
 
+          console.log(
+            day.toDateString(),
+            row.original.employee.user.name,
+            dayAttendance,
+          )
+
           return (
             <div
               className={cn(

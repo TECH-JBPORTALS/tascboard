@@ -297,7 +297,8 @@ export const listForEmployeesInDateRange = organizationQuery({
               .withIndex('by_employee_and_date', (q) =>
                 q
                   .eq('employeeId', employee._id)
-                  .eq('recordDate', day.getTime()),
+                  .gte('recordDate', day.getTime())
+                  .lt('recordDate', addDays(day, 1).getTime()),
               )
               .first()
 
