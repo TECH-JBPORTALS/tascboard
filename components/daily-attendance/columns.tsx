@@ -11,7 +11,7 @@ type AttendanceEmployee =
   (typeof api.attendance.listForEmployeesInDateRange._returnType)[number]
 
 type WorkSchedule =
-  (typeof api.organizationSettings.getWorkingSchedule._returnType)
+  typeof api.organizationSettings.getWorkingSchedule._returnType
 
 function isWorkingDay(day: Date, schedule: WorkSchedule): boolean {
   const weekday = format(day, 'EEEE').toLowerCase() as keyof WorkSchedule
@@ -83,6 +83,7 @@ export const getColumns = (
                   loginTime={dayAttendance.loginTime}
                   logoutTime={dayAttendance.logoutTime}
                   isOnLeave={dayAttendance.status === 'on leave'}
+                  workingSchedule={dayAttendance.workingSchedule}
                 />
               )}
             </div>

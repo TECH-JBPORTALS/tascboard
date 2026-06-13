@@ -74,6 +74,7 @@ export function MyAttendance() {
                   loginTime={att.loginTime}
                   logoutTime={att.logoutTime}
                   isOnLeave={att.status === 'on leave'}
+                  workingSchedule={att.workingSchedule}
                 />
               </div>
             </CardHeader>

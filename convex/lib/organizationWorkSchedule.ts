@@ -3,6 +3,38 @@ import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { workScheduleValidator } from '../tables/organizationWorkSchedule'
 
 export type WorkSchedule = Infer<typeof workScheduleValidator>
+export type DayWorkSchedule = WorkSchedule[keyof WorkSchedule]
+export type Weekday = keyof WorkSchedule
+
+const WEEKDAYS_BY_INDEX = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const satisfies readonly Weekday[]
+
+export function getWeekdayFromDate(date: number | Date): Weekday {
+  return WEEKDAYS_BY_INDEX[new Date(date).getDay()]!
+}
+
+export function getDaySchedule(
+  schedule: WorkSchedule,
+  date: number | Date,
+): DayWorkSchedule {
+  return schedule[getWeekdayFromDate(date)]
+}
+
+export async function getDayScheduleForOrganization(
+  ctx: QueryCtx | MutationCtx,
+  organizationId: string,
+  date: number | Date,
+): Promise<DayWorkSchedule> {
+  const schedule = await getWorkSchedule(ctx, organizationId)
+  return getDaySchedule(schedule, date)
+}
 
 const defaultDay = (enabled: boolean) => ({
   enabled,

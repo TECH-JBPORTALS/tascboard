@@ -14,6 +14,7 @@ import { leaveRequests } from './tables/leaveRequests'
 import { meeting } from './tables/meeting'
 import { meetingAttendee } from './tables/meetingAttendee'
 import { meetingRecipient } from './tables/meetingRecipient'
+import { organizationWorkSchedule } from './tables/organizationWorkSchedule'
 import { payroll } from './tables/payroll'
 import { projectActivities } from './tables/projectActivities'
 import { projectMember } from './tables/projectMember'
@@ -27,7 +28,6 @@ import { taskMember } from './tables/taskMember'
 import { tasks } from './tables/tasks'
 import { trackMember } from './tables/trackMember'
 import { tracks } from './tables/tracks'
-import { organizationWorkSchedule } from './tables/organizationWorkSchedule'
 
 const schema = defineSchema({
   inboxItems,

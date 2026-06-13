@@ -16,7 +16,9 @@ import {
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
+import { getDaySchedule, getWorkSchedule } from './lib/organizationWorkSchedule'
 import { vv } from './schema'
+import { dayWorkSchedule } from './tables/organizationWorkSchedule'
 
 type AttendanceStatus = 'present' | 'on leave' | 'late' | 'half day'
 
@@ -68,6 +70,11 @@ export const listMonthlyMineByMonth = organizationQuery({
   args: {
     date: v.number(),
   },
+  returns: v.array(
+    vv.doc('attendance').extend({
+      workingSchedule: dayWorkSchedule,
+    }),
+  ),
   handler: async (ctx, args) => {
     const monthStart = startOfMonth(new Date(args.date))
     const monthEnd = addMonths(monthStart, 1)
@@ -84,6 +91,11 @@ export const listMonthlyMineByMonth = organizationQuery({
       throw new Error('Employee not found')
     }
 
+    const schedule = await getWorkSchedule(
+      ctx,
+      ctx.session.activeOrganizationId,
+    )
+
     const attendance = await ctx.db
       .query('attendance')
       .withIndex('by_employee_and_date', (q) =>
@@ -95,7 +107,10 @@ export const listMonthlyMineByMonth = organizationQuery({
       .order('desc')
       .collect()
 
-    return attendance
+    return attendance.map((record) => ({
+      ...record,
+      workingSchedule: getDaySchedule(schedule, record.recordDate),
+    }))
   },
 })
 
@@ -302,6 +317,11 @@ export const listForEmployeesInDateRange = organizationQuery({
               )
               .first()
 
+            const schedule = await getWorkSchedule(
+              ctx,
+              ctx.session.activeOrganizationId,
+            )
+
             return [
               dateKey,
               attendanceForTheDay
@@ -309,11 +329,13 @@ export const listForEmployeesInDateRange = organizationQuery({
                     loginTime: attendanceForTheDay.loginTime,
                     logoutTime: attendanceForTheDay.logoutTime ?? null,
                     status: attendanceForTheDay.status,
+                    workingSchedule: getDaySchedule(schedule, day),
                   }
                 : {
                     loginTime: null,
                     logoutTime: null,
                     status: null,
+                    workingSchedule: getDaySchedule(schedule, day),
                   },
             ] as const
           }),
