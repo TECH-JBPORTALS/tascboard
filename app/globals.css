@@ -147,8 +147,8 @@
       45deg,
       var(--color-background),
       var(--color-background) 5px,
-      var(--color-accent) 5px,
-      var(--color-accent) 6px
+      var(--color-muted) 5px,
+      var(--color-muted) 6px
     );
   }
 }

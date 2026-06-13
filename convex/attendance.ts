@@ -1,14 +1,41 @@
 import { v } from 'convex/values'
-import { eachDayOfInterval } from 'date-fns'
-import { components } from './_generated/api'
 import {
+  addDays,
+  addMonths,
+  eachDayOfInterval,
+  endOfDay,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns'
+import { components } from './_generated/api'
+import { internalMutation } from './_generated/server'
+import {
+  organizationMutation,
   organizationQuery,
   privateMutation,
   privateQuery,
 } from './lib/customFunctions'
 import { vv } from './schema'
 
-export default privateMutation({
+type AttendanceStatus = 'present' | 'on leave' | 'late' | 'half day'
+
+function timestampOnDay(day: Date, hours: number, minutes: number): number {
+  const date = new Date(day)
+  date.setHours(hours, minutes, 0, 0)
+  return date.getTime()
+}
+
+function statusForSeedDay(
+  dayIndex: number,
+  employeeIndex: number,
+): AttendanceStatus {
+  const pattern: AttendanceStatus[] = ['present', 'late', 'present', 'half day']
+  return pattern[(dayIndex + employeeIndex) % pattern.length] ?? 'present'
+}
+
+/** @deprecated use `markLogin` instead */
+export const createAttendance = privateMutation({
   args: vv
     .doc('attendance')
     .omit('_id', '_creationTime', 'createdAt', 'updatedAt'),
@@ -36,17 +63,68 @@ export default privateMutation({
   },
 })
 
-export const listByEmployee = privateQuery({
+/** Lists current users attendance for the whole given month */
+export const listMonthlyMineByMonth = organizationQuery({
   args: {
-    employeeId: v.string(),
+    date: v.number(),
   },
-
   handler: async (ctx, args) => {
-    return await ctx.db
+    const monthStart = startOfMonth(new Date(args.date))
+    const monthEnd = addMonths(monthStart, 1)
+
+    const employee = await ctx.runQuery(
+      components.betterAuth.employees.getByOrganizationUser,
+      {
+        organizationId: ctx.session.activeOrganizationId,
+        userId: ctx.session.userId,
+      },
+    )
+
+    if (!employee) {
+      throw new Error('Employee not found')
+    }
+
+    const attendance = await ctx.db
       .query('attendance')
-      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
+      .withIndex('by_employee_and_date', (q) =>
+        q
+          .eq('employeeId', employee._id)
+          .gte('recordDate', monthStart.getTime())
+          .lt('recordDate', monthEnd.getTime()),
+      )
       .order('desc')
       .collect()
+
+    return attendance
+  },
+})
+
+export const getMyAttendanceByDate = organizationQuery({
+  args: {
+    recordDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const employee = await ctx.runQuery(
+      components.betterAuth.employees.getByOrganizationUser,
+      {
+        organizationId: ctx.session.activeOrganizationId,
+        userId: ctx.session.userId,
+      },
+    )
+
+    if (!employee) {
+      throw new Error('Employee not found')
+    }
+
+    return await ctx.db
+      .query('attendance')
+      .withIndex('by_employee_and_date', (q) =>
+        q
+          .eq('employeeId', employee._id)
+          .gte('recordDate', startOfDay(args.recordDate).getTime())
+          .lte('recordDate', addDays(args.recordDate, 1).getTime()),
+      )
+      .first()
   },
 })
 
@@ -128,6 +206,47 @@ export const deleteAttendance = privateMutation({
   },
 })
 
+export const markLogin = organizationMutation({
+  args: {},
+  handler: async (ctx) => {
+    const employee = await ctx.runQuery(
+      components.betterAuth.employees.getByOrganizationUser,
+      {
+        organizationId: ctx.session.activeOrganizationId,
+        userId: ctx.session.userId,
+      },
+    )
+
+    if (!employee) {
+      throw new Error('Employee not found')
+    }
+
+    const attendance = await ctx.db
+      .query('attendance')
+      .withIndex('by_employee_and_date', (q) =>
+        q
+          .eq('employeeId', employee._id)
+          .gte('recordDate', startOfDay(Date.now()).getTime())
+          .lte('recordDate', endOfDay(Date.now()).getTime()),
+      )
+      .first()
+
+    if (attendance) {
+      throw new Error('You are already logged in')
+    }
+
+    await ctx.db.insert('attendance', {
+      employeeId: employee._id,
+      recordDate: Date.now(),
+      loginTime: Date.now(),
+      status: 'present',
+      createdAt: Date.now(),
+    })
+
+    return null
+  },
+})
+
 export const markLogout = privateMutation({
   args: {
     attendanceId: vv.id('attendance'),
@@ -169,41 +288,119 @@ export const listForEmployeesInDateRange = organizationQuery({
     })
 
     const employeesAttendance = await Promise.all(
-      employees.flatMap(async (employee) => {
+      employees.map(async (employee) => {
+        const attendanceEntries = await Promise.all(
+          weekOfDays.map(async (day) => {
+            const dateKey = day.toDateString()
+            const attendanceForTheDay = await ctx.db
+              .query('attendance')
+              .withIndex('by_employee_and_date', (q) =>
+                q
+                  .eq('employeeId', employee._id)
+                  .eq('recordDate', day.getTime()),
+              )
+              .first()
+
+            return [
+              dateKey,
+              attendanceForTheDay
+                ? {
+                    loginTime: attendanceForTheDay.loginTime,
+                    logoutTime: attendanceForTheDay.logoutTime ?? null,
+                    status: attendanceForTheDay.status,
+                  }
+                : {
+                    loginTime: null,
+                    logoutTime: null,
+                    status: null,
+                  },
+            ] as const
+          }),
+        )
+
         return {
           employee,
-          attendance: await Promise.all(
-            weekOfDays.map(async (day) => {
-              const attendanceForTheDay = await ctx.db
-                .query('attendance')
-                .withIndex('by_employee_and_date', (q) =>
-                  q
-                    .eq('employeeId', employee._id)
-                    .eq('recordDate', day.getTime()),
-                )
-                .first()
-
-              if (!attendanceForTheDay) {
-                return {
-                  date: day.getTime(),
-                  loginTime: null,
-                  logoutTime: null,
-                  status: null,
-                }
-              }
-
-              return {
-                date: day.getTime(),
-                loginTime: attendanceForTheDay.loginTime,
-                logoutTime: attendanceForTheDay.logoutTime,
-                status: attendanceForTheDay.status,
-              }
-            }),
-          ),
+          attendance: Object.fromEntries(attendanceEntries),
         }
       }),
     )
 
     return employeesAttendance
+  },
+})
+
+export const seed = internalMutation({
+  args: {
+    organizationId: v.string(),
+  },
+  returns: v.object({
+    created: v.number(),
+    skipped: v.number(),
+    employeeCount: v.number(),
+    dayCount: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const employees = await ctx.runQuery(components.betterAuth.employees.list, {
+      organizationId: args.organizationId,
+      role: 'employee',
+    })
+
+    const weekStart = addDays(startOfWeek(new Date()), 1)
+    const days = eachDayOfInterval({
+      start: weekStart,
+      end: addDays(weekStart, 2),
+    })
+
+    let created = 0
+    let skipped = 0
+
+    for (
+      let employeeIndex = 0;
+      employeeIndex < employees.length;
+      employeeIndex++
+    ) {
+      const employee = employees[employeeIndex]
+      if (!employee) continue
+
+      for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+        const day = days[dayIndex]
+        if (!day) continue
+
+        const recordDate = day.getTime()
+        const existing = await ctx.db
+          .query('attendance')
+          .withIndex('by_employee_and_date', (q) =>
+            q.eq('employeeId', employee._id).eq('recordDate', recordDate),
+          )
+          .first()
+
+        if (existing) {
+          skipped += 1
+          continue
+        }
+
+        const status = statusForSeedDay(dayIndex, employeeIndex)
+        const loginHour = status === 'late' ? 10 : 9
+        const loginMinute = status === 'late' ? 30 : 0
+        const logoutHour = status === 'half day' ? 13 : 18
+
+        await ctx.db.insert('attendance', {
+          employeeId: employee._id,
+          recordDate,
+          loginTime: timestampOnDay(day, loginHour, loginMinute),
+          logoutTime: timestampOnDay(day, logoutHour, 0),
+          status,
+          createdAt: Date.now(),
+        })
+        created += 1
+      }
+    }
+
+    return {
+      created,
+      skipped,
+      employeeCount: employees.length,
+      dayCount: days.length,
+    }
   },
 })

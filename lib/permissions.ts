@@ -8,6 +8,7 @@ import {
 export const statement = {
   ...defaultStatements,
   project: ['create', 'read', 'update', 'delete'],
+  attendance: ['create', 'personal', 'read', 'delete', 'edit'],
 } as const
 
 export const ac = createAccessControl(statement)
@@ -15,11 +16,13 @@ export const ac = createAccessControl(statement)
 export const owner = ac.newRole({
   ...ownerAc.statements,
   project: ['create', 'read', 'update', 'delete'],
+  attendance: ['create', 'read', 'delete', 'edit'],
 })
 
 export const employee = ac.newRole({
   ...memberAc.statements,
   project: ['read'],
+  attendance: ['personal', 'read'],
 })
 
 export const orgRoles = {

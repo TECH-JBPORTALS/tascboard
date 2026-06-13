@@ -61,7 +61,7 @@ export function DataTable<TData>({
               return (
                 <TableRow key={row.id} className={cn(inactive && 'opacity-50')}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="group/table-cell">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),

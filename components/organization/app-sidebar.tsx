@@ -4,11 +4,8 @@ import {
   RiAddLargeFill,
   RiCalendarCheckFill,
   RiCalendarCheckLine,
-  RiCalendarLine,
   RiInboxFill,
   RiInboxLine,
-  RiMoneyDollarCircleFill,
-  RiMoneyDollarCircleLine,
   RiRouteLine,
   RiTeamFill,
   RiTeamLine,
@@ -63,19 +60,20 @@ const navItems = [
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
   },
-  {
-    label: 'Meetings',
-    href: '/meetings',
-    icon: RiCalendarLine,
-    fillIcon: RiCalendarLine,
-  },
-  {
-    label: 'Payroll',
-    href: '/payroll',
-    icon: RiMoneyDollarCircleLine,
-    fillIcon: RiMoneyDollarCircleFill,
-    permissions: { organization: ['delete'] },
-  },
+
+  // {
+  //   label: 'Meetings',
+  //   href: '/meetings',
+  //   icon: RiCalendarLine,
+  //   fillIcon: RiCalendarLine,
+  // },
+  // {
+  //   label: 'Payroll',
+  //   href: '/payroll',
+  //   icon: RiMoneyDollarCircleLine,
+  //   fillIcon: RiMoneyDollarCircleFill,
+  //   permissions: { organization: ['delete'] },
+  // },
 ]
 
 export function AppSidebar({
