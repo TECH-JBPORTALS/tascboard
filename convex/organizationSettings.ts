@@ -13,6 +13,14 @@ import {
 } from './lib/organizationWorkSchedule'
 import { workScheduleValidator } from './tables/organizationWorkSchedule'
 
+export const getWorkingSchedule = organizationQuery({
+  args: {},
+  returns: workScheduleValidator,
+  handler: async (ctx) => {
+    return await getWorkSchedule(ctx, ctx.session.activeOrganizationId)
+  },
+})
+
 export const getSettings = organizationQuery({
   args: {},
   returns: v.object({

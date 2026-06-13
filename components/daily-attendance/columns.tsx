@@ -10,17 +10,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 type AttendanceEmployee =
   (typeof api.attendance.listForEmployeesInDateRange._returnType)[number]
 
-const workingDays = [
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-]
+type WorkSchedule =
+  (typeof api.organizationSettings.getWorkingSchedule._returnType)
+
+function isWorkingDay(day: Date, schedule: WorkSchedule): boolean {
+  const weekday = format(day, 'EEEE').toLowerCase() as keyof WorkSchedule
+  return schedule[weekday].enabled
+}
 
 export const getColumns = (
   weekDays: Date[],
+  workingSchedule: WorkSchedule,
 ): ColumnDef<AttendanceEmployee>[] => {
   const isToday = (date: Date) => isSameDay(date, new Date())
 
@@ -63,22 +63,16 @@ export const getColumns = (
         ),
         cell: ({ row }) => {
           const dayAttendance = row.original.attendance[day.toDateString()]
-          const isWorkingDay = workingDays.includes(
-            format(day, 'EEEE').toLowerCase(),
-          )
-
-          console.log(
-            day.toDateString(),
-            row.original.employee.user.name,
-            dayAttendance,
-          )
+          const hasAttendance = dayAttendance?.status != null
+          const showNonWorkingPattern =
+            !isWorkingDay(day, workingSchedule) && !hasAttendance
 
           return (
             <div
               className={cn(
                 'h-20 p-4 flex flex-col relative items-center justify-center border-r w-full group-last/table-cell:border-r-0',
                 isToday(day) && 'bg-accent/50',
-                !isWorkingDay && 'pattern',
+                showNonWorkingPattern && 'pattern',
               )}
             >
               <span className="text-xs absolute top-2.5 left-4 text-muted-foreground">

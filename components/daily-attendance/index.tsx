@@ -25,13 +25,17 @@ export function Attendance() {
     start: start.getTime(),
     end: end.getTime(),
   })
+  const workingSchedule = useQuery(
+    api.organizationSettings.getWorkingSchedule,
+    {},
+  )
 
   const weekDays = eachDayOfInterval({
     start,
     end,
   })
 
-  if (data === undefined) return null
+  if (data === undefined || workingSchedule === undefined) return null
 
   return (
     <div className=" space-y-4 px-6 py-4 [&_td]:p-0 [&_th]:px-0 ">
@@ -61,7 +65,7 @@ export function Attendance() {
           </PopoverContent>
         </Popover>
       </div>
-      <DataTable columns={getColumns(weekDays)} data={data} />
+      <DataTable columns={getColumns(weekDays, workingSchedule)} data={data} />
     </div>
   )
 }
