@@ -24,6 +24,7 @@ import {
 } from '../ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
+import { DailyReportDialog } from './daily-report-dialog'
 
 /** My Attendance for Employee */
 export function MyAttendance() {
@@ -71,6 +72,7 @@ export function MyAttendance() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <AttendanceStatusBadge
+                  status={att.status}
                   loginTime={att.loginTime}
                   logoutTime={att.logoutTime}
                   isOnLeave={att.status === 'on leave'}
@@ -107,9 +109,8 @@ export function TodayAttendance() {
     recordDate: startOfDay(Date.now()).getTime(),
   })
   const markLogin = useMutation(api.attendance.markLogin)
-  const markLogout = useMutation(api.attendance.markLogout)
   const [loggingIn, setLoggingIn] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
 
   async function onLogin() {
     setLoggingIn(true)
@@ -126,21 +127,7 @@ export function TodayAttendance() {
   }
 
   async function onLogout() {
-    setLoggingOut(true)
-    try {
-      if (todayAttendance)
-        await markLogout({
-          logoutTime: Date.now(),
-          attendanceId: todayAttendance._id,
-        })
-    } catch (e) {
-      if (e instanceof ConvexError) {
-        toast.error(e.message)
-      } else {
-        toast.error('Failed to logout')
-      }
-    }
-    setLoggingOut(false)
+    setReportDialogOpen(true)
   }
 
   if (todayAttendance === undefined) return <div>Loading...</div>
@@ -165,40 +152,44 @@ export function TodayAttendance() {
 
   if (!todayAttendance.logoutTime)
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RiTimeLine className="text-muted-foreground size-5" />
-            Today Attendance
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-5 items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Login Time</span>
-            <span className="text-base font-semibold">
-              {format(new Date(todayAttendance.loginTime), 'hh:mm aaa')}
-            </span>
-          </div>
-          <Separator orientation="vertical" />
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Working Clock </span>
-            <span className="text-base font-semibold text-primary">
-              <AttendanceTimeTicker
-                loginTime={todayAttendance.loginTime}
-                showSeconds
-              />
-            </span>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button
-            variant={'outline'}
-            onClick={() => onLogout()}
-            disabled={loggingOut}
-          >
-            {loggingOut ? 'Logging out...' : 'Logout from work'}
-          </Button>
-        </CardFooter>
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RiTimeLine className="text-muted-foreground size-5" />
+              Today Attendance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-5 items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Login Time</span>
+              <span className="text-base font-semibold">
+                {format(new Date(todayAttendance.loginTime), 'hh:mm aaa')}
+              </span>
+            </div>
+            <Separator orientation="vertical" />
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Working Clock </span>
+              <span className="text-base font-semibold text-primary">
+                <AttendanceTimeTicker
+                  loginTime={todayAttendance.loginTime}
+                  showSeconds
+                />
+              </span>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button variant={'outline'} onClick={() => onLogout()}>
+              Logout from work
+            </Button>
+          </CardFooter>
+        </Card>
+        <DailyReportDialog
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+          attendanceId={todayAttendance._id}
+          loginTime={todayAttendance.loginTime}
+        />
+      </>
     )
 }

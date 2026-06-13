@@ -5,7 +5,9 @@ import { format, isSameDay } from 'date-fns'
 import { api } from '@/convex/_generated/api'
 import { cn } from '@/lib/utils'
 import { AttendanceStatusBadge } from '../common/attendance-status-badge'
+import type { SelectedAttendanceDay } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { Button } from '../ui/button'
 
 type AttendanceEmployee =
   (typeof api.attendance.listForEmployeesInDateRange._returnType)[number]
@@ -21,6 +23,7 @@ function isWorkingDay(day: Date, schedule: WorkSchedule): boolean {
 export const getColumns = (
   weekDays: Date[],
   workingSchedule: WorkSchedule,
+  onSelectDay: (selection: SelectedAttendanceDay) => void,
 ): ColumnDef<AttendanceEmployee>[] => {
   const isToday = (date: Date) => isSameDay(date, new Date())
 
@@ -68,25 +71,36 @@ export const getColumns = (
             !isWorkingDay(day, workingSchedule) && !hasAttendance
 
           return (
-            <div
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                onSelectDay({
+                  employeeId: row.original.employee._id,
+                  employeeName: row.original.employee.user.name,
+                  day,
+                  dayAttendance,
+                })
+              }
               className={cn(
-                'h-20 p-4 flex flex-col relative items-center justify-center border-r w-full group-last/table-cell:border-r-0',
+                'relative flex h-20 w-full flex-col items-center justify-center rounded-none border-0 border-r! border-r-border bg-transparent p-4 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-last/table-cell:border-r-0',
                 isToday(day) && 'bg-accent/50',
                 showNonWorkingPattern && 'pattern',
               )}
             >
-              <span className="text-xs absolute top-2.5 left-4 text-muted-foreground">
+              <span className="absolute top-2.5 left-4 text-xs text-muted-foreground">
                 {format(day, 'dd')}
               </span>
-              {dayAttendance?.status && (
+              {dayAttendance?.status ? (
                 <AttendanceStatusBadge
+                  status={dayAttendance.status}
                   loginTime={dayAttendance.loginTime}
                   logoutTime={dayAttendance.logoutTime}
                   isOnLeave={dayAttendance.status === 'on leave'}
                   workingSchedule={dayAttendance.workingSchedule}
                 />
-              )}
-            </div>
+              ) : null}
+            </Button>
           )
         },
       }),

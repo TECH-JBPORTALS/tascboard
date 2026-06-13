@@ -4,11 +4,13 @@ import {
   addMonths,
   eachDayOfInterval,
   endOfDay,
+  endOfMonth,
   startOfDay,
   startOfMonth,
   startOfWeek,
 } from 'date-fns'
 import { components } from './_generated/api'
+import type { QueryCtx } from './_generated/server'
 import { internalMutation } from './_generated/server'
 import {
   organizationMutation,
@@ -17,10 +19,118 @@ import {
   privateQuery,
 } from './lib/customFunctions'
 import { getDaySchedule, getWorkSchedule } from './lib/organizationWorkSchedule'
+import { deriveStatusFromLogin } from './lib/attendanceStatus'
 import { vv } from './schema'
 import { dayWorkSchedule } from './tables/organizationWorkSchedule'
 
-type AttendanceStatus = 'present' | 'on leave' | 'late' | 'half day'
+type AttendanceStatus = 'present' | 'on leave' | 'late' | 'half day' | 'absent'
+
+const attendanceDayCell = v.object({
+  attendanceId: v.union(vv.id('attendance'), v.null()),
+  loginTime: v.union(v.number(), v.null()),
+  logoutTime: v.union(v.number(), v.null()),
+  status: v.union(
+    v.literal('present'),
+    v.literal('on leave'),
+    v.literal('late'),
+    v.literal('half day'),
+    v.literal('absent'),
+    v.null(),
+  ),
+  remarks: v.union(v.string(), v.null()),
+  workingSchedule: dayWorkSchedule,
+})
+
+const employeeAttendanceRow = v.object({
+  employee: v.any(),
+  attendance: v.record(v.string(), attendanceDayCell),
+})
+
+function assertOwner(role: string) {
+  if (role !== 'owner') {
+    throw new Error('Only organization owners can manage attendance')
+  }
+}
+
+async function buildEmployeesAttendanceForDays(
+  ctx: QueryCtx & {
+    session: {
+      activeOrganizationId: string
+      userId: string
+      employee: { role: string }
+    }
+    runQuery: (
+      ref: typeof components.betterAuth.employees.list,
+      args: { organizationId: string; role: string },
+    ) => Promise<
+      Array<{
+        _id: string
+        user: { name: string; image?: string | null }
+      }>
+    >
+  },
+  start: Date,
+  end: Date,
+) {
+  const organizationId = ctx.session.activeOrganizationId
+
+  const employees = await ctx.runQuery(components.betterAuth.employees.list, {
+    organizationId,
+    role: 'employee',
+  })
+
+  const schedule = await getWorkSchedule(ctx, organizationId)
+
+  const days = eachDayOfInterval({
+    start,
+    end,
+  })
+
+  return Promise.all(
+    employees.map(async (employee) => {
+      const attendanceEntries = await Promise.all(
+        days.map(async (day) => {
+          const dateKey = day.toDateString()
+          const dayStart = startOfDay(day).getTime()
+          const attendanceForTheDay = await ctx.db
+            .query('attendance')
+            .withIndex('by_employee_and_date', (q) =>
+              q
+                .eq('employeeId', employee._id)
+                .gte('recordDate', dayStart)
+                .lt('recordDate', addDays(day, 1).getTime()),
+            )
+            .first()
+
+          const cell = attendanceForTheDay
+            ? {
+                attendanceId: attendanceForTheDay._id,
+                loginTime: attendanceForTheDay.loginTime,
+                logoutTime: attendanceForTheDay.logoutTime ?? null,
+                status: attendanceForTheDay.status,
+                remarks: attendanceForTheDay.remarks ?? null,
+                workingSchedule: getDaySchedule(schedule, day),
+              }
+            : {
+                attendanceId: null,
+                loginTime: null,
+                logoutTime: null,
+                status: null,
+                remarks: null,
+                workingSchedule: getDaySchedule(schedule, day),
+              }
+
+          return [dateKey, cell] as const
+        }),
+      )
+
+      return {
+        employee,
+        attendance: Object.fromEntries(attendanceEntries),
+      }
+    }),
+  )
+}
 
 function timestampOnDay(day: Date, hours: number, minutes: number): number {
   const date = new Date(day)
@@ -195,6 +305,10 @@ export const updateAttendance = privateMutation({
       patch.status = args.body.status
     }
 
+    if (args.body.remarks !== undefined) {
+      patch.remarks = args.body.remarks
+    }
+
     patch.updatedAt = Date.now()
 
     await ctx.db.patch(args.attendanceId, patch)
@@ -288,67 +402,184 @@ export const listForEmployeesInDateRange = organizationQuery({
     start: v.number(),
     end: v.number(),
   },
+  returns: v.array(employeeAttendanceRow),
   handler: async (ctx, { start, end }) => {
-    const organizationId = ctx.session.activeOrganizationId
+    return await buildEmployeesAttendanceForDays(
+      ctx,
+      new Date(start),
+      new Date(end),
+    )
+  },
+})
 
-    // 1. Get all employees in the organization
-    const employees = await ctx.runQuery(components.betterAuth.employees.list, {
-      organizationId,
-      role: 'employee',
-    })
+export const listForEmployeesInMonth = organizationQuery({
+  args: {
+    month: v.number(),
+  },
+  returns: v.array(employeeAttendanceRow),
+  handler: async (ctx, args) => {
+    const monthStart = startOfMonth(new Date(args.month))
+    const monthEnd = endOfMonth(new Date(args.month))
 
-    const weekOfDays = eachDayOfInterval({
-      start,
-      end,
-    })
+    return await buildEmployeesAttendanceForDays(ctx, monthStart, monthEnd)
+  },
+})
 
-    const employeesAttendance = await Promise.all(
-      employees.map(async (employee) => {
-        const attendanceEntries = await Promise.all(
-          weekOfDays.map(async (day) => {
-            const dateKey = day.toDateString()
-            const attendanceForTheDay = await ctx.db
-              .query('attendance')
-              .withIndex('by_employee_and_date', (q) =>
-                q
-                  .eq('employeeId', employee._id)
-                  .gte('recordDate', day.getTime())
-                  .lt('recordDate', addDays(day, 1).getTime()),
-              )
-              .first()
+export const getEmployeeDayDetail = organizationQuery({
+  args: {
+    employeeId: v.string(),
+    recordDate: v.number(),
+  },
+  returns: attendanceDayCell,
+  handler: async (ctx, args) => {
+    if (ctx.session.employee.role !== 'owner') {
+      throw new Error('Only organization owners can view attendance details')
+    }
 
-            const schedule = await getWorkSchedule(
-              ctx,
-              ctx.session.activeOrganizationId,
-            )
-
-            return [
-              dateKey,
-              attendanceForTheDay
-                ? {
-                    loginTime: attendanceForTheDay.loginTime,
-                    logoutTime: attendanceForTheDay.logoutTime ?? null,
-                    status: attendanceForTheDay.status,
-                    workingSchedule: getDaySchedule(schedule, day),
-                  }
-                : {
-                    loginTime: null,
-                    logoutTime: null,
-                    status: null,
-                    workingSchedule: getDaySchedule(schedule, day),
-                  },
-            ] as const
-          }),
-        )
-
-        return {
-          employee,
-          attendance: Object.fromEntries(attendanceEntries),
-        }
-      }),
+    const day = startOfDay(args.recordDate)
+    const schedule = await getWorkSchedule(
+      ctx,
+      ctx.session.activeOrganizationId,
     )
 
-    return employeesAttendance
+    const attendanceForTheDay = await ctx.db
+      .query('attendance')
+      .withIndex('by_employee_and_date', (q) =>
+        q
+          .eq('employeeId', args.employeeId)
+          .gte('recordDate', day.getTime())
+          .lt('recordDate', addDays(day, 1).getTime()),
+      )
+      .first()
+
+    if (!attendanceForTheDay) {
+      return {
+        attendanceId: null,
+        loginTime: null,
+        logoutTime: null,
+        status: null,
+        remarks: null,
+        workingSchedule: getDaySchedule(schedule, day),
+      }
+    }
+
+    return {
+      attendanceId: attendanceForTheDay._id,
+      loginTime: attendanceForTheDay.loginTime,
+      logoutTime: attendanceForTheDay.logoutTime ?? null,
+      status: attendanceForTheDay.status,
+      remarks: attendanceForTheDay.remarks ?? null,
+      workingSchedule: getDaySchedule(schedule, day),
+    }
+  },
+})
+
+export const ownerUpdateEmployeeDay = organizationMutation({
+  args: {
+    employeeId: v.string(),
+    recordDate: v.number(),
+    loginTime: v.optional(v.number()),
+    logoutTime: v.optional(v.union(v.number(), v.null())),
+    markAbsent: v.optional(v.boolean()),
+    remarks: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    assertOwner(ctx.session.employee.role)
+
+    const day = startOfDay(args.recordDate)
+    const recordDate = day.getTime()
+
+    const existing = await ctx.db
+      .query('attendance')
+      .withIndex('by_employee_and_date', (q) =>
+        q
+          .eq('employeeId', args.employeeId)
+          .gte('recordDate', recordDate)
+          .lt('recordDate', addDays(day, 1).getTime()),
+      )
+      .first()
+
+    if (args.markAbsent) {
+      const remarks = args.remarks?.trim()
+      if (!remarks) {
+        throw new Error('Remarks are required when marking someone absent')
+      }
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          status: 'absent',
+          remarks,
+          logoutTime: undefined,
+          updatedAt: Date.now(),
+        })
+      } else {
+        await ctx.db.insert('attendance', {
+          employeeId: args.employeeId,
+          recordDate,
+          loginTime: recordDate,
+          status: 'absent',
+          remarks,
+          createdAt: Date.now(),
+        })
+      }
+
+      return null
+    }
+
+    if (args.loginTime === undefined && args.logoutTime === undefined) {
+      throw new Error('No changes to save')
+    }
+
+    const schedule = await getWorkSchedule(
+      ctx,
+      ctx.session.activeOrganizationId,
+    )
+    const daySchedule = getDaySchedule(schedule, day)
+
+    if (existing) {
+      if (existing.status === 'absent') {
+        throw new Error('Restore attendance before editing login time')
+      }
+
+      if (existing.status === 'on leave') {
+        throw new Error('Cannot edit attendance for an employee on leave')
+      }
+
+      const patch: Record<string, unknown> = {
+        updatedAt: Date.now(),
+      }
+
+      if (args.loginTime !== undefined) {
+        patch.loginTime = args.loginTime
+        if (existing.status === 'present' || existing.status === 'late') {
+          patch.status = deriveStatusFromLogin(args.loginTime, daySchedule)
+        }
+      }
+
+      if (args.logoutTime !== undefined) {
+        patch.logoutTime = args.logoutTime ?? undefined
+      }
+
+      await ctx.db.patch(existing._id, patch)
+
+      return null
+    }
+
+    if (args.loginTime === undefined) {
+      throw new Error('Login time is required to create an attendance record')
+    }
+
+    await ctx.db.insert('attendance', {
+      employeeId: args.employeeId,
+      recordDate,
+      loginTime: args.loginTime,
+      logoutTime: args.logoutTime ?? undefined,
+      status: deriveStatusFromLogin(args.loginTime, daySchedule),
+      createdAt: Date.now(),
+    })
+
+    return null
   },
 })
 

@@ -15,10 +15,13 @@ import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { AttendanceDaySheet } from './attendance-day-sheet'
 import { getColumns } from './columns'
+import type { SelectedAttendanceDay } from './types'
 
 export function Attendance() {
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selection, setSelection] = useState<SelectedAttendanceDay | null>(null)
   const start = addDays(startOfWeek(selectedDate), 1)
   const end = addDays(endOfWeek(selectedDate), 1)
   const data = useQuery(api.attendance.listForEmployeesInDateRange, {
@@ -29,13 +32,14 @@ export function Attendance() {
     api.organizationSettings.getWorkingSchedule,
     {},
   )
+  if (workingSchedule === undefined) return null
 
   const weekDays = eachDayOfInterval({
     start,
     end,
   })
 
-  if (data === undefined || workingSchedule === undefined) return null
+  if (data === undefined) return null
 
   return (
     <div className=" space-y-4 px-6 py-4 [&_td]:p-0 [&_th]:px-0 ">
@@ -65,7 +69,17 @@ export function Attendance() {
           </PopoverContent>
         </Popover>
       </div>
-      <DataTable columns={getColumns(weekDays, workingSchedule)} data={data} />
+      <DataTable
+        columns={getColumns(weekDays, workingSchedule, setSelection)}
+        data={data}
+      />
+
+      <AttendanceDaySheet
+        selection={selection}
+        onOpenChange={(open) => {
+          if (!open) setSelection(null)
+        }}
+      />
     </div>
   )
 }

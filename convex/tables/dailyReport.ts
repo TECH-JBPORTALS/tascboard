@@ -11,4 +11,6 @@ export const dailyReport = defineTable({
   remark: v.string(),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
-}).index('by_employee', ['employeeId'])
+})
+  .index('by_employee', ['employeeId'])
+  .index('by_employee_and_date', ['employeeId', 'reportDate'])

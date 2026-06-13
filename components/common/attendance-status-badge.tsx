@@ -1,5 +1,11 @@
-import { RiAlertLine, RiCheckboxCircleLine, RiTimeLine } from '@remixicon/react'
+import {
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiTimeLine,
+} from '@remixicon/react'
 import { differenceInMilliseconds } from 'date-fns'
+import type { AttendanceStatus } from '@/lib/attendance-types'
+import { cn } from '@/lib/utils'
 import {
   type DayWorkSchedule,
   isUnderScheduledHours,
@@ -11,21 +17,34 @@ import {
 } from './attendance-time-ticker'
 
 export function AttendanceStatusBadge({
+  status,
   isOnLeave,
   loginTime,
   logoutTime,
   workingSchedule,
 }: {
-  loginTime: number
+  status?: AttendanceStatus | null
+  loginTime?: number | null
   logoutTime?: number | null
   isOnLeave?: boolean
   workingSchedule?: DayWorkSchedule
 }) {
-  if (isOnLeave) {
+  if (status === 'absent') {
+    return (
+      <Badge className="capitalize bg-destructive/20 text-destructive">
+        <RiCloseCircleLine />
+        Absent
+      </Badge>
+    )
+  }
+
+  if (isOnLeave || status === 'on leave') {
     return (
       <Badge className="capitalize bg-green-600/30 text-green-600">Leave</Badge>
     )
   }
+
+  if (!loginTime) return null
 
   if (logoutTime) {
     const workedMs = differenceInMilliseconds(
@@ -36,17 +55,13 @@ export function AttendanceStatusBadge({
       workingSchedule &&
       isUnderScheduledHours(loginTime, logoutTime, workingSchedule)
 
-    if (underScheduled) {
-      return (
-        <Badge className="capitalize bg-orange-600/30 text-orange-600">
-          <RiAlertLine />
-          {formatElapsedDuration(workedMs)}
-        </Badge>
-      )
-    }
-
     return (
-      <Badge className="capitalize bg-green-600/20 text-green-600">
+      <Badge
+        className={cn(
+          'capitalize bg-green-600/20 text-green-600',
+          underScheduled && 'bg-orange-600/20 text-orange-600',
+        )}
+      >
         <RiCheckboxCircleLine />
         {formatElapsedDuration(workedMs)}
       </Badge>

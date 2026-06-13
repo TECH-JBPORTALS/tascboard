@@ -1,6 +1,11 @@
 import type { Id } from '@/convex/_generated/dataModel'
 
-export type AttendanceStatus = 'present' | 'on leave' | 'late' | 'half day'
+export type AttendanceStatus =
+  | 'present'
+  | 'on leave'
+  | 'late'
+  | 'half day'
+  | 'absent'
 export type LeaveStatus = 'pending' | 'approved' | 'rejected'
 export type LeaveType = 'sick' | 'casual' | 'emergency'
 export type ActiveTab = 'daily' | 'monthly' | 'leave'
@@ -113,6 +118,7 @@ export const STATUS_LABELS: Record<AttendanceStatus, string> = {
   late: 'Late',
   'on leave': 'On Leave',
   'half day': 'Half Day',
+  absent: 'Absent',
 }
 
 export function getElapsedWorkingDays(y: number, m: number): number {

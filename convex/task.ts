@@ -13,6 +13,9 @@ import {
   reindexStatusColumn,
 } from './lib/taskKanban'
 import { listTasksForTrack } from './lib/taskList'
+import {
+  statusTimingPatch,
+} from './lib/dailyReportTasks'
 import { vv } from './schema'
 
 /**
@@ -148,16 +151,18 @@ export const reorderKanban = privateMutation({
 
     const actorUserId = ctx.session.userId
     const actorName = ctx.session.user.name
+    const now = Date.now()
 
     await Promise.all(
       targetTasks.map((columnTask, index) => {
         const patch: Partial<Doc<'tasks'>> = {
           statusOrder: index,
-          updatedAt: Date.now(),
+          updatedAt: now,
         }
 
         if (columnTask._id === args.taskId && newStatus !== oldStatus) {
           patch.status = newStatus
+          Object.assign(patch, statusTimingPatch(oldStatus, newStatus, now))
         }
 
         return ctx.db.patch(columnTask._id, patch)
@@ -333,6 +338,10 @@ export const update = privateMutation({
 
     if (args.body.status !== undefined && args.body.status !== task.status) {
       patch.status = args.body.status
+      Object.assign(
+        patch,
+        statusTimingPatch(task.status, args.body.status, Date.now()),
+      )
       await logTaskActivity(ctx, {
         taskId: args.taskId,
         actorUserId,
