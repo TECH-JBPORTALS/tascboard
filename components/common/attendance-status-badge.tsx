@@ -1,46 +1,48 @@
-import { RiEmojiStickerLine } from '@remixicon/react'
-import { AttendanceStatus } from '@/lib/attendance-types'
+import { RiCheckboxCircleLine, RiTimeLine } from '@remixicon/react'
+import { differenceInMilliseconds } from 'date-fns'
 import { Badge } from '../ui/badge'
+import {
+  AttendanceTimeTicker,
+  formatElapsedDuration,
+} from './attendance-time-ticker'
 
 export function AttendanceStatusBadge({
-  status,
+  isOnLeave,
+  loginTime,
+  logoutTime,
 }: {
-  status: AttendanceStatus
+  loginTime: number
+  logoutTime?: number | null
+  isOnLeave?: boolean
 }) {
-  switch (status) {
-    case 'present':
-      return (
-        <Badge
-          variant={'secondary'}
-          className="capitalize bg-green-600/30 text-green-600"
-        >
-          Present
-        </Badge>
-      )
-    case 'late':
-      return (
-        <Badge
-          variant={'secondary'}
-          className="capitalize bg-orange-600/30 text-orange-600"
-        >
-          Late
-        </Badge>
-      )
-
-    case 'half day':
-      return (
-        <Badge className="capitalize bg-purple-600/30 text-purple-600">
-          Half day
-        </Badge>
-      )
-
-    case 'on leave':
-      return (
-        <Badge className="capitalize bg-green-600/30 text-green-600">
-          <RiEmojiStickerLine /> Leave
-        </Badge>
-      )
-    default:
-      return null
+  if (isOnLeave) {
+    return (
+      <Badge className="capitalize bg-green-600/30 text-green-600">Leave</Badge>
+    )
   }
+
+  if (logoutTime) {
+    return (
+      <Badge className="capitalize bg-green-600/20 text-green-600">
+        <RiCheckboxCircleLine />
+        {formatElapsedDuration(
+          differenceInMilliseconds(new Date(logoutTime), new Date(loginTime)),
+        )}
+      </Badge>
+    )
+  }
+
+  if (loginTime) {
+    return (
+      <Badge
+        variant={'secondary'}
+        className="capitalize border border-green-500  text-green-600"
+      >
+        <RiTimeLine />
+        <AttendanceTimeTicker showSeconds loginTime={loginTime} />
+      </Badge>
+    )
+  }
+
+  return null
 }

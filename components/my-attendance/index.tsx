@@ -7,10 +7,11 @@ import { useQuery } from 'convex-helpers/react/cache'
 import { format, startOfDay } from 'date-fns'
 import { isEmpty } from 'lodash'
 import { parseAsIsoDate, useQueryState } from 'nuqs'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '@/convex/_generated/api'
 import { AttendanceStatusBadge } from '../common/attendance-status-badge'
+import { AttendanceTimeTicker } from '../common/attendance-time-ticker'
 import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
 import {
@@ -69,7 +70,11 @@ export function MyAttendance() {
                 {format(new Date(att.recordDate), 'dd MMMM yyyy')}
               </CardTitle>
               <div className="flex items-center gap-2">
-                <AttendanceStatusBadge status={att.status} />
+                <AttendanceStatusBadge
+                  loginTime={att.loginTime}
+                  logoutTime={att.logoutTime}
+                  isOnLeave={att.status === 'on leave'}
+                />
               </div>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
@@ -177,7 +182,10 @@ export function TodayAttendance() {
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Working Clock </span>
             <span className="text-base font-semibold text-primary">
-              <TickingClock loginTime={todayAttendance.loginTime} />
+              <AttendanceTimeTicker
+                loginTime={todayAttendance.loginTime}
+                showSeconds
+              />
             </span>
           </div>
         </CardContent>
@@ -192,33 +200,4 @@ export function TodayAttendance() {
         </CardFooter>
       </Card>
     )
-}
-
-function formatElapsedDuration(elapsedMs: number): string {
-  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000))
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-
-  return [hours, minutes, seconds]
-    .map((value) => String(value).padStart(2, '0'))
-    .join(':')
-}
-
-function TickingClock({ loginTime }: { loginTime: number }) {
-  const [elapsedMs, setElapsedMs] = useState(() => Date.now() - loginTime)
-
-  useEffect(() => {
-    const tick = () => setElapsedMs(Date.now() - loginTime)
-
-    tick()
-    const interval = setInterval(tick, 1000)
-    return () => clearInterval(interval)
-  }, [loginTime])
-
-  return (
-    <span className="tabular-nums font-mono">
-      {formatElapsedDuration(elapsedMs)}
-    </span>
-  )
 }

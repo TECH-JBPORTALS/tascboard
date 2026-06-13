@@ -4,8 +4,8 @@ import { ColumnDef } from '@tanstack/react-table'
 import { format, isSameDay } from 'date-fns'
 import { api } from '@/convex/_generated/api'
 import { cn } from '@/lib/utils'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { AttendanceStatusBadge } from '../common/attendance-status-badge'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
 type AttendanceEmployee =
   (typeof api.attendance.listForEmployeesInDateRange._returnType)[number]
@@ -85,7 +85,11 @@ export const getColumns = (
                 {format(day, 'dd')}
               </span>
               {dayAttendance?.status && (
-                <AttendanceStatusBadge status={dayAttendance.status} />
+                <AttendanceStatusBadge
+                  loginTime={dayAttendance.loginTime}
+                  logoutTime={dayAttendance.logoutTime}
+                  isOnLeave={dayAttendance.status === 'on leave'}
+                />
               )}
             </div>
           )
