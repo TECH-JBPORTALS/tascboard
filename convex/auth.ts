@@ -65,6 +65,13 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           })
         },
         organizationHooks: {
+          afterCreateOrganization: async ({ organization }) => {
+            const mutationCtx = requireMutationCtx(ctx)
+            await mutationCtx.runMutation(
+              internal.organizationSettings.ensureWorkSchedule,
+              { organizationId: organization.id },
+            )
+          },
           afterAcceptInvitation: async ({ invitation, user }) => {
             const mutationCtx = requireMutationCtx(ctx)
             await mutationCtx.runMutation(

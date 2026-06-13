@@ -1,40 +1,17 @@
 import { v } from 'convex/values'
+import { internalMutation } from './_generated/server'
 import { authComponent, createAuth } from './auth'
 import { organizationMutation, organizationQuery } from './lib/customFunctions'
-
-type OrganizationMetadata = {
-  address: string
-  imageStorageId?: string
-}
-
-function parseOrganizationMetadata(metadata: unknown): OrganizationMetadata {
-  if (!metadata) {
-    return { address: '' }
-  }
-
-  let raw: Record<string, unknown>
-  try {
-    raw =
-      typeof metadata === 'string'
-        ? (JSON.parse(metadata) as Record<string, unknown>)
-        : (metadata as Record<string, unknown>)
-  } catch {
-    return { address: '' }
-  }
-
-  return {
-    address: typeof raw.address === 'string' ? raw.address : '',
-    imageStorageId:
-      typeof raw.imageStorageId === 'string' ? raw.imageStorageId : undefined,
-  }
-}
-
-function buildOrganizationMetadata(data: OrganizationMetadata) {
-  return {
-    address: data.address.trim(),
-    ...(data.imageStorageId ? { imageStorageId: data.imageStorageId } : {}),
-  }
-}
+import {
+  buildOrganizationMetadata,
+  parseOrganizationMetadata,
+} from './lib/organizationMetadata'
+import {
+  DEFAULT_WORK_SCHEDULE,
+  getWorkSchedule,
+  saveWorkSchedule,
+} from './lib/organizationWorkSchedule'
+import { workScheduleValidator } from './tables/organizationWorkSchedule'
 
 export const getSettings = organizationQuery({
   args: {},
@@ -44,6 +21,7 @@ export const getSettings = organizationQuery({
     slug: v.string(),
     address: v.string(),
     imageStorageId: v.optional(v.string()),
+    workingSchedule: workScheduleValidator,
   }),
   handler: async (ctx) => {
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
@@ -61,6 +39,7 @@ export const getSettings = organizationQuery({
       slug: organization.slug,
       address: metadata.address,
       imageStorageId: metadata.imageStorageId,
+      workingSchedule: await getWorkSchedule(ctx, organization.id),
     }
   },
 })
@@ -70,6 +49,7 @@ export const updateSettings = organizationMutation({
     name: v.optional(v.string()),
     address: v.optional(v.string()),
     imageStorageId: v.optional(v.string()),
+    workingSchedule: v.optional(workScheduleValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -84,31 +64,62 @@ export const updateSettings = organizationMutation({
       throw new Error('Organization not found')
     }
 
+    const organizationId = organization.id
     const currentMetadata = parseOrganizationMetadata(organization.metadata)
-    const data: {
-      name?: string
-      metadata: ReturnType<typeof buildOrganizationMetadata>
-    } = {
-      metadata: buildOrganizationMetadata({
-        address: args.address ?? currentMetadata.address,
-        imageStorageId: args.imageStorageId ?? currentMetadata.imageStorageId,
-      }),
-    }
 
-    if (args.name !== undefined) {
-      const trimmedName = args.name.trim()
-      if (!trimmedName) {
-        throw new Error('Organization name is required')
+    if (
+      args.name !== undefined ||
+      args.address !== undefined ||
+      args.imageStorageId !== undefined
+    ) {
+      const data: {
+        name?: string
+        metadata: ReturnType<typeof buildOrganizationMetadata>
+      } = {
+        metadata: buildOrganizationMetadata({
+          address: args.address ?? currentMetadata.address,
+          imageStorageId: args.imageStorageId ?? currentMetadata.imageStorageId,
+        }),
       }
-      data.name = trimmedName
+
+      if (args.name !== undefined) {
+        const trimmedName = args.name.trim()
+        if (!trimmedName) {
+          throw new Error('Organization name is required')
+        }
+        data.name = trimmedName
+      }
+
+      await auth.api.updateOrganization({
+        headers,
+        body: { organizationId, data },
+      })
     }
 
-    await auth.api.updateOrganization({
-      headers,
-      body: {
-        organizationId: organization.id,
-        data,
-      },
+    if (args.workingSchedule) {
+      await saveWorkSchedule(ctx, organizationId, args.workingSchedule)
+    }
+
+    return null
+  },
+})
+
+export const ensureWorkSchedule = internalMutation({
+  args: { organizationId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('organizationWorkSchedule')
+      .withIndex('by_organization', (q) =>
+        q.eq('organizationId', args.organizationId),
+      )
+      .unique()
+
+    if (existing) return null
+
+    await ctx.db.insert('organizationWorkSchedule', {
+      organizationId: args.organizationId,
+      ...DEFAULT_WORK_SCHEDULE,
     })
 
     return null

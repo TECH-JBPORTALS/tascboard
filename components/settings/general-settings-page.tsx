@@ -37,12 +37,14 @@ import {
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import { cn } from '@/lib/utils'
+import { Protect } from '../auth/protect'
 import { UserAvatar } from '../employees/user-avatar'
+import { OrganizationAvatar } from '../organization/organizatoin-avatar'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import { Spinner } from '../ui/spinner'
-import { Protect } from '../auth/protect'
-import { OrganizationAvatar } from '../organization/organizatoin-avatar'
+import type { WorkSchedule } from './organization-work-schedule-fieldset'
+import { OrganizationWorkScheduleFieldset } from './organization-work-schedule-fieldset'
 
 const themeOptions = [
   { value: 'system', label: 'System', icon: RiComputerLine },
@@ -353,6 +355,7 @@ function OrganizationSettingsSection() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const [isSavingName, setIsSavingName] = useState(false)
   const [isSavingAddress, setIsSavingAddress] = useState(false)
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false)
 
   useEffect(() => {
     if (organization?.name !== undefined) {
@@ -445,6 +448,23 @@ function OrganizationSettingsSection() {
       )
     } finally {
       setIsSavingAddress(false)
+    }
+  }
+
+  async function handleSaveSchedule(schedule: WorkSchedule) {
+    setIsSavingSchedule(true)
+    try {
+      await updateOrganization({ workingSchedule: schedule })
+      toast.success('Working schedule updated')
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update working schedule',
+      )
+      throw error
+    } finally {
+      setIsSavingSchedule(false)
     }
   }
 
@@ -579,6 +599,17 @@ function OrganizationSettingsSection() {
             )}
           </Field>
         </FieldSet>
+      </CardContent>
+
+      <Separator />
+
+      <CardContent>
+        <OrganizationWorkScheduleFieldset
+          value={organization?.workingSchedule}
+          isLoading={isLoading}
+          isSaving={isSavingSchedule}
+          onSave={handleSaveSchedule}
+        />
       </CardContent>
     </Card>
   )

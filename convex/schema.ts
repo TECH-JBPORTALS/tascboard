@@ -27,6 +27,7 @@ import { taskMember } from './tables/taskMember'
 import { tasks } from './tables/tasks'
 import { trackMember } from './tables/trackMember'
 import { tracks } from './tables/tracks'
+import { organizationWorkSchedule } from './tables/organizationWorkSchedule'
 
 const schema = defineSchema({
   inboxItems,
@@ -56,6 +57,7 @@ const schema = defineSchema({
   projectMember,
   trackMember,
   taskMember,
+  organizationWorkSchedule,
 })
 
 export const vv = typedV(schema)
