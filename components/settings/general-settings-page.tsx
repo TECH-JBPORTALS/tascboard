@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Tooltip,
   TooltipContent,
@@ -37,8 +38,11 @@ import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '../employees/user-avatar'
+import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import { Spinner } from '../ui/spinner'
+import { Protect } from '../auth/protect'
+import { OrganizationAvatar } from '../organization/organizatoin-avatar'
 
 const themeOptions = [
   { value: 'system', label: 'System', icon: RiComputerLine },
@@ -321,6 +325,261 @@ export function GeneralSettingsPage() {
           <ThemePreferenceSection />
         </CardContent>
       </Card>
+
+      <Protect permissions={{ organization: ['update', 'delete'] }}>
+        <div>
+          <h1 className="text-xl font-semibold">Organization</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage your organization settings.
+          </p>
+        </div>
+
+        <OrganizationSettingsSection />
+      </Protect>
     </div>
+  )
+}
+
+function OrganizationSettingsSection() {
+  const organization = useQuery(api.organizationSettings.getSettings, {})
+  const updateOrganization = useMutation(
+    api.organizationSettings.updateSettings,
+  )
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [organizationName, setOrganizationName] = useState('')
+  const [organizationAddress, setOrganizationAddress] = useState('')
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const [isSavingName, setIsSavingName] = useState(false)
+  const [isSavingAddress, setIsSavingAddress] = useState(false)
+
+  useEffect(() => {
+    if (organization?.name !== undefined) {
+      setOrganizationName(organization.name)
+    }
+  }, [organization?.name])
+
+  useEffect(() => {
+    if (organization?.address !== undefined) {
+      setOrganizationAddress(organization.address)
+    }
+  }, [organization?.address])
+
+  async function uploadFile(file: File): Promise<Id<'_storage'>> {
+    const uploadUrl = await generateUploadUrl({})
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    })
+
+    if (!response.ok) {
+      throw new Error('Upload failed')
+    }
+
+    const { storageId } = (await response.json()) as {
+      storageId: Id<'_storage'>
+    }
+    return storageId
+  }
+
+  async function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose a valid image file')
+      return
+    }
+
+    setIsUploadingLogo(true)
+    try {
+      const storageId = await uploadFile(file)
+      await updateOrganization({ imageStorageId: storageId })
+      toast.success('Organization logo updated')
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update organization logo',
+      )
+    } finally {
+      setIsUploadingLogo(false)
+    }
+  }
+
+  async function handleSaveName() {
+    const trimmed = organizationName.trim()
+    if (!trimmed) {
+      toast.error('Organization name is required')
+      return
+    }
+
+    setIsSavingName(true)
+    try {
+      await updateOrganization({ name: trimmed })
+      toast.success('Organization name updated')
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update organization name',
+      )
+    } finally {
+      setIsSavingName(false)
+    }
+  }
+
+  async function handleSaveAddress() {
+    setIsSavingAddress(true)
+    try {
+      await updateOrganization({ address: organizationAddress.trim() })
+      toast.success('Organization address updated')
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update organization address',
+      )
+    } finally {
+      setIsSavingAddress(false)
+    }
+  }
+
+  const isLoading = organization === undefined
+
+  return (
+    <Card>
+      <CardContent>
+        <FieldSet className="grid grid-cols-4">
+          <div className="col-span-3">
+            <FieldLegend>Organization logo</FieldLegend>
+            <FieldDescription>
+              This logo is tied to your organization. It is used to identify
+              your organization across the app.
+            </FieldDescription>
+          </div>
+          <div className="col-span-1 flex items-center justify-end">
+            {isLoading ? (
+              <Skeleton className="size-16 rounded-xl" />
+            ) : (
+              <>
+                <div
+                  className="relative group cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <OrganizationAvatar
+                    name={organization.name}
+                    imageStorageId={organization.imageStorageId}
+                    className="size-14! rounded-xl"
+                  />
+                  <div
+                    className={cn(
+                      'absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-muted/80 opacity-0 group-hover:opacity-100',
+                      isUploadingLogo && 'opacity-100',
+                    )}
+                  >
+                    {isUploadingLogo ? (
+                      <Spinner />
+                    ) : (
+                      <RiAddLine className="size-4" />
+                    )}
+                  </div>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleLogoChange}
+                />
+              </>
+            )}
+          </div>
+        </FieldSet>
+      </CardContent>
+
+      <Separator />
+
+      <CardContent>
+        <FieldSet className="grid grid-cols-6">
+          <div className="col-span-4">
+            <FieldLegend>Organization name</FieldLegend>
+            <FieldDescription>
+              This name is tied to your organization. It is used to identify
+              your organization across the app.
+            </FieldDescription>
+          </div>
+          <Field className="col-span-2 flex-row items-center justify-end">
+            {isLoading ? (
+              <Skeleton className="h-7 w-full" />
+            ) : (
+              <InputGroup className="flex-1">
+                <InputGroupInput
+                  id="organization-name"
+                  value={organizationName}
+                  disabled={isSavingName}
+                  onChange={(event) => setOrganizationName(event.target.value)}
+                  placeholder="Organization name"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      void handleSaveName()
+                    }
+                  }}
+                />
+                <InputGroupAddon align="inline-end">
+                  {isSavingName ? <Spinner className="size-2.5" /> : null}
+                </InputGroupAddon>
+              </InputGroup>
+            )}
+          </Field>
+        </FieldSet>
+      </CardContent>
+
+      <Separator />
+
+      <CardContent>
+        <FieldSet className="grid grid-cols-6 gap-4">
+          <div className="col-span-4">
+            <FieldLegend>Organization address</FieldLegend>
+            <FieldDescription>
+              Optional. Used for organization records and future billing or
+              compliance features.
+            </FieldDescription>
+          </div>
+          <Field className="col-span-2 justify-end">
+            {isLoading ? (
+              <Skeleton className="h-24 w-full" />
+            ) : (
+              <div className="flex w-full flex-col gap-2">
+                <Textarea
+                  id="organization-address"
+                  value={organizationAddress}
+                  disabled={isSavingAddress}
+                  onChange={(event) =>
+                    setOrganizationAddress(event.target.value)
+                  }
+                  placeholder="Street, city, state, country"
+                  rows={3}
+                  className="resize-none"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="self-end"
+                  disabled={isSavingAddress}
+                  onClick={() => void handleSaveAddress()}
+                >
+                  {isSavingAddress ? 'Saving...' : 'Save address'}
+                </Button>
+              </div>
+            )}
+          </Field>
+        </FieldSet>
+      </CardContent>
+    </Card>
   )
 }

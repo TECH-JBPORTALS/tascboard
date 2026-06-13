@@ -37,7 +37,7 @@ export function ProjectsSettingsGroup() {
       <SidebarContent>
         <SidebarMenu>
           {projects?.map((project) => {
-            const href = `${basePath}/settings/${project._id}`
+            const href = `${basePath}/settings/p/${project._id}`
             const isActive = getProjectActiveState(href)
 
             return (

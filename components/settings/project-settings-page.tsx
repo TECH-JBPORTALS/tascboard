@@ -82,7 +82,7 @@ export function ProjectSettingsPage() {
 
       <Card className="py-0 gap-0">
         {settingsSections.map((section, index) => {
-          const href = `/${orgSlug}/settings/${projectId}/${section.href}`
+          const href = `/${orgSlug}/settings/p/${projectId}/${section.href}`
 
           return (
             <React.Fragment key={section.href}>

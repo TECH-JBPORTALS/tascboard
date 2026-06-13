@@ -31,6 +31,7 @@ import type * as lib_taskDisplay from "../lib/taskDisplay.js";
 import type * as lib_taskKanban from "../lib/taskKanban.js";
 import type * as lib_taskList from "../lib/taskList.js";
 import type * as meeting from "../meeting.js";
+import type * as organizationSettings from "../organizationSettings.js";
 import type * as payroll from "../payroll.js";
 import type * as project from "../project.js";
 import type * as projectActivity from "../projectActivity.js";
@@ -102,6 +103,7 @@ declare const fullApi: ApiFromModules<{
   "lib/taskKanban": typeof lib_taskKanban;
   "lib/taskList": typeof lib_taskList;
   meeting: typeof meeting;
+  organizationSettings: typeof organizationSettings;
   payroll: typeof payroll;
   project: typeof project;
   projectActivity: typeof projectActivity;

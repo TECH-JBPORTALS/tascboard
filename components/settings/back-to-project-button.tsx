@@ -13,7 +13,7 @@ export function BackToProjectButton({ projectId }: { projectId: string }) {
     projectId: projectId as Id<'projects'>,
   })
   const { orgSlug } = useParams<{ orgSlug: string }>()
-  const href = `/${orgSlug}/settings/${projectId}`
+  const href = `/${orgSlug}/settings/p/${projectId}`
   const router = useRouter()
 
   if (!project) return null
