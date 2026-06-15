@@ -237,24 +237,86 @@ export const update = organizationMutation({
       if (args.body.status !== undefined || args.body.approvedBy !== undefined) {
         throw new Error('Unauthorized')
       }
+    } else if (leaveRequest.status !== 'pending') {
+      const hasDisallowedField =
+        args.body.leaveType !== undefined ||
+        args.body.reason !== undefined ||
+        args.body.startDate !== undefined ||
+        args.body.endDate !== undefined
+
+      if (hasDisallowedField) {
+        throw new Error('Only status can be updated for processed requests')
+      }
+
+      if (args.body.status !== undefined) {
+        if (args.body.status === 'pending') {
+          throw new Error('Processed requests cannot be set back to pending')
+        }
+        if (args.body.status === leaveRequest.status) {
+          return null
+        }
+        const isValidFlip =
+          (leaveRequest.status === 'approved' &&
+            args.body.status === 'rejected') ||
+          (leaveRequest.status === 'rejected' &&
+            args.body.status === 'approved')
+        if (!isValidFlip) {
+          throw new Error('Only approved and rejected statuses can be flipped')
+        }
+      }
     }
 
     const patch: Partial<Doc<'leaveRequests'>> = {}
     if (args.body.leaveType !== undefined) {
       patch.leaveType = args.body.leaveType
     }
+    if (args.body.reason !== undefined) {
+      patch.reason = args.body.reason.trim()
+    }
+
+    const nextStartDate =
+      args.body.startDate !== undefined
+        ? normalizeLeaveDate(args.body.startDate)
+        : leaveRequest.startDate
+    const nextEndDate =
+      args.body.endDate !== undefined
+        ? normalizeLeaveDate(args.body.endDate)
+        : leaveRequest.endDate
+
     if (args.body.startDate !== undefined) {
-      patch.startDate = args.body.startDate
+      patch.startDate = nextStartDate
     }
     if (args.body.endDate !== undefined) {
-      patch.endDate = args.body.endDate
+      patch.endDate = nextEndDate
     }
-    if (args.body.reason !== undefined) {
-      patch.reason = args.body.reason
+    if (
+      args.body.startDate !== undefined ||
+      args.body.endDate !== undefined
+    ) {
+      if (nextEndDate < nextStartDate) {
+        throw new Error('End date must be on or after start date')
+      }
     }
+
     if (isOwner && args.body.status !== undefined) {
       patch.status = args.body.status
+      if (args.body.status === 'rejected') {
+        const rejectionReason =
+          args.body.rejectionReason?.trim() ?? leaveRequest.rejectionReason
+        if (!rejectionReason) {
+          throw new Error('Rejection reason is required')
+        }
+        patch.rejectionReason = rejectionReason
+        patch.approvedBy = current._id
+      } else if (args.body.status === 'approved') {
+        patch.rejectionReason = undefined
+        patch.approvedBy = current._id
+      } else {
+        patch.rejectionReason = undefined
+        patch.approvedBy = undefined
+      }
     }
+
     if (isOwner && args.body.approvedBy !== undefined) {
       patch.approvedBy = args.body.approvedBy
     }

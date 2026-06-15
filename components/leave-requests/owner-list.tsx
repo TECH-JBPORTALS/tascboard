@@ -14,7 +14,8 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from '../ui/empty'
-import { getOwnerLeaveColumns } from './columns'
+import { getOwnerLeaveColumns, type LeaveRequestRow } from './columns'
+import { EditLeaveDialog } from './edit-leave-dialog'
 import { LeaveTableSkeleton } from './leave-table-skeleton'
 import { RejectLeaveDialog } from './reject-leave-dialog'
 
@@ -25,6 +26,10 @@ export function LeaveRequestsOwner() {
     useState<Id<'leaveRequests'> | null>(null)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectingId, setRejectingId] = useState<Id<'leaveRequests'> | null>(
+    null,
+  )
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingRequest, setEditingRequest] = useState<LeaveRequestRow | null>(
     null,
   )
 
@@ -45,6 +50,11 @@ export function LeaveRequestsOwner() {
   function handleReject(leaveRequestId: Id<'leaveRequests'>) {
     setRejectingId(leaveRequestId)
     setRejectDialogOpen(true)
+  }
+
+  function handleEdit(request: LeaveRequestRow) {
+    setEditingRequest(request)
+    setEditDialogOpen(true)
   }
 
   if (requests === undefined) {
@@ -77,6 +87,7 @@ export function LeaveRequestsOwner() {
           columns={getOwnerLeaveColumns({
             onApprove: handleApprove,
             onReject: handleReject,
+            onEdit: handleEdit,
             processingId,
           })}
           data={requests}
@@ -89,6 +100,16 @@ export function LeaveRequestsOwner() {
           setRejectDialogOpen(open)
           if (!open) {
             setRejectingId(null)
+          }
+        }}
+      />
+      <EditLeaveDialog
+        request={editingRequest}
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open)
+          if (!open) {
+            setEditingRequest(null)
           }
         }}
       />

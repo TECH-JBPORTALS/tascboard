@@ -1,21 +1,14 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import { api } from '@/convex/_generated/api'
-import type { LeaveType } from '@/lib/attendance-types'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
+import { formatLeaveDate, leaveTypeLabels } from './leave-formatters'
 import { LeaveStatusBadge } from './leave-status-badge'
 
 export type LeaveRequestRow =
   (typeof api.leaveRequest.list._returnType)[number]
-
-const leaveTypeLabels: Record<LeaveType, string> = {
-  sick: 'Sick',
-  casual: 'Casual',
-  emergency: 'Emergency',
-}
 
 function formatReasonCell(row: LeaveRequestRow) {
   if (row.status === 'rejected' && row.rejectionReason) {
@@ -31,21 +24,15 @@ function formatReasonCell(row: LeaveRequestRow) {
   return <span className="line-clamp-2 max-w-xs">{row.reason}</span>
 }
 
-function formatLeaveDate(startDate: number, endDate: number) {
-  const start = format(new Date(startDate), 'dd MMM yyyy')
-  if (startDate === endDate) {
-    return start
-  }
-  return `${start} – ${format(new Date(endDate), 'dd MMM yyyy')}`
-}
-
 export function getOwnerLeaveColumns({
   onApprove,
   onReject,
+  onEdit,
   processingId,
 }: {
   onApprove: (id: LeaveRequestRow['_id']) => void
   onReject: (id: LeaveRequestRow['_id']) => void
+  onEdit: (row: LeaveRequestRow) => void
   processingId: LeaveRequestRow['_id'] | null
 }): ColumnDef<LeaveRequestRow>[] {
   return [
@@ -98,28 +85,39 @@ export function getOwnerLeaveColumns({
       header: 'Actions',
       id: 'actions',
       cell: ({ row }) => {
-        if (row.original.status !== 'pending') {
-          return <span className="text-muted-foreground">—</span>
+        if (row.original.status === 'pending') {
+          const isProcessing = processingId === row.original._id
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                disabled={isProcessing}
+                onClick={() => onApprove(row.original._id)}
+              >
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isProcessing}
+                onClick={() => onReject(row.original._id)}
+              >
+                Reject
+              </Button>
+            </div>
+          )
         }
-        const isProcessing = processingId === row.original._id
+
         return (
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              disabled={isProcessing}
-              onClick={() => onApprove(row.original._id)}
-            >
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={isProcessing}
-              onClick={() => onReject(row.original._id)}
-            >
-              Reject
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onEdit(row.original)}
+          >
+            {row.original.status === 'approved'
+              ? 'Mark rejected'
+              : 'Mark approved'}
+          </Button>
         )
       },
     },
