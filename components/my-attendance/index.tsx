@@ -100,7 +100,12 @@ export function MyAttendance() {
                 </span>
               </div>
             </CardContent>
-            <CardFooter></CardFooter>
+            <CardFooter className="space-x-2.5">
+              <span className="text-muted-foreground">Remarks:</span>
+              <span className="text-xs font-semibold">
+                {att.remarks || 'N/A'}
+              </span>
+            </CardFooter>
           </Card>
         ))}
       </div>
