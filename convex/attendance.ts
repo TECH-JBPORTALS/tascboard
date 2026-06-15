@@ -12,6 +12,12 @@ import {
 import { components } from './_generated/api'
 import type { QueryCtx } from './_generated/server'
 import { internalMutation } from './_generated/server'
+import { deriveStatusFromLogin } from './lib/attendanceStatus'
+import {
+  endOfCalendarDay,
+  startOfCalendarDay,
+  toCalendarDateKey,
+} from './lib/calendarDate'
 import {
   organizationMutation,
   organizationQuery,
@@ -19,7 +25,6 @@ import {
   privateQuery,
 } from './lib/customFunctions'
 import { getDaySchedule, getWorkSchedule } from './lib/organizationWorkSchedule'
-import { deriveStatusFromLogin } from './lib/attendanceStatus'
 import { vv } from './schema'
 import { dayWorkSchedule } from './tables/organizationWorkSchedule'
 
@@ -90,15 +95,16 @@ async function buildEmployeesAttendanceForDays(
     employees.map(async (employee) => {
       const attendanceEntries = await Promise.all(
         days.map(async (day) => {
-          const dateKey = day.toDateString()
-          const dayStart = startOfDay(day).getTime()
+          const dateKey = toCalendarDateKey(day)
+          const dayStart = startOfCalendarDay(day)
+          const dayEnd = endOfCalendarDay(day)
           const attendanceForTheDay = await ctx.db
             .query('attendance')
             .withIndex('by_employee_and_date', (q) =>
               q
                 .eq('employeeId', employee._id)
                 .gte('recordDate', dayStart)
-                .lt('recordDate', addDays(day, 1).getTime()),
+                .lt('recordDate', dayEnd),
             )
             .first()
 
@@ -432,11 +438,8 @@ export const getEmployeeDayDetail = organizationQuery({
   },
   returns: attendanceDayCell,
   handler: async (ctx, args) => {
-    if (ctx.session.employee.role !== 'owner') {
-      throw new Error('Only organization owners can view attendance details')
-    }
-
-    const day = startOfDay(args.recordDate)
+    const dayStart = startOfCalendarDay(args.recordDate)
+    const dayEnd = endOfCalendarDay(args.recordDate)
     const schedule = await getWorkSchedule(
       ctx,
       ctx.session.activeOrganizationId,
@@ -447,8 +450,8 @@ export const getEmployeeDayDetail = organizationQuery({
       .withIndex('by_employee_and_date', (q) =>
         q
           .eq('employeeId', args.employeeId)
-          .gte('recordDate', day.getTime())
-          .lt('recordDate', addDays(day, 1).getTime()),
+          .gte('recordDate', dayStart)
+          .lt('recordDate', dayEnd),
       )
       .first()
 
@@ -459,7 +462,7 @@ export const getEmployeeDayDetail = organizationQuery({
         logoutTime: null,
         status: null,
         remarks: null,
-        workingSchedule: getDaySchedule(schedule, day),
+        workingSchedule: getDaySchedule(schedule, dayStart),
       }
     }
 
@@ -469,7 +472,7 @@ export const getEmployeeDayDetail = organizationQuery({
       logoutTime: attendanceForTheDay.logoutTime ?? null,
       status: attendanceForTheDay.status,
       remarks: attendanceForTheDay.remarks ?? null,
-      workingSchedule: getDaySchedule(schedule, day),
+      workingSchedule: getDaySchedule(schedule, dayStart),
     }
   },
 })
@@ -487,16 +490,16 @@ export const ownerUpdateEmployeeDay = organizationMutation({
   handler: async (ctx, args) => {
     assertOwner(ctx.session.employee.role)
 
-    const day = startOfDay(args.recordDate)
-    const recordDate = day.getTime()
+    const dayStart = startOfCalendarDay(args.recordDate)
+    const recordDate = dayStart
 
     const existing = await ctx.db
       .query('attendance')
       .withIndex('by_employee_and_date', (q) =>
         q
           .eq('employeeId', args.employeeId)
-          .gte('recordDate', recordDate)
-          .lt('recordDate', addDays(day, 1).getTime()),
+          .gte('recordDate', dayStart)
+          .lt('recordDate', endOfCalendarDay(args.recordDate)),
       )
       .first()
 
@@ -535,7 +538,7 @@ export const ownerUpdateEmployeeDay = organizationMutation({
       ctx,
       ctx.session.activeOrganizationId,
     )
-    const daySchedule = getDaySchedule(schedule, day)
+    const daySchedule = getDaySchedule(schedule, dayStart)
 
     if (existing) {
       if (existing.status === 'absent') {

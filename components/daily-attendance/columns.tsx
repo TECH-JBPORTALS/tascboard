@@ -3,6 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { format, isSameDay } from 'date-fns'
 import { api } from '@/convex/_generated/api'
+import { toCalendarDateKey } from '@/lib/calendar-date'
 import { cn } from '@/lib/utils'
 import { AttendanceStatusBadge } from '../common/attendance-status-badge'
 import type { SelectedAttendanceDay } from './types'
@@ -65,7 +66,7 @@ export const getColumns = (
           </div>
         ),
         cell: ({ row }) => {
-          const dayAttendance = row.original.attendance[day.toDateString()]
+          const dayAttendance = row.original.attendance[toCalendarDateKey(day)]
           const hasAttendance = dayAttendance?.status != null
           const showNonWorkingPattern =
             !isWorkingDay(day, workingSchedule) && !hasAttendance

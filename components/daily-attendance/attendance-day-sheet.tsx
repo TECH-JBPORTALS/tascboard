@@ -2,7 +2,7 @@
 
 import { useMutation } from 'convex/react'
 import { useQuery } from 'convex-helpers/react/cache'
-import { format, startOfDay } from 'date-fns'
+import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AttendanceStatusBadge } from '@/components/common/attendance-status-badge'
@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/convex/_generated/api'
 import { applyTimeToDate, formatTimeInputValue } from '@/lib/attendance-time'
+import { startOfCalendarDay } from '@/lib/calendar-date'
 import type { SelectedAttendanceDay } from './types'
 
 type AttendanceDaySheetProps = {
@@ -34,9 +35,9 @@ export function AttendanceDaySheet({
   onOpenChange,
 }: AttendanceDaySheetProps) {
   const open = selection !== null
-  const recordDate = selection ? startOfDay(selection.day).getTime() : 0
+  const recordDate = selection ? startOfCalendarDay(selection.day) : 0
 
-  const dayDetail = useQuery(
+  const dayDetailQuery = useQuery(
     api.attendance.getEmployeeDayDetail,
     selection
       ? {
@@ -45,6 +46,8 @@ export function AttendanceDaySheet({
         }
       : 'skip',
   )
+
+  const dayDetail = dayDetailQuery ?? selection?.dayAttendance ?? null
 
   const dailyReport = useQuery(
     api.dailyReport.getByEmployeeAndDate,
@@ -137,7 +140,7 @@ export function AttendanceDaySheet({
           </SheetDescription>
         </SheetHeader>
 
-        {selection && dayDetail === undefined && (
+        {selection && dayDetailQuery === undefined && !selection.dayAttendance && (
           <div className="space-y-4 px-6 pb-6">
             <Skeleton className="h-6 w-32" />
             <Skeleton className="h-10 w-full" />

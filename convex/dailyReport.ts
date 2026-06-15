@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { endOfDay, format, startOfDay } from 'date-fns'
+import { startOfCalendarDay } from './lib/calendarDate'
 import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { Doc } from './_generated/dataModel'
@@ -212,11 +213,7 @@ export const getByEmployeeAndDate = organizationQuery({
     v.null(),
   ),
   handler: async (ctx, args) => {
-    if (ctx.session.employee.role !== 'owner') {
-      throw new Error('Only organization owners can view daily reports')
-    }
-
-    const reportDate = startOfDay(args.recordDate).getTime()
+    const reportDate = startOfCalendarDay(args.recordDate)
 
     const report = await ctx.db
       .query('dailyReport')

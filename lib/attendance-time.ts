@@ -1,4 +1,4 @@
-import { startOfDay } from 'date-fns'
+import { startOfCalendarDay } from '@/lib/calendar-date'
 
 export function formatTimeInputValue(timestamp: number): string {
   const date = new Date(timestamp)
@@ -9,7 +9,7 @@ export function formatTimeInputValue(timestamp: number): string {
 
 export function applyTimeToDate(recordDate: number, timeValue: string): number {
   const [hours, minutes] = timeValue.split(':').map(Number)
-  const date = startOfDay(recordDate)
+  const date = new Date(startOfCalendarDay(recordDate))
   date.setHours(hours ?? 0, minutes ?? 0, 0, 0)
   return date.getTime()
 }
