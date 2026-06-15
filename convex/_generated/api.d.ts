@@ -23,6 +23,7 @@ import type * as inbox from "../inbox.js";
 import type * as label from "../label.js";
 import type * as leaveRequest from "../leaveRequest.js";
 import type * as lib_attendanceStatus from "../lib/attendanceStatus.js";
+import type * as lib_attendanceSummary from "../lib/attendanceSummary.js";
 import type * as lib_calendarDate from "../lib/calendarDate.js";
 import type * as lib_customFunctions from "../lib/customFunctions.js";
 import type * as lib_dailyReportTasks from "../lib/dailyReportTasks.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   label: typeof label;
   leaveRequest: typeof leaveRequest;
   "lib/attendanceStatus": typeof lib_attendanceStatus;
+  "lib/attendanceSummary": typeof lib_attendanceSummary;
   "lib/calendarDate": typeof lib_calendarDate;
   "lib/customFunctions": typeof lib_customFunctions;
   "lib/dailyReportTasks": typeof lib_dailyReportTasks;

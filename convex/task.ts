@@ -3,6 +3,7 @@ import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { statusTimingPatch } from './lib/dailyReportTasks'
 import { getTrackMembers } from './lib/memberHelper'
 import { formatTaskDate, logTaskActivity } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
@@ -13,9 +14,6 @@ import {
   reindexStatusColumn,
 } from './lib/taskKanban'
 import { listTasksForTrack } from './lib/taskList'
-import {
-  statusTimingPatch,
-} from './lib/dailyReportTasks'
 import { vv } from './schema'
 
 /**

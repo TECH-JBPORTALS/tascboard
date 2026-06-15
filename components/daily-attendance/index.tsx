@@ -2,9 +2,14 @@
 
 import { useQuery } from 'convex-helpers/react/cache'
 import { addDays, eachDayOfInterval, endOfWeek, startOfWeek } from 'date-fns'
+import { useQueryState } from 'nuqs'
 import { useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { api } from '@/convex/_generated/api'
+import {
+  attendanceSearchParser,
+  filterAttendanceByEmployeeName,
+} from '@/lib/attendance-search'
 import { DataTable } from '../data-table'
 import { AttendanceDaySheet } from './attendance-day-sheet'
 import { AttendanceTableSkeleton } from './attendance-table-skeleton'
@@ -20,6 +25,7 @@ function parseSelectedDate(dateParam: string | null): Date {
 export function Attendance() {
   const searchParams = useSearchParams()
   const selectedDate = parseSelectedDate(searchParams.get('date'))
+  const [search] = useQueryState('q', attendanceSearchParser)
 
   const [selection, setSelection] = useState<SelectedAttendanceDay | null>(null)
   const start = addDays(startOfWeek(selectedDate), 1)
@@ -37,13 +43,18 @@ export function Attendance() {
 
   const isLoading = data === undefined || workingSchedule === undefined
 
+  const filteredData = useMemo(
+    () => (data ? filterAttendanceByEmployeeName(data, search) : []),
+    [data, search],
+  )
+
   if (isLoading) return <AttendanceTableSkeleton weekDays={weekDays} />
 
   return (
     <>
       <DataTable
         columns={getColumns(weekDays, workingSchedule, setSelection)}
-        data={data}
+        data={filteredData}
       />
 
       <AttendanceDaySheet

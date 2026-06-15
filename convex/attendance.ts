@@ -14,6 +14,12 @@ import type { QueryCtx } from './_generated/server'
 import { internalMutation } from './_generated/server'
 import { deriveStatusFromLogin } from './lib/attendanceStatus'
 import {
+  attendanceDateKey,
+  getCalendarMonthRange,
+  getElapsedWorkingDayKeysInMonth,
+  scoreAttendanceForDays,
+} from './lib/attendanceSummary'
+import {
   endOfCalendarDay,
   startOfCalendarDay,
   toCalendarDateKey,
@@ -49,6 +55,13 @@ const attendanceDayCell = v.object({
 const employeeAttendanceRow = v.object({
   employee: v.any(),
   attendance: v.record(v.string(), attendanceDayCell),
+})
+
+const monthlySummaryRow = v.object({
+  employee: v.any(),
+  attendedCount: v.number(),
+  totalSessions: v.number(),
+  percentage: v.number(),
 })
 
 function assertOwner(role: string) {
@@ -428,6 +441,60 @@ export const listForEmployeesInMonth = organizationQuery({
     const monthEnd = endOfMonth(new Date(args.month))
 
     return await buildEmployeesAttendanceForDays(ctx, monthStart, monthEnd)
+  },
+})
+
+export const listMonthlySummaryForEmployees = organizationQuery({
+  args: {
+    month: v.number(),
+    now: v.number(),
+  },
+  returns: v.array(monthlySummaryRow),
+  handler: async (ctx, args) => {
+    const organizationId = ctx.session.activeOrganizationId
+    const { start: monthStart, end: monthEnd } = getCalendarMonthRange(
+      args.month,
+    )
+
+    const employees = await ctx.runQuery(components.betterAuth.employees.list, {
+      organizationId,
+      role: 'employee',
+    })
+
+    const schedule = await getWorkSchedule(ctx, organizationId)
+    const workingDayKeys = getElapsedWorkingDayKeysInMonth(
+      schedule,
+      args.month,
+      args.now,
+    )
+
+    return Promise.all(
+      employees.map(async (employee) => {
+        const records = await ctx.db
+          .query('attendance')
+          .withIndex('by_employee_and_date', (q) =>
+            q
+              .eq('employeeId', employee._id)
+              .gte('recordDate', monthStart)
+              .lt('recordDate', endOfCalendarDay(monthEnd)),
+          )
+          .collect()
+
+        const attendanceByDateKey = Object.fromEntries(
+          records.map((record) => [
+            attendanceDateKey(record.recordDate),
+            { status: record.status },
+          ]),
+        )
+
+        const score = scoreAttendanceForDays(attendanceByDateKey, workingDayKeys)
+
+        return {
+          employee,
+          ...score,
+        }
+      }),
+    )
   },
 })
 
