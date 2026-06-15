@@ -45,6 +45,10 @@ import { Card, CardContent } from '../ui/card'
 import { Spinner } from '../ui/spinner'
 import type { WorkSchedule } from './organization-work-schedule-fieldset'
 import { OrganizationWorkScheduleFieldset } from './organization-work-schedule-fieldset'
+import {
+  OrganizationYearlyLeaveFieldset,
+  type LeaveQuota,
+} from './organization-yearly-leave-fieldset'
 
 const themeOptions = [
   { value: 'system', label: 'System', icon: RiComputerLine },
@@ -356,6 +360,7 @@ function OrganizationSettingsSection() {
   const [isSavingName, setIsSavingName] = useState(false)
   const [isSavingAddress, setIsSavingAddress] = useState(false)
   const [isSavingSchedule, setIsSavingSchedule] = useState(false)
+  const [isSavingLeaveQuota, setIsSavingLeaveQuota] = useState(false)
 
   useEffect(() => {
     if (organization?.name !== undefined) {
@@ -465,6 +470,21 @@ function OrganizationSettingsSection() {
       throw error
     } finally {
       setIsSavingSchedule(false)
+    }
+  }
+
+  async function handleSaveLeaveQuota(leaveQuota: LeaveQuota) {
+    setIsSavingLeaveQuota(true)
+    try {
+      await updateOrganization({ leaveQuota })
+      toast.success('Leave quota updated')
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update leave quota',
+      )
+      throw error
+    } finally {
+      setIsSavingLeaveQuota(false)
     }
   }
 
@@ -609,6 +629,17 @@ function OrganizationSettingsSection() {
           isLoading={isLoading}
           isSaving={isSavingSchedule}
           onSave={handleSaveSchedule}
+        />
+      </CardContent>
+
+      <Separator />
+
+      <CardContent>
+        <OrganizationYearlyLeaveFieldset
+          value={organization?.leaveQuotas}
+          isLoading={isLoading}
+          isSaving={isSavingLeaveQuota}
+          onSave={handleSaveLeaveQuota}
         />
       </CardContent>
     </Card>

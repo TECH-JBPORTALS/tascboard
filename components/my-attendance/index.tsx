@@ -25,6 +25,10 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
 import { DailyReportDialog } from './daily-report-dialog'
+import {
+  MyAttendanceSkeleton,
+  TodayAttendanceSkeleton,
+} from './my-attendance-skeleton'
 
 /** My Attendance for Employee */
 export function MyAttendance() {
@@ -39,7 +43,7 @@ export function MyAttendance() {
     date: startOfDay(date).getTime(),
   })
 
-  if (myAttendance === undefined) return <div>Loading...</div>
+  if (myAttendance === undefined) return <MyAttendanceSkeleton />
   if (isEmpty(myAttendance)) return <div>No attendance found</div>
 
   return (
@@ -130,7 +134,7 @@ export function TodayAttendance() {
     setReportDialogOpen(true)
   }
 
-  if (todayAttendance === undefined) return <div>Loading...</div>
+  if (todayAttendance === undefined) return <TodayAttendanceSkeleton />
 
   if (isEmpty(todayAttendance))
     return (

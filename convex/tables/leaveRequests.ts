@@ -11,6 +11,7 @@ export const leaveRequests = defineTable({
   startDate: v.number(),
   endDate: v.number(),
   reason: v.string(),
+  rejectionReason: v.optional(v.string()),
   status: v.union(
     v.literal('pending'),
     v.literal('approved'),

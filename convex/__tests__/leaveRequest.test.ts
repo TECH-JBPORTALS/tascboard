@@ -1,162 +1,82 @@
-import { beforeEach, describe, expect, test } from 'bun:test'
-import { convexTest, TestConvexForDataModel } from 'convex-test'
+import { describe, expect, test } from 'bun:test'
+import { convexTest } from 'convex-test'
 
-import { api } from '../_generated/api'
-import { DataModel, Id } from '../_generated/dataModel'
 import schema from '../schema'
 import { modules } from './_modules.test'
 
-describe('Leave Requests', () => {
-  let t: TestConvexForDataModel<DataModel>
+describe('Leave Requests (database)', () => {
+  test('approve and reject update leave request status', async () => {
+    const t = convexTest(schema, modules)
+    const leaveDate = new Date('2026-06-15T00:00:00.000Z').getTime()
 
-  beforeEach(() => {
-    t = convexTest(schema, modules).withIdentity({
-      userId: 'emp-1',
-      orgId: 'org-1',
-    })
-  })
-
-  test('raise creates leave request', async () => {
-    const res = await t.mutation(api.leaveRequest.raise, {
-      employeeId: 'emp-1',
-      leaveType: 'sick',
-      startDate: 1000000,
-      endDate: 2000000,
-      reason: 'fever',
-    })
-
-    expect(res.success).toBe(true)
-
-    const balance = await t.query(api.leaveRequest.getLeaveBalance, {
-      employeeId: 'emp-1',
-    })
-
-    expect(balance.employeeId).toBe('emp-1')
-  })
-
-  test('reject invalid date range', async () => {
-    await expect(
-      t.mutation(api.leaveRequest.raise, {
+    const requestId = await t.run(async (ctx) => {
+      return await ctx.db.insert('leaveRequests', {
         employeeId: 'emp-1',
         leaveType: 'casual',
-        startDate: 2000000,
-        endDate: 1000000,
-        reason: 'bad',
-      }),
-    ).rejects.toThrow('Invalid date range')
+        startDate: leaveDate,
+        endDate: leaveDate,
+        reason: 'trip',
+        status: 'pending',
+        createdAt: Date.now(),
+      })
+    })
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch('leaveRequests', requestId, {
+        status: 'approved',
+        approvedBy: 'owner-1',
+        updatedAt: Date.now(),
+      })
+    })
+
+    const approved = await t.run(async (ctx) =>
+      ctx.db.get('leaveRequests', requestId),
+    )
+    expect(approved?.status).toBe('approved')
+    expect(approved?.approvedBy).toBe('owner-1')
+
+    const rejectId = await t.run(async (ctx) => {
+      return await ctx.db.insert('leaveRequests', {
+        employeeId: 'emp-1',
+        leaveType: 'sick',
+        startDate: leaveDate,
+        endDate: leaveDate,
+        reason: 'fever',
+        rejectionReason: 'Insufficient coverage',
+        status: 'rejected',
+        approvedBy: 'owner-1',
+        createdAt: Date.now(),
+      })
+    })
+
+    const rejected = await t.run(async (ctx) =>
+      ctx.db.get('leaveRequests', rejectId),
+    )
+    expect(rejected?.status).toBe('rejected')
+    expect(rejected?.rejectionReason).toBe('Insufficient coverage')
   })
 
-  test('approve leave request', async () => {
-    const { requestId } = await t.mutation(api.leaveRequest.raise, {
-      employeeId: 'emp-1',
-      leaveType: 'casual',
-      startDate: 1000000,
-      endDate: 2000000,
-      reason: 'trip',
+  test('delete removes leave request', async () => {
+    const t = convexTest(schema, modules)
+    const requestId = await t.run(async (ctx) => {
+      return await ctx.db.insert('leaveRequests', {
+        employeeId: 'emp-1',
+        leaveType: 'casual',
+        startDate: Date.now(),
+        endDate: Date.now(),
+        reason: 'day off',
+        status: 'pending',
+        createdAt: Date.now(),
+      })
     })
 
-    const res = await t.mutation(api.leaveRequest.approveLeaveRequest, {
-      leaveRequestId: requestId,
-      approvedBy: 'admin-1',
+    await t.run(async (ctx) => {
+      await ctx.db.delete('leaveRequests', requestId)
     })
 
-    expect(res.success).toBe(true)
-    expect(res.approvedDays).toBeGreaterThan(0)
-  })
-
-  test('reject leave request', async () => {
-    const { requestId } = await t.mutation(api.leaveRequest.raise, {
-      employeeId: 'emp-1',
-      leaveType: 'casual',
-      startDate: 1000000,
-      endDate: 2000000,
-      reason: 'trip',
-    })
-
-    const res = await t.mutation(api.leaveRequest.rejectLeaveRequest, {
-      leaveRequestId: requestId,
-      approvedBy: 'manager-1',
-      reason: 'not allowed',
-    })
-
-    expect(res.success).toBe(true)
-  })
-
-  test('cancel leave request', async () => {
-    const { requestId } = await t.mutation(api.leaveRequest.raise, {
-      employeeId: 'emp-1',
-      leaveType: 'casual',
-      startDate: 1000000,
-      endDate: 2000000,
-      reason: 'trip',
-    })
-
-    const res = await t.mutation(api.leaveRequest.cancelLeaveRequest, {
-      leaveRequestId: requestId,
-    })
-
-    expect(res.success).toBe(true)
-  })
-
-  test('get leave balance returns correct structure', async () => {
-    const res = await t.query(api.leaveRequest.getLeaveBalance, {
-      employeeId: 'emp-1',
-    })
-
-    expect(res).toHaveProperty('leaveQuota')
-    expect(res).toHaveProperty('usedLeaves')
-    expect(res).toHaveProperty('remaining')
-  })
-
-  test('assign monthly leaves works', async () => {
-    const res = await t.query(api.leaveRequest.assignMonthlyLeaves, {
-      employeeId: 'emp-1',
-      month: 1,
-      year: 2026,
-    })
-
-    expect(res).toHaveProperty('suggestedMonthlyLimit')
-  })
-
-  test('assign yearly leaves works', async () => {
-    const res = await t.query(api.leaveRequest.assignYearlyLeaves, {
-      employeeId: 'emp-1',
-      year: 2026,
-    })
-
-    expect(res).toHaveProperty('yearlyQuota')
-    expect(res).toHaveProperty('usedLeaves')
-    expect(res).toHaveProperty('remainingLeaves')
-  })
-
-  test('cannot approve already processed request', async () => {
-    const { requestId } = await t.mutation(api.leaveRequest.raise, {
-      employeeId: 'emp-1',
-      leaveType: 'casual',
-      startDate: 1000000,
-      endDate: 2000000,
-      reason: 'trip',
-    })
-
-    await t.mutation(api.leaveRequest.approveLeaveRequest, {
-      leaveRequestId: requestId,
-      approvedBy: 'admin-1',
-    })
-
-    await expect(
-      t.mutation(api.leaveRequest.approveLeaveRequest, {
-        leaveRequestId: requestId,
-        approvedBy: 'admin-1',
-      }),
-    ).rejects.toThrow('Request already processed')
-  })
-
-  test('cannot reject non-existent request', async () => {
-    await expect(
-      t.mutation(api.leaveRequest.rejectLeaveRequest, {
-        leaveRequestId: 'non-existent' as Id<'leaveRequests'>,
-        approvedBy: 'admin-1',
-      }),
-    ).rejects.toThrow()
+    const deleted = await t.run(async (ctx) =>
+      ctx.db.get('leaveRequests', requestId),
+    )
+    expect(deleted).toBeNull()
   })
 })

@@ -30,6 +30,7 @@ export type LeaveRequest = {
   startDate: number
   endDate: number
   reason: string
+  rejectionReason?: string
   status: LeaveStatus
   approvedBy?: string
   createdAt: number

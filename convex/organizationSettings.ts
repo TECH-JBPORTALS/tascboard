@@ -11,6 +11,11 @@ import {
   getWorkSchedule,
   saveWorkSchedule,
 } from './lib/organizationWorkSchedule'
+import {
+  ensureLeaveQuotaForYear,
+  listLeaveQuotas,
+  saveLeaveQuota,
+} from './lib/organizationLeaveQuota'
 import { workScheduleValidator } from './tables/organizationWorkSchedule'
 
 export const getWorkingSchedule = organizationQuery({
@@ -30,6 +35,12 @@ export const getSettings = organizationQuery({
     address: v.string(),
     imageStorageId: v.optional(v.string()),
     workingSchedule: workScheduleValidator,
+    leaveQuotas: v.array(
+      v.object({
+        year: v.number(),
+        paidLeaves: v.number(),
+      }),
+    ),
   }),
   handler: async (ctx) => {
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
@@ -48,6 +59,7 @@ export const getSettings = organizationQuery({
       address: metadata.address,
       imageStorageId: metadata.imageStorageId,
       workingSchedule: await getWorkSchedule(ctx, organization.id),
+      leaveQuotas: await listLeaveQuotas(ctx, organization.id),
     }
   },
 })
@@ -58,6 +70,12 @@ export const updateSettings = organizationMutation({
     address: v.optional(v.string()),
     imageStorageId: v.optional(v.string()),
     workingSchedule: v.optional(workScheduleValidator),
+    leaveQuota: v.optional(
+      v.object({
+        year: v.number(),
+        paidLeaves: v.number(),
+      }),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -108,6 +126,15 @@ export const updateSettings = organizationMutation({
       await saveWorkSchedule(ctx, organizationId, args.workingSchedule)
     }
 
+    if (args.leaveQuota) {
+      await saveLeaveQuota(
+        ctx,
+        organizationId,
+        args.leaveQuota.year,
+        args.leaveQuota.paidLeaves,
+      )
+    }
+
     return null
   },
 })
@@ -129,6 +156,12 @@ export const ensureWorkSchedule = internalMutation({
       organizationId: args.organizationId,
       ...DEFAULT_WORK_SCHEDULE,
     })
+
+    await ensureLeaveQuotaForYear(
+      ctx,
+      args.organizationId,
+      new Date().getFullYear(),
+    )
 
     return null
   },

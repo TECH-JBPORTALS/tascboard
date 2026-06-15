@@ -1,55 +1,205 @@
 import { v } from 'convex/values'
+import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
-import { MutationCtx } from './_generated/server'
-import { privateMutation, privateQuery } from './lib/customFunctions'
+import type { MutationCtx, QueryCtx } from './_generated/server'
+import {
+  organizationMutation,
+  organizationQuery,
+} from './lib/customFunctions'
+import {
+  getLeaveDays,
+  getUsedApprovedLeaves,
+  normalizeLeaveDate,
+  splitLeaveDaysByYear,
+  validateAdvanceNotice,
+  validateRaiseAgainstQuota,
+} from './lib/leaveRequestHelpers'
+import { getPaidLeavesForYear } from './lib/organizationLeaveQuota'
 import { vv } from './schema'
 
-const getDays = (start: number, end: number) => {
-  return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+const leaveTypeValidator = v.union(
+  v.literal('sick'),
+  v.literal('casual'),
+  v.literal('emergency'),
+)
+
+const employeeRefValidator = v.object({
+  id: v.string(),
+  name: v.string(),
+  email: v.string(),
+  image: v.union(v.string(), v.null()),
+  role: v.string(),
+})
+
+const enrichedLeaveValidator = vv.doc('leaveRequests').extend({
+  employee: v.optional(employeeRefValidator),
+})
+
+type OrganizationCtx = (QueryCtx | MutationCtx) & {
+  session: {
+    activeOrganizationId: string
+    userId: string
+    employee: { role: string }
+  }
 }
-const LEAVE_QUOTA = 24
-export const raise = privateMutation({
-  args: vv
-    .doc('leaveRequests')
-    .omit(
-      '_id',
-      '_creationTime',
-      'status',
-      'approvedBy',
-      'createdAt',
-      'updatedAt',
+
+function getDays(start: number, end: number) {
+  return getLeaveDays(start, end)
+}
+
+function assertOwner(ctx: OrganizationCtx) {
+  if (ctx.session.employee.role !== 'owner') {
+    throw new Error('Only organization owners can perform this action')
+  }
+}
+
+function assertEmployee(ctx: OrganizationCtx) {
+  if (ctx.session.employee.role !== 'employee') {
+    throw new Error('Only employees can raise leave requests')
+  }
+}
+
+async function resolveCurrentEmployee(ctx: OrganizationCtx) {
+  const employee = await ctx.runQuery(
+    components.betterAuth.employees.getByOrganizationUser,
+    {
+      organizationId: ctx.session.activeOrganizationId,
+      userId: ctx.session.userId,
+    },
+  )
+  if (!employee) {
+    throw new Error('Employee not found')
+  }
+  return employee
+}
+
+async function getOrgEmployeeIds(ctx: OrganizationCtx) {
+  const employees = await ctx.runQuery(components.betterAuth.employees.list, {
+    organizationId: ctx.session.activeOrganizationId,
+    role: 'employee',
+  })
+  return new Set(
+    employees.map((employee: { _id: string }) => employee._id),
+  )
+}
+
+async function enrichRequests(
+  ctx: OrganizationCtx,
+  requests: Doc<'leaveRequests'>[],
+) {
+  const members = await ctx.runQuery(components.betterAuth.employees.list, {
+    organizationId: ctx.session.activeOrganizationId,
+  })
+  const memberMap = new Map(
+    members.map(
+      (member: {
+        _id: string
+        role: string
+        user: { name: string; email: string; image?: string | null }
+      }) => [member._id, member],
     ),
-  handler: async (ctx, args) => {
-    if (args.endDate < args.startDate) {
-      throw new Error('Invalid date range')
+  )
+
+  return requests.map((request) => {
+    const member = memberMap.get(request.employeeId)
+    return {
+      ...request,
+      employee: member
+        ? {
+            id: member._id,
+            name: member.user.name,
+            email: member.user.email,
+            image: member.user.image ?? null,
+            role: member.role,
+          }
+        : undefined,
     }
-    const requestDays = getDays(args.startDate, args.endDate)
-    const year = new Date(args.startDate).getFullYear()
+  })
+}
+
+async function assertCanAccessLeaveRequest(
+  ctx: OrganizationCtx,
+  leaveRequest: Doc<'leaveRequests'>,
+) {
+  const orgEmployeeIds = await getOrgEmployeeIds(ctx)
+  if (!orgEmployeeIds.has(leaveRequest.employeeId)) {
+    throw new Error('Leave request not found')
+  }
+
+  const current = await resolveCurrentEmployee(ctx)
+  const isOwner = ctx.session.employee.role === 'owner'
+  if (!isOwner && leaveRequest.employeeId !== current._id) {
+    throw new Error('Unauthorized')
+  }
+}
+
+async function getLeaveRequestOrThrow(
+  ctx: OrganizationCtx,
+  leaveRequestId: Id<'leaveRequests'>,
+) {
+  const leaveRequest = await ctx.db.get('leaveRequests', leaveRequestId)
+  if (!leaveRequest) {
+    throw new Error('Leave request not found')
+  }
+  await assertCanAccessLeaveRequest(ctx, leaveRequest)
+  return leaveRequest
+}
+
+async function getQuotasForLeaveRange(
+  ctx: OrganizationCtx,
+  startDate: number,
+  endDate: number,
+) {
+  const organizationId = ctx.session.activeOrganizationId
+  const daysByYear = splitLeaveDaysByYear(startDate, endDate)
+  const quotasByYear = new Map<number, number>()
+
+  for (const year of daysByYear.keys()) {
+    quotasByYear.set(
+      year,
+      await getPaidLeavesForYear(ctx, organizationId, year),
+    )
+  }
+
+  return quotasByYear
+}
+
+export const raise = organizationMutation({
+  args: {
+    leaveType: leaveTypeValidator,
+    startDate: v.number(),
+    endDate: v.number(),
+    reason: v.string(),
+  },
+  returns: v.object({
+    success: v.boolean(),
+    requestId: vv.id('leaveRequests'),
+    remainingLeavesAfterApproval: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    assertEmployee(ctx)
+    const employee = await resolveCurrentEmployee(ctx)
+    const startDate = normalizeLeaveDate(args.startDate)
+    const endDate = normalizeLeaveDate(args.endDate)
+    validateAdvanceNotice(startDate, Date.now())
+
     const requests = await ctx.db
       .query('leaveRequests')
-      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
       .collect()
-    const approved = requests.filter(
-      (r) =>
-        r.status === 'approved' && new Date(r.startDate).getFullYear() === year,
-    )
-    let used = 0
-    for (const r of approved) {
-      used += getDays(r.startDate, r.endDate)
-    }
-    if (used >= LEAVE_QUOTA) {
-      throw new Error('No leave balance remaining for this year')
-    }
-    const remaining = LEAVE_QUOTA - used
-    if (requestDays > remaining) {
-      throw new Error(`You only have ${remaining} leave days remaining`)
-    }
+    const quotasByYear = await getQuotasForLeaveRange(ctx, startDate, endDate)
+    const { remaining } = validateRaiseAgainstQuota({
+      requests,
+      startDate,
+      endDate,
+      quotasByYear,
+    })
     const requestId = await ctx.db.insert('leaveRequests', {
-      employeeId: args.employeeId,
+      employeeId: employee._id,
       leaveType: args.leaveType,
-      startDate: args.startDate,
-      endDate: args.endDate,
+      startDate,
+      endDate,
       reason: args.reason.trim(),
       status: 'pending',
       approvedBy: undefined,
@@ -62,7 +212,8 @@ export const raise = privateMutation({
     }
   },
 })
-export const update = privateMutation({
+
+export const update = organizationMutation({
   args: {
     leaveRequestId: vv.id('leaveRequests'),
     body: vv
@@ -70,11 +221,24 @@ export const update = privateMutation({
       .omit('_id', '_creationTime', 'employeeId', 'createdAt', 'updatedAt')
       .partial(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
-    const leaveRequest = await ctx.db.get(args.leaveRequestId)
-    if (!leaveRequest) {
-      throw new Error('Leave request not found')
+    const leaveRequest = await getLeaveRequestOrThrow(ctx, args.leaveRequestId)
+    const current = await resolveCurrentEmployee(ctx)
+    const isOwner = ctx.session.employee.role === 'owner'
+
+    if (!isOwner) {
+      if (leaveRequest.employeeId !== current._id) {
+        throw new Error('Unauthorized')
+      }
+      if (leaveRequest.status !== 'pending') {
+        throw new Error('Only pending requests can be edited')
+      }
+      if (args.body.status !== undefined || args.body.approvedBy !== undefined) {
+        throw new Error('Unauthorized')
+      }
     }
+
     const patch: Partial<Doc<'leaveRequests'>> = {}
     if (args.body.leaveType !== undefined) {
       patch.leaveType = args.body.leaveType
@@ -88,34 +252,163 @@ export const update = privateMutation({
     if (args.body.reason !== undefined) {
       patch.reason = args.body.reason
     }
-    if (args.body.status !== undefined) {
+    if (isOwner && args.body.status !== undefined) {
       patch.status = args.body.status
     }
-    if (args.body.approvedBy !== undefined) {
+    if (isOwner && args.body.approvedBy !== undefined) {
       patch.approvedBy = args.body.approvedBy
     }
     if (Object.keys(patch).length === 0) {
       return null
     }
     patch.updatedAt = Date.now()
-    await ctx.db.patch(args.leaveRequestId, patch)
+    await ctx.db.patch('leaveRequests', args.leaveRequestId, patch)
     return null
   },
 })
 
-export const get = privateQuery({
+export const get = organizationQuery({
   args: {
     leaveRequestId: vv.id('leaveRequests'),
   },
+  returns: v.union(enrichedLeaveValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.leaveRequestId)
+    const leaveRequest = await ctx.db.get('leaveRequests', args.leaveRequestId)
+    if (!leaveRequest) {
+      return null
+    }
+    await assertCanAccessLeaveRequest(ctx, leaveRequest)
+    const [enriched] = await enrichRequests(ctx, [leaveRequest])
+    return enriched ?? null
   },
 })
 
-export const list = privateQuery({
+export const list = organizationQuery({
   args: {},
+  returns: v.array(enrichedLeaveValidator),
   handler: async (ctx) => {
-    return await ctx.db.query('leaveRequests').order('desc').collect()
+    const current = await resolveCurrentEmployee(ctx)
+    const isOwner = ctx.session.employee.role === 'owner'
+
+    let requests: Doc<'leaveRequests'>[]
+    if (isOwner) {
+      const orgEmployeeIds = await getOrgEmployeeIds(ctx)
+      const all = await ctx.db.query('leaveRequests').order('desc').collect()
+      requests = all.filter((request) => orgEmployeeIds.has(request.employeeId))
+    } else {
+      requests = await ctx.db
+        .query('leaveRequests')
+        .withIndex('by_employee', (q) => q.eq('employeeId', current._id))
+        .order('desc')
+        .collect()
+    }
+
+    return enrichRequests(ctx, requests)
+  },
+})
+
+export const pendingCount = organizationQuery({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    assertOwner(ctx)
+    const orgEmployeeIds = await getOrgEmployeeIds(ctx)
+    const pending = await ctx.db
+      .query('leaveRequests')
+      .withIndex('by_status', (q) => q.eq('status', 'pending'))
+      .collect()
+    return pending.filter((request) => orgEmployeeIds.has(request.employeeId))
+      .length
+  },
+})
+
+export const approveLeaveRequest = organizationMutation({
+  args: {
+    leaveRequestId: vv.id('leaveRequests'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+    approvedDays: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    assertOwner(ctx)
+    const leaveRequest = await ctx.db.get('leaveRequests', args.leaveRequestId)
+    if (!leaveRequest) {
+      throw new Error('Leave request not found')
+    }
+    const orgEmployeeIds = await getOrgEmployeeIds(ctx)
+    if (!orgEmployeeIds.has(leaveRequest.employeeId)) {
+      throw new Error('Leave request not found')
+    }
+    if (leaveRequest.status !== 'pending') {
+      throw new Error('Request already processed')
+    }
+    const approvedDays = getDays(leaveRequest.startDate, leaveRequest.endDate)
+    await ctx.db.patch('leaveRequests', args.leaveRequestId, {
+      status: 'approved',
+      approvedBy: (await resolveCurrentEmployee(ctx))._id,
+      updatedAt: Date.now(),
+    })
+    return { success: true, approvedDays }
+  },
+})
+
+export const rejectLeaveRequest = organizationMutation({
+  args: {
+    leaveRequestId: vv.id('leaveRequests'),
+    rejectionReason: v.string(),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    assertOwner(ctx)
+    const leaveRequest = await ctx.db.get('leaveRequests', args.leaveRequestId)
+    if (!leaveRequest) {
+      throw new Error('Leave request not found')
+    }
+    const orgEmployeeIds = await getOrgEmployeeIds(ctx)
+    if (!orgEmployeeIds.has(leaveRequest.employeeId)) {
+      throw new Error('Leave request not found')
+    }
+    if (leaveRequest.status !== 'pending') {
+      throw new Error('Request already processed')
+    }
+    const rejectionReason = args.rejectionReason.trim()
+    if (!rejectionReason) {
+      throw new Error('Rejection reason is required')
+    }
+    await ctx.db.patch('leaveRequests', args.leaveRequestId, {
+      status: 'rejected',
+      approvedBy: (await resolveCurrentEmployee(ctx))._id,
+      rejectionReason,
+      updatedAt: Date.now(),
+    })
+    return { success: true }
+  },
+})
+
+export const cancelLeaveRequest = organizationMutation({
+  args: {
+    leaveRequestId: vv.id('leaveRequests'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const leaveRequest = await ctx.db.get('leaveRequests', args.leaveRequestId)
+    if (!leaveRequest) {
+      throw new Error('Leave request not found')
+    }
+    const current = await resolveCurrentEmployee(ctx)
+    if (leaveRequest.employeeId !== current._id) {
+      throw new Error('Unauthorized')
+    }
+    if (leaveRequest.status !== 'pending') {
+      throw new Error('Only pending requests can be cancelled')
+    }
+    await removeLeaveCascade(ctx, args.leaveRequestId)
+    return { success: true }
   },
 })
 
@@ -123,53 +416,76 @@ export async function removeLeaveCascade(
   ctx: MutationCtx,
   leaveRequestId: Id<'leaveRequests'>,
 ) {
-  await ctx.db.delete(leaveRequestId)
+  await ctx.db.delete('leaveRequests', leaveRequestId)
 }
 
-export const remove = privateMutation({
+export const remove = organizationMutation({
   args: {
     leaveRequestId: vv.id('leaveRequests'),
   },
+  returns: v.null(),
   handler: async (ctx, { leaveRequestId }) => {
-    const leaveRequest = await ctx.db.get(leaveRequestId)
-    if (!leaveRequest) {
-      throw new Error('Leave request not found')
-    }
+    await getLeaveRequestOrThrow(ctx, leaveRequestId)
     await removeLeaveCascade(ctx, leaveRequestId)
     return null
   },
 })
 
-export const getLeaveBalance = privateQuery({
-  args: { employeeId: v.string() },
-  handler: async (ctx, { employeeId }) => {
+export const getLeaveBalance = organizationQuery({
+  args: {},
+  returns: v.object({
+    employeeId: v.string(),
+    leaveQuota: v.number(),
+    usedLeaves: v.number(),
+    remaining: v.number(),
+  }),
+  handler: async (ctx) => {
+    const employee = await resolveCurrentEmployee(ctx)
+    const year = new Date().getFullYear()
+    const leaveQuota = await getPaidLeavesForYear(
+      ctx,
+      ctx.session.activeOrganizationId,
+      year,
+    )
     const requests = await ctx.db
       .query('leaveRequests')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employeeId))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
       .collect()
     const approved = requests.filter((r) => r.status === 'approved')
-    let usedLeaves = 0
-    for (const leave of approved) {
-      usedLeaves += getDays(leave.startDate, leave.endDate)
-    }
+    const usedLeaves = getUsedApprovedLeaves(approved, year)
     return {
-      employeeId,
-      leaveQuota: LEAVE_QUOTA,
+      employeeId: employee._id,
+      leaveQuota,
       usedLeaves,
-      remaining: LEAVE_QUOTA - usedLeaves,
+      remaining: leaveQuota - usedLeaves,
     }
   },
 })
-export const getStats = privateQuery({
+
+export const getStats = organizationQuery({
   args: {
-    employeeId: v.string(),
     year: v.number(),
     month: v.optional(v.number()),
   },
-  handler: async (ctx, { employeeId, year, month }) => {
+  returns: v.object({
+    employeeId: v.string(),
+    year: v.number(),
+    month: v.union(v.number(), v.null()),
+    leaveQuota: v.number(),
+    usedLeaves: v.number(),
+    remainingLeaves: v.number(),
+    suggestedMonthlyLimit: v.number(),
+  }),
+  handler: async (ctx, { year, month }) => {
+    const employee = await resolveCurrentEmployee(ctx)
+    const leaveQuota = await getPaidLeavesForYear(
+      ctx,
+      ctx.session.activeOrganizationId,
+      year,
+    )
     const requests = await ctx.db
       .query('leaveRequests')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employeeId))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
       .collect()
     const approved = requests.filter((r) => {
       const d = new Date(r.startDate)
@@ -180,18 +496,15 @@ export const getStats = privateQuery({
       }
       return true
     })
-    let usedLeaves = 0
-    for (const leave of approved) {
-      usedLeaves += getDays(leave.startDate, leave.endDate)
-    }
+    const usedLeaves = getUsedApprovedLeaves(approved)
     return {
-      employeeId,
+      employeeId: employee._id,
       year,
       month: month ?? null,
-      leaveQuota: LEAVE_QUOTA,
+      leaveQuota,
       usedLeaves,
-      remainingLeaves: LEAVE_QUOTA - usedLeaves,
-      suggestedMonthlyLimit: Math.floor(LEAVE_QUOTA / 12),
+      remainingLeaves: leaveQuota - usedLeaves,
+      suggestedMonthlyLimit: Math.floor(leaveQuota / 12),
     }
   },
 })

@@ -15,6 +15,7 @@ import { meeting } from './tables/meeting'
 import { meetingAttendee } from './tables/meetingAttendee'
 import { meetingRecipient } from './tables/meetingRecipient'
 import { organizationWorkSchedule } from './tables/organizationWorkSchedule'
+import { organizationLeaveQuota } from './tables/organizationLeaveQuota'
 import { payroll } from './tables/payroll'
 import { projectActivities } from './tables/projectActivities'
 import { projectMember } from './tables/projectMember'
@@ -58,6 +59,7 @@ const schema = defineSchema({
   trackMember,
   taskMember,
   organizationWorkSchedule,
+  organizationLeaveQuota,
 })
 
 export const vv = typedV(schema)
