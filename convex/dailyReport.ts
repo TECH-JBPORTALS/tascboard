@@ -1,9 +1,9 @@
 import { v } from 'convex/values'
 import { endOfDay, format, startOfDay } from 'date-fns'
-import { startOfCalendarDay } from './lib/calendarDate'
 import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { Doc } from './_generated/dataModel'
+import { startOfCalendarDay } from './lib/calendarDate'
 import {
   organizationMutation,
   organizationQuery,

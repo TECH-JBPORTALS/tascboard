@@ -46,8 +46,8 @@ import { Spinner } from '../ui/spinner'
 import type { WorkSchedule } from './organization-work-schedule-fieldset'
 import { OrganizationWorkScheduleFieldset } from './organization-work-schedule-fieldset'
 import {
-  OrganizationYearlyLeaveFieldset,
   type LeaveQuota,
+  OrganizationYearlyLeaveFieldset,
 } from './organization-yearly-leave-fieldset'
 
 const themeOptions = [

@@ -3,10 +3,7 @@ import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import {
-  organizationMutation,
-  organizationQuery,
-} from './lib/customFunctions'
+import { organizationMutation, organizationQuery } from './lib/customFunctions'
 import {
   getLeaveDays,
   getUsedApprovedLeaves,
@@ -79,9 +76,7 @@ async function getOrgEmployeeIds(ctx: OrganizationCtx) {
     organizationId: ctx.session.activeOrganizationId,
     role: 'employee',
   })
-  return new Set(
-    employees.map((employee: { _id: string }) => employee._id),
-  )
+  return new Set(employees.map((employee: { _id: string }) => employee._id))
 }
 
 async function enrichRequests(
@@ -234,7 +229,10 @@ export const update = organizationMutation({
       if (leaveRequest.status !== 'pending') {
         throw new Error('Only pending requests can be edited')
       }
-      if (args.body.status !== undefined || args.body.approvedBy !== undefined) {
+      if (
+        args.body.status !== undefined ||
+        args.body.approvedBy !== undefined
+      ) {
         throw new Error('Unauthorized')
       }
     } else if (leaveRequest.status !== 'pending') {
@@ -289,10 +287,7 @@ export const update = organizationMutation({
     if (args.body.endDate !== undefined) {
       patch.endDate = nextEndDate
     }
-    if (
-      args.body.startDate !== undefined ||
-      args.body.endDate !== undefined
-    ) {
+    if (args.body.startDate !== undefined || args.body.endDate !== undefined) {
       if (nextEndDate < nextStartDate) {
         throw new Error('End date must be on or after start date')
       }

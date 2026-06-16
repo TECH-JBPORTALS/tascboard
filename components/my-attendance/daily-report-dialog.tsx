@@ -83,7 +83,9 @@ export function DailyReportDialog({
       onSuccess?.()
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to submit daily report',
+        error instanceof Error
+          ? error.message
+          : 'Failed to submit daily report',
       )
     } finally {
       setSubmitting(false)

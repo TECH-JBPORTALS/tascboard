@@ -3,6 +3,11 @@ import { internalMutation } from './_generated/server'
 import { authComponent, createAuth } from './auth'
 import { organizationMutation, organizationQuery } from './lib/customFunctions'
 import {
+  ensureLeaveQuotaForYear,
+  listLeaveQuotas,
+  saveLeaveQuota,
+} from './lib/organizationLeaveQuota'
+import {
   buildOrganizationMetadata,
   parseOrganizationMetadata,
 } from './lib/organizationMetadata'
@@ -11,11 +16,6 @@ import {
   getWorkSchedule,
   saveWorkSchedule,
 } from './lib/organizationWorkSchedule'
-import {
-  ensureLeaveQuotaForYear,
-  listLeaveQuotas,
-  saveLeaveQuota,
-} from './lib/organizationLeaveQuota'
 import { workScheduleValidator } from './tables/organizationWorkSchedule'
 
 export const getWorkingSchedule = organizationQuery({

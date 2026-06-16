@@ -3,7 +3,9 @@ type OrganizationMetadata = {
   imageStorageId?: string
 }
 
-export function parseOrganizationMetadata(metadata: unknown): OrganizationMetadata {
+export function parseOrganizationMetadata(
+  metadata: unknown,
+): OrganizationMetadata {
   if (!metadata) return { address: '' }
 
   let raw: Record<string, unknown>

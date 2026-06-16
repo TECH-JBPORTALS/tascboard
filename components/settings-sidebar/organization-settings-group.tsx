@@ -5,6 +5,7 @@ import { useParams, usePathname } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog'
 import { authClient } from '@/lib/auth-client'
+import { OrganizationAvatar } from '../organization/organizatoin-avatar'
 import {
   SidebarContent,
   SidebarGroup,
@@ -14,9 +15,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from '../ui/sidebar'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { RiBuilding2Fill } from '@remixicon/react'
-import { OrganizationAvatar } from '../organization/organizatoin-avatar'
 
 export function OrganizationsSettingsGroup() {
   const pathname = usePathname()

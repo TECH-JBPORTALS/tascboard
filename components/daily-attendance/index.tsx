@@ -2,8 +2,8 @@
 
 import { useQuery } from 'convex-helpers/react/cache'
 import { addDays, eachDayOfInterval, endOfWeek, startOfWeek } from 'date-fns'
-import { useQueryState } from 'nuqs'
 import { useSearchParams } from 'next/navigation'
+import { useQueryState } from 'nuqs'
 import { useMemo, useState } from 'react'
 import { api } from '@/convex/_generated/api'
 import {

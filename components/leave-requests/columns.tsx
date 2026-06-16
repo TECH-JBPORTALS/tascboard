@@ -7,8 +7,7 @@ import { Button } from '../ui/button'
 import { formatLeaveDate, leaveTypeLabels } from './leave-formatters'
 import { LeaveStatusBadge } from './leave-status-badge'
 
-export type LeaveRequestRow =
-  (typeof api.leaveRequest.list._returnType)[number]
+export type LeaveRequestRow = (typeof api.leaveRequest.list._returnType)[number]
 
 function formatReasonCell(row: LeaveRequestRow) {
   if (row.status === 'rejected' && row.rejectionReason) {

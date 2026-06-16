@@ -140,14 +140,16 @@ export function AttendanceDaySheet({
           </SheetDescription>
         </SheetHeader>
 
-        {selection && dayDetailQuery === undefined && !selection.dayAttendance && (
-          <div className="space-y-4 px-6 pb-6">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        )}
+        {selection &&
+          dayDetailQuery === undefined &&
+          !selection.dayAttendance && (
+            <div className="space-y-4 px-6 pb-6">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          )}
 
         {dayDetail && selection && (
           <div className="space-y-6 px-6 pb-6">

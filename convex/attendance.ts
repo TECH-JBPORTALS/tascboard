@@ -487,7 +487,10 @@ export const listMonthlySummaryForEmployees = organizationQuery({
           ]),
         )
 
-        const score = scoreAttendanceForDays(attendanceByDateKey, workingDayKeys)
+        const score = scoreAttendanceForDays(
+          attendanceByDateKey,
+          workingDayKeys,
+        )
 
         return {
           employee,

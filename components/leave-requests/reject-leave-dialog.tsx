@@ -6,8 +6,6 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import z from 'zod'
-import { api } from '@/convex/_generated/api'
-import type { Id } from '@/convex/_generated/dataModel'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,6 +18,8 @@ import {
 import { Field, FieldError } from '@/components/ui/field'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
 
 const rejectLeaveSchema = z.object({
   rejectionReason: z.string().trim().min(1, 'Rejection reason is required'),

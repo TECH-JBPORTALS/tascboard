@@ -27,8 +27,9 @@ export function LeaveRequestsEmployee() {
   const balance = useQuery(api.leaveRequest.getLeaveBalance)
   const cancelLeave = useMutation(api.leaveRequest.cancelLeaveRequest)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [cancellingId, setCancellingId] =
-    useState<Id<'leaveRequests'> | null>(null)
+  const [cancellingId, setCancellingId] = useState<Id<'leaveRequests'> | null>(
+    null,
+  )
 
   async function handleCancel(leaveRequestId: Id<'leaveRequests'>) {
     setCancellingId(leaveRequestId)

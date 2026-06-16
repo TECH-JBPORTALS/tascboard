@@ -1,8 +1,10 @@
 import { parseAsString } from 'nuqs'
 
-export const attendanceSearchParser = parseAsString.withDefault('').withOptions({
-  clearOnDefault: true,
-})
+export const attendanceSearchParser = parseAsString
+  .withDefault('')
+  .withOptions({
+    clearOnDefault: true,
+  })
 
 export function filterAttendanceByEmployeeName<
   T extends { employee: { user: { name: string } } },

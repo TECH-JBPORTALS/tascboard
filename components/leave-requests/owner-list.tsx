@@ -8,12 +8,7 @@ import { toast } from 'sonner'
 import { DataTable } from '@/components/data-table'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '../ui/empty'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '../ui/empty'
 import { getOwnerLeaveColumns, type LeaveRequestRow } from './columns'
 import { EditLeaveDialog } from './edit-leave-dialog'
 import { LeaveTableSkeleton } from './leave-table-skeleton'
@@ -22,8 +17,9 @@ import { RejectLeaveDialog } from './reject-leave-dialog'
 export function LeaveRequestsOwner() {
   const requests = useQuery(api.leaveRequest.list)
   const approveLeave = useMutation(api.leaveRequest.approveLeaveRequest)
-  const [processingId, setProcessingId] =
-    useState<Id<'leaveRequests'> | null>(null)
+  const [processingId, setProcessingId] = useState<Id<'leaveRequests'> | null>(
+    null,
+  )
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectingId, setRejectingId] = useState<Id<'leaveRequests'> | null>(
     null,

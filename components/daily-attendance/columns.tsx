@@ -6,9 +6,9 @@ import { api } from '@/convex/_generated/api'
 import { toCalendarDateKey } from '@/lib/calendar-date'
 import { cn } from '@/lib/utils'
 import { AttendanceStatusBadge } from '../common/attendance-status-badge'
-import type { SelectedAttendanceDay } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
+import type { SelectedAttendanceDay } from './types'
 
 type AttendanceEmployee =
   (typeof api.attendance.listForEmployeesInDateRange._returnType)[number]

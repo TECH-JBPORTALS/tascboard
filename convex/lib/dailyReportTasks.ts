@@ -1,7 +1,9 @@
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 
-export function getTaskCompletionTimestamp(task: Doc<'tasks'>): number | undefined {
+export function getTaskCompletionTimestamp(
+  task: Doc<'tasks'>,
+): number | undefined {
   return task.completedAt ?? task.updatedAt
 }
 

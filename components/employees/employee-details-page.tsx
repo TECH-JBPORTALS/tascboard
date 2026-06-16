@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { api } from '@/convex/_generated/api'
 import { usePermission } from '@/hooks/use-permission'
+import { EmployeeCompensationSection } from './employee-compensation-section'
 import { UserAvatar } from './user-avatar'
 
 const detailTabs = [
@@ -306,6 +307,8 @@ export function EmployeeDetailsPage({
               />
             </SectionCard>
           </div>
+        ) : activeTab === 'professional' ? (
+          <EmployeeCompensationSection employeeId={employeeId} />
         ) : (
           <Card>
             <CardContent className="py-8 text-center text-sm text-muted-foreground">

@@ -1,13 +1,12 @@
 import { describe, expect, test } from 'bun:test'
 import { convexTest } from 'convex-test'
-
-import schema from '../schema'
 import {
   DEFAULT_PAID_LEAVES,
   getPaidLeavesForYear,
   listLeaveQuotas,
   saveLeaveQuota,
 } from '../lib/organizationLeaveQuota'
+import schema from '../schema'
 import { modules } from './_modules.test'
 
 describe('organizationLeaveQuota', () => {

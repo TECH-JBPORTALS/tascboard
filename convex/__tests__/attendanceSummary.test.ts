@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import {
   attendanceDateKey,
   DEFAULT_WORK_SCHEDULE,
-  formatAttendedCount,
   formatAttendancePercentage,
+  formatAttendedCount,
   getElapsedWorkingDayKeysInMonth,
   scoreAttendanceForDays,
 } from '../lib/attendanceSummary'
@@ -72,7 +72,12 @@ describe('attendanceSummary', () => {
   })
 
   test('scoreAttendanceForDays ignores absent, on leave, and missing records', () => {
-    const workingDayKeys = ['2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05']
+    const workingDayKeys = [
+      '2025-06-02',
+      '2025-06-03',
+      '2025-06-04',
+      '2025-06-05',
+    ]
 
     const attendanceByDateKey = {
       '2025-06-02': { status: 'present' as const },
@@ -88,10 +93,12 @@ describe('attendanceSummary', () => {
   })
 
   test('attendanceDateKey normalizes record timestamps to calendar day', () => {
-    expect(attendanceDateKey(calendarDayFromKey('2026-06-09'))).toBe('2026-06-09')
-    expect(attendanceDateKey(calendarDayFromKey('2026-06-09') + 60_000 * 60 * 10)).toBe(
+    expect(attendanceDateKey(calendarDayFromKey('2026-06-09'))).toBe(
       '2026-06-09',
     )
+    expect(
+      attendanceDateKey(calendarDayFromKey('2026-06-09') + 60_000 * 60 * 10),
+    ).toBe('2026-06-09')
   })
 
   test('formatAttendedCount shows integer or one decimal', () => {

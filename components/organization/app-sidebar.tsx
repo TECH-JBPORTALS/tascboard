@@ -6,6 +6,8 @@ import {
   RiCalendarCheckLine,
   RiInboxFill,
   RiInboxLine,
+  RiMoneyDollarCircleFill,
+  RiMoneyDollarCircleLine,
   RiRouteLine,
   RiTeamFill,
   RiTeamLine,
@@ -60,20 +62,13 @@ const navItems = [
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
   },
-
-  // {
-  //   label: 'Meetings',
-  //   href: '/meetings',
-  //   icon: RiCalendarLine,
-  //   fillIcon: RiCalendarLine,
-  // },
-  // {
-  //   label: 'Payroll',
-  //   href: '/payroll',
-  //   icon: RiMoneyDollarCircleLine,
-  //   fillIcon: RiMoneyDollarCircleFill,
-  //   permissions: { organization: ['delete'] },
-  // },
+  {
+    label: 'Payroll',
+    href: '/payroll',
+    icon: RiMoneyDollarCircleLine,
+    fillIcon: RiMoneyDollarCircleFill,
+    permissions: { payroll: ['read'] },
+  },
 ]
 
 export function AppSidebar({
