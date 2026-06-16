@@ -18,9 +18,9 @@ export function EmployeesPage() {
     if (!employees) return []
     return employees.map((employee) => ({
       id: employee.id,
-      name: employee.user.name,
-      email: employee.user.email,
-      image: employee.user.image ?? '',
+      name: employee.name,
+      email: employee.email,
+      image: employee.image ?? '',
       role: employee.role,
       active: employee.active,
     }))
