@@ -14,13 +14,17 @@ export type OwnerPayrollRow =
 type ColumnOptions = {
   onEdit: (row: OwnerPayrollRow) => void
   onMarkPaid: (row: OwnerPayrollRow) => void
+  onDelete: (row: OwnerPayrollRow) => void
   markingPaidId: string | null
+  deletingId: string | null
 }
 
 export function createOwnerPayrollColumns({
   onEdit,
   onMarkPaid,
+  onDelete,
   markingPaidId,
+  deletingId,
 }: ColumnOptions): ColumnDef<OwnerPayrollRow>[] {
   return [
     {
@@ -105,6 +109,16 @@ export function createOwnerPayrollColumns({
                 onClick={() => onMarkPaid(row.original)}
               >
                 {markingPaidId === payroll._id ? 'Marking...' : 'Mark paid'}
+              </Button>
+            ) : null}
+            {payroll ? (
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={deletingId === payroll._id}
+                onClick={() => onDelete(row.original)}
+              >
+                {deletingId === payroll._id ? 'Deleting...' : 'Delete'}
               </Button>
             ) : null}
           </div>

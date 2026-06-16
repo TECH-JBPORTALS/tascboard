@@ -133,7 +133,12 @@ export function EmployeeYearlyPayroll() {
                 <CardTitle className="text-base">
                   {format(new Date(payslip.payPeriodStart), 'MMMM yyyy')}
                 </CardTitle>
-                <Badge variant="secondary">Paid</Badge>
+                <div className="flex items-center gap-2">
+                  {payslip.editedAt ? (
+                    <Badge variant="outline">Edited</Badge>
+                  ) : null}
+                  <Badge variant="secondary">Paid</Badge>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">

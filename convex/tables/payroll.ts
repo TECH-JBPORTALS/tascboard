@@ -12,6 +12,7 @@ export const payroll = defineTable({
   bonus: v.float64(),
   netSalary: v.float64(),
   creditedAt: v.optional(v.number()),
+  editedAt: v.optional(v.number()),
   notes: v.optional(v.string()),
   extensionFields: v.optional(v.record(v.string(), v.number())),
   createdAt: v.number(),

@@ -148,4 +148,118 @@ describe('Payroll (database)', () => {
 
     expect(netSalary).toBe(1150)
   })
+
+  test('editing a paid payslip sets editedAt and updates amounts', async () => {
+    const t = convexTest(schema, modules)
+    const month = new Date('2026-06-15T00:00:00.000Z').getTime()
+    const { payPeriodStart, payPeriodEnd } = getPayPeriodForMonth(month)
+    const paidAt = Date.UTC(2026, 6, 1)
+    const editedAt = Date.UTC(2026, 6, 5)
+
+    const payrollId = await t.run(async (ctx) => {
+      return await ctx.db.insert('payroll', {
+        organizationId: 'org-1',
+        employeeId: 'emp-1',
+        payPeriodStart,
+        payPeriodEnd,
+        basicSalary: 1000,
+        deduction: 0,
+        overtimePay: 0,
+        bonus: 0,
+        netSalary: 1000,
+        creditedAt: paidAt,
+        createdAt: Date.now(),
+      })
+    })
+
+    await t.run(async (ctx) => {
+      const netSalary = calculateNetSalary({
+        basicSalary: 1200,
+        deduction: 50,
+        overtimePay: 100,
+        bonus: 0,
+      })
+      await ctx.db.patch(payrollId, {
+        basicSalary: 1200,
+        deduction: 50,
+        overtimePay: 100,
+        netSalary,
+        editedAt,
+        updatedAt: editedAt,
+      })
+    })
+
+    const record = await t.run(async (ctx) => ctx.db.get('payroll', payrollId))
+    expect(record?.editedAt).toBe(editedAt)
+    expect(record?.netSalary).toBe(1250)
+    expect(isPaidPayroll(record?.creditedAt)).toBe(true)
+  })
+
+  test('deleting a paid payslip removes the record', async () => {
+    const t = convexTest(schema, modules)
+    const month = new Date('2026-06-15T00:00:00.000Z').getTime()
+    const { payPeriodStart, payPeriodEnd } = getPayPeriodForMonth(month)
+
+    const payrollId = await t.run(async (ctx) => {
+      return await ctx.db.insert('payroll', {
+        organizationId: 'org-1',
+        employeeId: 'emp-1',
+        payPeriodStart,
+        payPeriodEnd,
+        basicSalary: 1000,
+        deduction: 0,
+        overtimePay: 0,
+        bonus: 0,
+        netSalary: 1000,
+        creditedAt: Date.UTC(2026, 6, 1),
+        createdAt: Date.now(),
+      })
+    })
+
+    await t.run(async (ctx) => {
+      await ctx.db.delete(payrollId)
+    })
+
+    const record = await t.run(async (ctx) => ctx.db.get('payroll', payrollId))
+    expect(record).toBeNull()
+  })
+
+  test('deleted paid payslips are excluded from employee visibility', async () => {
+    const t = convexTest(schema, modules)
+    const month = new Date('2026-06-15T00:00:00.000Z').getTime()
+    const { payPeriodStart, payPeriodEnd } = getPayPeriodForMonth(month)
+
+    const payrollId = await t.run(async (ctx) => {
+      return await ctx.db.insert('payroll', {
+        organizationId: 'org-1',
+        employeeId: 'emp-1',
+        payPeriodStart,
+        payPeriodEnd,
+        basicSalary: 1000,
+        deduction: 0,
+        overtimePay: 0,
+        bonus: 0,
+        netSalary: 1000,
+        creditedAt: Date.UTC(2026, 6, 1),
+        createdAt: Date.now(),
+      })
+    })
+
+    await t.run(async (ctx) => {
+      await ctx.db.delete(payrollId)
+    })
+
+    const visible = await t.run(async (ctx) => {
+      const records = await ctx.db
+        .query('payroll')
+        .withIndex('by_org_employee_period', (q) =>
+          q.eq('organizationId', 'org-1').eq('employeeId', 'emp-1'),
+        )
+        .collect()
+
+      return records.filter((record) => isPaidPayroll(record.creditedAt))
+    })
+
+    expect(visible).toHaveLength(0)
+  })
 })

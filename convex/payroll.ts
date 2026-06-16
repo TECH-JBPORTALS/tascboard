@@ -46,6 +46,7 @@ const payslipSummaryValidator = v.object({
   bonus: v.number(),
   netSalary: v.number(),
   creditedAt: v.number(),
+  editedAt: v.optional(v.number()),
 })
 
 function assertOwner(ctx: OrganizationCtx) {
@@ -167,6 +168,7 @@ export const listMineByYear = organizationQuery({
         bonus: record.bonus,
         netSalary: record.netSalary,
         creditedAt: record.creditedAt!,
+        editedAt: record.editedAt,
       }))
   },
 })
@@ -319,11 +321,16 @@ export const upsert = organizationMutation({
     )
 
     if (existing) {
-      if (isPaidPayroll(existing.creditedAt)) {
-        throw new Error('Cannot edit a paid payslip')
-      }
-
-      await ctx.db.patch(existing._id, {
+      const patch: {
+        basicSalary: number
+        deduction: number
+        overtimePay: number
+        bonus: number
+        netSalary: number
+        notes: string | undefined
+        updatedAt: number
+        editedAt?: number
+      } = {
         basicSalary,
         deduction: args.deduction,
         overtimePay: args.overtimePay,
@@ -331,7 +338,13 @@ export const upsert = organizationMutation({
         netSalary,
         notes: args.notes,
         updatedAt: now,
-      })
+      }
+
+      if (isPaidPayroll(existing.creditedAt)) {
+        patch.editedAt = now
+      }
+
+      await ctx.db.patch(existing._id, patch)
       return existing._id
     }
 
@@ -461,10 +474,6 @@ export const remove = organizationMutation({
     const record = await ctx.db.get(args.id)
     if (!record || record.organizationId !== ctx.session.activeOrganizationId) {
       throw new Error('Payroll record not found')
-    }
-
-    if (isPaidPayroll(record.creditedAt)) {
-      throw new Error('Cannot delete a paid payslip')
     }
 
     await ctx.db.delete(args.id)

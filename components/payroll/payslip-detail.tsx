@@ -62,6 +62,9 @@ export function PayslipDetail({
               Paid {format(new Date(payslip.creditedAt), 'MMM d, yyyy')}
             </Badge>
           ) : null}
+          {payslip.editedAt ? (
+            <Badge variant="outline">Edited</Badge>
+          ) : null}
           {showDownload && onDownload ? (
             <Button size="sm" variant="outline" onClick={onDownload}>
               Download PDF
