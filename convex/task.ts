@@ -3,6 +3,7 @@ import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
 import { privateMutation, privateQuery } from './lib/customFunctions'
+import { statusTimingPatch } from './lib/dailyReportTasks'
 import { getTrackMembers } from './lib/memberHelper'
 import { formatTaskDate, logTaskActivity } from './lib/taskActivityLog'
 import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
@@ -148,16 +149,18 @@ export const reorderKanban = privateMutation({
 
     const actorUserId = ctx.session.userId
     const actorName = ctx.session.user.name
+    const now = Date.now()
 
     await Promise.all(
       targetTasks.map((columnTask, index) => {
         const patch: Partial<Doc<'tasks'>> = {
           statusOrder: index,
-          updatedAt: Date.now(),
+          updatedAt: now,
         }
 
         if (columnTask._id === args.taskId && newStatus !== oldStatus) {
           patch.status = newStatus
+          Object.assign(patch, statusTimingPatch(oldStatus, newStatus, now))
         }
 
         return ctx.db.patch(columnTask._id, patch)
@@ -333,6 +336,10 @@ export const update = privateMutation({
 
     if (args.body.status !== undefined && args.body.status !== task.status) {
       patch.status = args.body.status
+      Object.assign(
+        patch,
+        statusTimingPatch(task.status, args.body.status, Date.now()),
+      )
       await logTaskActivity(ctx, {
         taskId: args.taskId,
         actorUserId,

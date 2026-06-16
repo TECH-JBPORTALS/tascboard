@@ -48,6 +48,14 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   --color-brand: var(--brand);
   --color-highlight: var(--highlight);
+  --color-pattern: var(--pattern);
+  --pattern: repeating-linear-gradient(
+    45deg,
+    #e5e5f7,
+    #e5e5f7 10px,
+    #444cf7 10px,
+    #444cf7 20px
+  );
 }
 
 :root {
@@ -132,5 +140,35 @@
   }
   html {
     @apply font-sans;
+  }
+
+  .pattern {
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-background),
+      var(--color-background) 5px,
+      var(--color-muted) 5px,
+      var(--color-muted) 6px
+    );
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #payslip-print-area,
+  #payslip-print-area * {
+    visibility: visible;
+  }
+
+  #payslip-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    box-shadow: none;
   }
 }

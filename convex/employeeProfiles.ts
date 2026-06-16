@@ -132,6 +132,7 @@ export const getMyProfile = organizationQuery({
   returns: v.union(profileReturn, v.null()),
   handler: async (ctx) => {
     const { employee } = ctx.session
+
     const profile = await ctx.db
       .query('employeeProfiles')
       .withIndex('by_employee', (q) => q.eq('employeeId', employee.id))

@@ -9,3 +9,4 @@ export const dailyReportTaskTag = defineTable({
 })
   .index('by_reportId', ['reportId'])
   .index('by_reportId_taskId', ['reportId', 'taskId'])
+  .index('by_task', ['taskId'])

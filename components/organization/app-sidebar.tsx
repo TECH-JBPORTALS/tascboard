@@ -4,7 +4,6 @@ import {
   RiAddLargeFill,
   RiCalendarCheckFill,
   RiCalendarCheckLine,
-  RiCalendarLine,
   RiInboxFill,
   RiInboxLine,
   RiMoneyDollarCircleFill,
@@ -64,17 +63,11 @@ const navItems = [
     fillIcon: RiCalendarCheckFill,
   },
   {
-    label: 'Meetings',
-    href: '/meetings',
-    icon: RiCalendarLine,
-    fillIcon: RiCalendarLine,
-  },
-  {
     label: 'Payroll',
     href: '/payroll',
     icon: RiMoneyDollarCircleLine,
     fillIcon: RiMoneyDollarCircleFill,
-    permissions: { organization: ['delete'] },
+    permissions: { payroll: ['read'] },
   },
 ]
 

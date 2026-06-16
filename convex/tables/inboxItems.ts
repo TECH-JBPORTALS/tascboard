@@ -29,3 +29,4 @@ export const inboxItems = defineTable({
     'archived',
     'read',
   ])
+  .index('by_organization', ['organizationId'])

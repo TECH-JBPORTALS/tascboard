@@ -1529,6 +1529,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     employees: {
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        { organizationId: string; role: string; userId: string },
+        any,
+        Name
+      >;
       getByOrganizationUser: FunctionReference<
         "query",
         "internal",
@@ -1542,6 +1549,32 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           role: string;
           userId: string;
         } | null,
+        Name
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        { organizationId: string; role?: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          active: boolean;
+          createdAt: number;
+          organizationId: string;
+          role: string;
+          user: {
+            _creationTime: number;
+            _id: string;
+            createdAt: number;
+            email: string;
+            emailVerified: boolean;
+            image?: null | string;
+            name: string;
+            updatedAt: number;
+            userId?: null | string;
+          };
+          userId: string;
+        }>,
         Name
       >;
     };
@@ -1565,6 +1598,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     users: {
+      createOrganization: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string; slug: string },
+        string,
+        Name
+      >;
       getById: FunctionReference<
         "query",
         "internal",
@@ -1582,6 +1622,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         } | null,
         Name
       >;
+      resetAuthData: FunctionReference<"mutation", "internal", {}, null, Name>;
       update: FunctionReference<
         "mutation",
         "internal",

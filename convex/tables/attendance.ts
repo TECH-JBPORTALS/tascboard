@@ -11,7 +11,9 @@ export const attendance = defineTable({
     v.literal('on leave'),
     v.literal('late'),
     v.literal('half day'),
+    v.literal('absent'),
   ),
+  remarks: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()),
 })

@@ -6,27 +6,15 @@ export type PayrollRecord = {
   employeeName: string
   employeeRole: string
   avatarUrl?: string | null
-  creditedAt: number
+  payPeriodStart: number
+  payPeriodEnd: number
+  creditedAt?: number
   basicSalary: number
-  hra: number
-  allowances: number
-  incentives: number
-  pfAmount: number
-  esiAmount: number
-  tax: number
-  loanRecovery: number
-  leaveDeduction: number
-  latePenalty: number
-  otherDeductions: number
-  overtimeHours: number
-  overtimeRate: number
-  overtimeAmount: number
-  performanceBonus: number
-  festivalBonus: number
-  manualReward: number
-  grossSalary: number
-  totalDeductions: number
+  deduction: number
+  overtimePay: number
+  bonus: number
   netSalary: number
+  notes?: string
 }
 
 export function formatCurrency(amount: number): string {
@@ -37,13 +25,8 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function getPayrollStatus(creditedAt: number): PayrollStatus {
-  const now = new Date()
-  const credited = new Date(creditedAt)
-  return credited.getMonth() === now.getMonth() &&
-    credited.getFullYear() === now.getFullYear()
-    ? 'paid'
-    : 'unpaid'
+export function getPayrollStatus(creditedAt?: number): PayrollStatus {
+  return creditedAt !== undefined ? 'paid' : 'unpaid'
 }
 
 export function getYear(ts: number): number {
@@ -52,4 +35,13 @@ export function getYear(ts: number): number {
 
 export function getMonth(ts: number): number {
   return new Date(ts).getMonth() + 1
+}
+
+export function calculateNetSalary(args: {
+  basicSalary: number
+  deduction: number
+  overtimePay: number
+  bonus: number
+}): number {
+  return args.basicSalary + args.overtimePay + args.bonus - args.deduction
 }

@@ -7,12 +7,20 @@ import { organizationQuery } from './lib/customFunctions'
 export const list = organizationQuery({
   args: {},
   handler: async (ctx) => {
-    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
-    const employees = await auth.api.listMembers({
-      headers,
+    const employees = await ctx.runQuery(components.betterAuth.employees.list, {
+      role: 'employee',
+      organizationId: ctx.session.activeOrganizationId,
     })
 
-    return employees.members
+    return employees.map((employee) => ({
+      id: employee._id,
+      userId: employee.user._id,
+      name: employee.user.name,
+      email: employee.user.email,
+      image: employee.user.image ?? null,
+      role: employee.role,
+      active: employee.active,
+    }))
   },
 })
 

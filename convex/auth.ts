@@ -10,9 +10,9 @@ import { v } from 'convex/values'
 import { ac, employee, owner } from '../lib/permissions'
 import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
-import { mutation, query } from './_generated/server'
+import { internalAction, mutation, query } from './_generated/server'
 import authConfig from './auth.config'
-import authSchema from './schema'
+import authSchema, { vv } from './schema'
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
@@ -50,7 +50,6 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
       enabled: true,
       requireEmailVerification: true,
     },
-
     plugins: [
       organization({
         ac,
@@ -66,6 +65,13 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           })
         },
         organizationHooks: {
+          afterCreateOrganization: async ({ organization }) => {
+            const mutationCtx = requireMutationCtx(ctx)
+            await mutationCtx.runMutation(
+              internal.organizationSettings.ensureWorkSchedule,
+              { organizationId: organization.id },
+            )
+          },
           afterAcceptInvitation: async ({ invitation, user }) => {
             const mutationCtx = requireMutationCtx(ctx)
             await mutationCtx.runMutation(
@@ -176,5 +182,23 @@ export const getActiveMemberRole = query({
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
 
     return await auth.api.getActiveMemberRole({ headers })
+  },
+})
+
+export const createAccount = internalAction({
+  args: {
+    email: vv.string(),
+    password: vv.string(),
+    name: vv.string(),
+    image: vv.optional(vv.string()),
+  },
+  handler: async (ctx, args) => {
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+    const { user } = await auth.api.signUpEmail({
+      body: args,
+      headers,
+    })
+
+    return { user }
   },
 })

@@ -5,6 +5,7 @@ import { comments } from './tables/comments'
 import { dailyReport } from './tables/dailyReport'
 import { dailyReportTaskTag } from './tables/dailyReportTaskTag'
 import { employeeCertificates } from './tables/employeeCertificates'
+import { employeeCompensation } from './tables/employeeCompensation'
 import { employeePerformancePoints } from './tables/employeePerformancePoints'
 import { employeeProfiles } from './tables/employeeProfiles'
 import { employeeTodos } from './tables/employeeTodos'
@@ -14,6 +15,8 @@ import { leaveRequests } from './tables/leaveRequests'
 import { meeting } from './tables/meeting'
 import { meetingAttendee } from './tables/meetingAttendee'
 import { meetingRecipient } from './tables/meetingRecipient'
+import { organizationLeaveQuota } from './tables/organizationLeaveQuota'
+import { organizationWorkSchedule } from './tables/organizationWorkSchedule'
 import { payroll } from './tables/payroll'
 import { projectActivities } from './tables/projectActivities'
 import { projectMember } from './tables/projectMember'
@@ -31,6 +34,7 @@ import { tracks } from './tables/tracks'
 const schema = defineSchema({
   inboxItems,
   employeeProfiles,
+  employeeCompensation,
   employeeCertificates,
   projects,
   projectActivities,
@@ -56,6 +60,8 @@ const schema = defineSchema({
   projectMember,
   trackMember,
   taskMember,
+  organizationWorkSchedule,
+  organizationLeaveQuota,
 })
 
 export const vv = typedV(schema)
