@@ -47,7 +47,7 @@ export const employeeColumns: ColumnDef<EmployeeRow>[] = [
           <div className="min-w-0">
             <Link
               href={`/${params.orgSlug}/employees/${row.original.id}`}
-              className="truncate font-medium"
+              className="truncate font-medium hover:underline"
             >
               {row.original.name}
             </Link>
