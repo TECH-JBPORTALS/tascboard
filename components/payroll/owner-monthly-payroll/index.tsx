@@ -3,6 +3,7 @@
 import { useMutation } from 'convex/react'
 import { useQuery } from 'convex-helpers/react/cache'
 import { format, startOfMonth } from 'date-fns'
+import { parseAsIsoDate, useQueryState } from 'nuqs'
 import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { DataTable } from '@/components/data-table'
@@ -16,24 +17,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/convex/_generated/api'
 import { startOfCalendarDay } from '@/lib/calendar-date'
 import { downloadCsv, payrollRowsToCsv } from '@/lib/payroll-export'
-import { useQueryState, parseAsIsoDate } from 'nuqs'
-import {
-  createOwnerPayrollColumns,
-  type OwnerPayrollRow,
-} from './columns'
+import { createOwnerPayrollColumns, type OwnerPayrollRow } from './columns'
 import { EditPayrollDialog } from './edit-dialog'
 import { OwnerMonthlyPayrollShell } from './shell'
-import { Skeleton } from '@/components/ui/skeleton'
 
 function filterBySearch(rows: OwnerPayrollRow[], search: string) {
   const query = search.trim().toLowerCase()
   if (!query) return rows
-  return rows.filter((row) =>
-    row.employee.name.toLowerCase().includes(query),
-  )
+  return rows.filter((row) => row.employee.name.toLowerCase().includes(query))
 }
 
 export function OwnerMonthlyPayroll() {
@@ -80,20 +75,23 @@ export function OwnerMonthlyPayroll() {
     }
   }
 
-  const onMarkPaid = useCallback(async (row: OwnerPayrollRow) => {
-    if (!row.payroll) return
-    setMarkingPaidId(row.payroll._id)
-    try {
-      await markPaid({ ids: [row.payroll._id] })
-      toast.success(`Marked ${row.employee.name} as paid`)
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to mark as paid',
-      )
-    } finally {
-      setMarkingPaidId(null)
-    }
-  }, [markPaid])
+  const onMarkPaid = useCallback(
+    async (row: OwnerPayrollRow) => {
+      if (!row.payroll) return
+      setMarkingPaidId(row.payroll._id)
+      try {
+        await markPaid({ ids: [row.payroll._id] })
+        toast.success(`Marked ${row.employee.name} as paid`)
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to mark as paid',
+        )
+      } finally {
+        setMarkingPaidId(null)
+      }
+    },
+    [markPaid],
+  )
 
   const onDelete = useCallback((row: OwnerPayrollRow) => {
     setDeleteRow(row)
@@ -150,9 +148,7 @@ export function OwnerMonthlyPayroll() {
   const editInitialValues = editRow
     ? {
         basicSalary:
-          editRow.payroll?.basicSalary ??
-          editRow.monthlyBasicSalary ??
-          0,
+          editRow.payroll?.basicSalary ?? editRow.monthlyBasicSalary ?? 0,
         deduction: editRow.payroll?.deduction ?? 0,
         overtimePay: editRow.payroll?.overtimePay ?? 0,
         bonus: editRow.payroll?.bonus ?? 0,
@@ -198,9 +194,9 @@ export function OwnerMonthlyPayroll() {
             <AlertDialogTitle>Delete payslip?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the payslip for{' '}
-              {deleteRow?.employee.name} for{' '}
-              {format(selectedDate, 'MMMM yyyy')}. The employee will no longer
-              see it. You can create a new payslip later.
+              {deleteRow?.employee.name} for {format(selectedDate, 'MMMM yyyy')}
+              . The employee will no longer see it. You can create a new payslip
+              later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -12,6 +12,8 @@ import {
   RiTeamFill,
   RiTeamLine,
   RiTriangleFill,
+  RiVideoChatFill,
+  RiVideoChatLine,
 } from '@remixicon/react'
 import { useQuery } from 'convex-helpers/react/cache'
 import Link from 'next/link'
@@ -61,6 +63,12 @@ const navItems = [
     href: '/attendance',
     icon: RiCalendarCheckLine,
     fillIcon: RiCalendarCheckFill,
+  },
+  {
+    label: 'Meetings',
+    href: '/meetings',
+    icon: RiVideoChatLine,
+    fillIcon: RiVideoChatFill,
   },
   {
     label: 'Payroll',
