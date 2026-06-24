@@ -164,7 +164,7 @@ export const list = organizationQuery({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : (user?.email ?? 'Unknown'),
+              : (user?.name ?? 'Unknown'),
             email: user?.email ?? '',
             image: image ?? '',
           },
