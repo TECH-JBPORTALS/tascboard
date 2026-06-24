@@ -2,7 +2,7 @@
 
 import { RiCalendarCloseLine, RiCalendarLine } from '@remixicon/react'
 import { useMutation } from 'convex/react'
-import { addDays, endOfWeek, format, startOfDay } from 'date-fns'
+import { addDays, endOfToday, endOfWeek, format, startOfDay } from 'date-fns'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -36,21 +36,27 @@ function buildPresets(): DueDatePreset[] {
 
   return [
     {
+      id: 'end-of-day',
+      label: 'End of the day',
+      shortcut: '1',
+      getDate: () => endOfToday(),
+    },
+    {
       id: 'tomorrow',
       label: 'Tomorrow',
-      shortcut: '1',
+      shortcut: '2',
       getDate: () => addDays(today, 1),
     },
     {
       id: 'end-of-week',
       label: 'End of this week',
-      shortcut: '2',
+      shortcut: '3',
       getDate: () => endOfWeek(today, { weekStartsOn: 1 }),
     },
     {
       id: 'one-week',
       label: 'In one week',
-      shortcut: '3',
+      shortcut: '4',
       getDate: () => addDays(today, 7),
     },
   ]
