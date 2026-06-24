@@ -23,7 +23,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        'sticky top-0 z-10 h-(--header-height) flex shrink-0 items-center gap-3 border-b border-border bg-sidebar px-4 backdrop-blur supports-backdrop-filter:bg-sidebar/80',
+        'sticky top-0 z-50 h-(--header-height) flex shrink-0 items-center gap-3 border-b border-border bg-sidebar px-4 backdrop-blur supports-backdrop-filter:bg-sidebar/80',
         className,
       )}
     >

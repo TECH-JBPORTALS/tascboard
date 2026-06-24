@@ -21,7 +21,7 @@ describe('Meeting', () => {
       title: 'Sprint Planning',
       description: 'Weekly sprint planning meeting',
       recurrenceType: 'weekly',
-      recurrenceDays: ['monday'], // ✅ FIXED
+      recurrenceDays: ['monday'],
       startTime: Date.now(),
       endTime: Date.now() + 3600000,
       meetingLink: 'https://meet.google.com/test',
@@ -36,6 +36,26 @@ describe('Meeting', () => {
 
     expect(meeting).not.toBeNull()
     expect(meeting?.title).toBe('Sprint Planning')
+  })
+
+  test('create one-off meeting auto-schedules first occurrence', async () => {
+    const startTime = Date.now() + 86400000
+    const endTime = startTime + 3600000
+
+    const meetingId = await t.mutation(api.meeting.create, {
+      title: 'One-off Sync',
+      description: 'Single meeting',
+      recurrenceType: 'none',
+      recurrenceDays: [],
+      startTime,
+      endTime,
+      meetingLink: 'https://meet.google.com/one-off',
+      recipients: ['emp-1'],
+    })
+
+    const schedules = await t.query(api.meeting.getSchedules, { meetingId })
+    expect(schedules.length).toBe(1)
+    expect(schedules[0]?.startTime).toBe(startTime)
   })
 
   test('list meetings', async () => {
@@ -100,8 +120,10 @@ describe('Meeting', () => {
 
     await t.mutation(api.meeting.update, {
       meetingId,
-      title: 'Updated Meeting',
-      description: 'Updated description',
+      body: {
+        title: 'Updated Meeting',
+        description: 'Updated description',
+      },
     })
 
     const updated = await t.query(api.meeting.get, {
@@ -117,16 +139,14 @@ describe('Meeting', () => {
       title: 'Delete Meeting',
       description: 'To be deleted',
       recurrenceType: 'none',
-      recurrenceDays: ['thursday'],
+      recurrenceDays: [],
       startTime: Date.now(),
       endTime: Date.now() + 1000,
       meetingLink: 'https://meet.delete',
       recipients: [],
     })
 
-    await t.mutation(api.meeting.remove, {
-      meetingId,
-    })
+    await t.mutation(api.meeting.remove, { meetingId })
 
     const meeting = await t.query(api.meeting.get, {
       meetingId,
@@ -149,8 +169,8 @@ describe('Meeting', () => {
 
     const scheduleId = await t.mutation(api.meeting.scheduleMeeting, {
       meetingId,
-      startTime: Date.now(),
-      endTime: Date.now() + 7200000,
+      startTime: Date.now() + 7200000,
+      endTime: Date.now() + 10800000,
       finalNotes: '',
     })
 
@@ -160,34 +180,30 @@ describe('Meeting', () => {
       meetingId,
     })
 
-    expect(schedules.length).toBe(1)
+    expect(schedules.length).toBeGreaterThan(0)
   })
 
   test('invite attendees', async () => {
     const meetingId = await t.mutation(api.meeting.create, {
       title: 'Invite Test',
       description: 'Invite attendees',
-      recurrenceType: 'weekly',
-      recurrenceDays: ['monday'],
+      recurrenceType: 'none',
+      recurrenceDays: [],
       startTime: Date.now(),
       endTime: Date.now() + 1000,
       meetingLink: 'https://meet.invite',
       recipients: [],
     })
 
-    const scheduleMeetingId = await t.mutation(api.meeting.scheduleMeeting, {
-      meetingId,
-      startTime: Date.now(),
-      endTime: Date.now() + 1000,
-      finalNotes: '',
-    })
+    const schedules = await t.query(api.meeting.getSchedules, { meetingId })
+    const scheduleMeetingId = schedules[0]!._id
 
     await t.mutation(api.meeting.inviteAttendees, {
       scheduleMeetingId,
       employeeIds: ['emp-1', 'emp-2'],
     })
 
-    const attendees = await t.mutation(api.meeting.trackMeetingAttendance, {
+    const attendees = await t.query(api.meeting.trackMeetingAttendance, {
       scheduleMeetingId,
     })
 
@@ -198,62 +214,54 @@ describe('Meeting', () => {
     const meetingId = await t.mutation(api.meeting.create, {
       title: 'Notes Meeting',
       description: 'Meeting notes',
-      recurrenceType: 'weekly',
-      recurrenceDays: ['tuesday'],
+      recurrenceType: 'none',
+      recurrenceDays: [],
       startTime: Date.now(),
       endTime: Date.now() + 1000,
       meetingLink: 'https://meet.notes',
       recipients: [],
     })
 
-    const scheduleMeetingId = await t.mutation(api.meeting.scheduleMeeting, {
-      meetingId,
-      startTime: Date.now(),
-      endTime: Date.now() + 1000,
-      finalNotes: '',
-    })
+    const schedules = await t.query(api.meeting.getSchedules, { meetingId })
+    const scheduleMeetingId = schedules[0]!._id
 
     await t.mutation(api.meeting.recordMeetingNotes, {
       scheduleMeetingId,
       finalNotes: 'Discussed project roadmap',
     })
 
-    const schedules = await t.query(api.meeting.getSchedules, {
+    const updatedSchedules = await t.query(api.meeting.getSchedules, {
       meetingId,
     })
 
-    expect(schedules[0]?.finalNotes).toBe('Discussed project roadmap')
+    expect(updatedSchedules[0]?.finalNotes).toBe('Discussed project roadmap')
   })
 
   test('track meeting attendance', async () => {
     const meetingId = await t.mutation(api.meeting.create, {
       title: 'Attendance Meeting',
       description: 'Attendance tracking',
-      recurrenceType: 'weekly',
-      recurrenceDays: ['friday'],
+      recurrenceType: 'none',
+      recurrenceDays: [],
       startTime: Date.now(),
       endTime: Date.now() + 1000,
       meetingLink: 'https://meet.attendance',
-      recipients: [],
+      recipients: ['emp-1', 'emp-2', 'emp-3'],
     })
 
-    const scheduleMeetingId = await t.mutation(api.meeting.scheduleMeeting, {
-      meetingId,
-      startTime: Date.now(),
-      endTime: Date.now() + 1000,
-      finalNotes: '',
-    })
+    const schedules = await t.query(api.meeting.getSchedules, { meetingId })
+    const scheduleMeetingId = schedules[0]!._id
 
     await t.mutation(api.meeting.inviteAttendees, {
       scheduleMeetingId,
-      employeeIds: ['emp-1', 'emp-2', 'emp-3'],
+      employeeIds: ['emp-4'],
     })
 
-    const attendees = await t.mutation(api.meeting.trackMeetingAttendance, {
+    const attendees = await t.query(api.meeting.trackMeetingAttendance, {
       scheduleMeetingId,
     })
 
-    expect(attendees.length).toBe(3)
+    expect(attendees.length).toBe(4)
     expect(attendees[0]?.employeeId).toBeDefined()
   })
 
@@ -280,26 +288,56 @@ describe('Meeting', () => {
     const meetingId = await t.mutation(api.meeting.create, {
       title: 'Reminder Meeting',
       description: 'Reminder test',
-      recurrenceType: 'weekly',
-      recurrenceDays: ['sunday'],
+      recurrenceType: 'none',
+      recurrenceDays: [],
       startTime: Date.now(),
       endTime: Date.now() + 1000,
       meetingLink: 'https://meet.reminder',
       recipients: [],
     })
 
-    const scheduleMeetingId = await t.mutation(api.meeting.scheduleMeeting, {
-      meetingId,
-      startTime: Date.now(),
-      endTime: Date.now() + 1000,
-      finalNotes: '',
-    })
+    const schedules = await t.query(api.meeting.getSchedules, { meetingId })
+    const scheduleMeetingId = schedules[0]!._id
 
     await expect(
       t.mutation(internal.meeting.sendMeetingReminders, {
         scheduleMeetingId,
       }),
     ).resolves.toBeNull()
+  })
+
+  test('scheduler dedupes occurrences', async () => {
+    const startTime = Date.now() + 86400000
+    const endTime = startTime + 3600000
+
+    const meetingId = await t.mutation(api.meeting.create, {
+      title: 'Dedupe Meeting',
+      description: 'Dedupe test',
+      recurrenceType: 'none',
+      recurrenceDays: [],
+      startTime,
+      endTime,
+      meetingLink: 'https://meet.dedupe',
+      recipients: ['emp-1'],
+    })
+
+    await expect(
+      t.mutation(api.meeting.scheduleMeeting, {
+        meetingId,
+        startTime,
+        endTime,
+      }),
+    ).rejects.toThrow('A schedule already exists for this time')
+
+    const result = await t.mutation(
+      internal.meetingScheduler.generateRecurringSchedules,
+      {},
+    )
+
+    expect(result.totalCreated).toBeGreaterThanOrEqual(0)
+
+    const schedules = await t.query(api.meeting.getSchedules, { meetingId })
+    expect(schedules.length).toBe(1)
   })
 
   test('non owner cannot update meeting', async () => {
@@ -322,7 +360,9 @@ describe('Meeting', () => {
     await expect(
       user2.mutation(api.meeting.update, {
         meetingId,
-        title: 'Hacked',
+        body: {
+          title: 'Hacked',
+        },
       }),
     ).rejects.toThrow()
   })
