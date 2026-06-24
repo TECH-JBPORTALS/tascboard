@@ -4,7 +4,7 @@ import {
   organizationMutation,
   organizationQuery,
   privateMutation,
-} from './lib/customFunctions'
+} from './helpers/customFunctions'
 
 export const getGeneralSettings = organizationQuery({
   args: {},

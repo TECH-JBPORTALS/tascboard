@@ -3,7 +3,10 @@ import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import { organizationMutation, organizationQuery } from './lib/customFunctions'
+import {
+  organizationMutation,
+  organizationQuery,
+} from './helpers/customFunctions'
 import {
   getLeaveDays,
   getUsedApprovedLeaves,
@@ -11,8 +14,8 @@ import {
   splitLeaveDaysByYear,
   validateAdvanceNotice,
   validateRaiseAgainstQuota,
-} from './lib/leaveRequestHelpers'
-import { getPaidLeavesForYear } from './lib/organizationLeaveQuota'
+} from './helpers/leaveRequestHelpers'
+import { getPaidLeavesForYear } from './helpers/organizationLeaveQuota'
 import { vv } from './schema'
 
 const leaveTypeValidator = v.union(

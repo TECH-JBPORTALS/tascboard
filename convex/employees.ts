@@ -2,7 +2,7 @@ import { v } from 'convex/values'
 import { components } from './_generated/api'
 import { query } from './_generated/server'
 import { authComponent, createAuth } from './auth'
-import { organizationQuery } from './lib/customFunctions'
+import { organizationQuery } from './helpers/customFunctions'
 
 export const list = organizationQuery({
   args: {},

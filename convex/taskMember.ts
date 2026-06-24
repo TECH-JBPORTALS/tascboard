@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { privateMutation, privateQuery } from './lib/customFunctions'
+import { privateMutation, privateQuery } from './helpers/customFunctions'
 import { vv } from './schema'
 
 export const toggleMember = privateMutation({

@@ -1,16 +1,19 @@
 import { v } from 'convex/values'
 import { components } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import type { MutationCtx, QueryCtx } from './_generated/server'
+import {
+  internalMutation,
+  type MutationCtx,
+  type QueryCtx,
+} from './_generated/server'
 import {
   organizationMutation,
   organizationQuery,
-  privateInternalMutation,
-} from './lib/customFunctions'
+} from './helpers/customFunctions'
 import {
   createScheduleWithAttendees,
   generateSchedulesForMeeting,
-} from './lib/meetingScheduler'
+} from './helpers/meetingScheduler'
 import { vv } from './schema'
 
 const DAYS_AHEAD = 14 /* Generate schedules for 14 days ahead by default */
@@ -289,7 +292,7 @@ export const listOccurrences = organizationQuery({
   ),
   handler: async (ctx, args) => {
     const { activeOrganizationId: orgId, employee } = ctx.session
-    const employeeId = employee.id
+    const employeeId = employee._id
     const isOwner = isOwnerRole(employee.role)
 
     const employees = await ctx.runQuery(components.betterAuth.employees.list, {
@@ -469,7 +472,7 @@ export const getScheduleDetail = organizationQuery({
       .withIndex('by_meeting', (q) => q.eq('meetingId', meeting._id))
       .collect()
 
-    const employeeId = ctx.session.employee.id
+    const employeeId = ctx.session.employee._id
     if (
       !isOwnerRole(ctx.session.employee.role) &&
       !isInvitedToOccurrence(
@@ -662,7 +665,7 @@ export const inviteAttendees = organizationMutation({
   },
 })
 
-export const sendMeetingReminders = privateInternalMutation({
+export const sendMeetingReminders = internalMutation({
   args: {
     scheduleMeetingId: vv.id('scheduleMeeting'),
   },

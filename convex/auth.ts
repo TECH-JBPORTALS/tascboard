@@ -122,8 +122,9 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
       convex({
         authConfig,
         jwt: {
+          /** Customized convex auth payload */
           definePayload: ({ session, user }) => ({
-            orgId: session.activeOrganizationId as string,
+            activeOrganizationId: session.activeOrganizationId,
             userId: session.userId,
             email: user.email,
             name: user.name,

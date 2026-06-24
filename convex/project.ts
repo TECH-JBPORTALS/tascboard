@@ -1,13 +1,15 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { components, internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import {
   organizationMutation,
   organizationQuery,
-  privateQuery,
-} from './lib/customFunctions'
-import { getProjectMembers } from './lib/memberHelper'
-import { formatProjectDate, logProjectActivity } from './lib/projectActivityLog'
+} from './helpers/customFunctions'
+import { getProjectMembers } from './helpers/memberHelper'
+import {
+  formatProjectDate,
+  logProjectActivity,
+} from './helpers/projectActivityLog'
 import { vv } from './schema'
 import { EMPTY_PROSEMIRROR_DOC, getProjectEditorId } from './syncEditor'
 import { removeTrackCascade } from './track'
@@ -25,12 +27,11 @@ export const create = organizationMutation({
     ),
 
   handler: async (ctx, args) => {
-    const { userId, activeOrganizationId: orgId, user } = ctx.session
     if (args.endDate < args.startDate) {
       throw new Error('End date cannot be before start date')
     }
     const insertedProjectId = await ctx.db.insert('projects', {
-      organizationId: orgId,
+      organizationId: ctx.session.activeOrganizationId,
       name: args.name.trim(),
       summary: args.summary?.trim() || undefined,
       icon: args.icon,
@@ -46,9 +47,9 @@ export const create = organizationMutation({
     })
     await logProjectActivity(ctx, {
       projectId: insertedProjectId,
-      organizationId: orgId,
-      actorUserId: userId,
-      actorName: user.name,
+      organizationId: ctx.session.activeOrganizationId,
+      actorUserId: ctx.session.userId,
+      actorName: ctx.session.user.name,
       kind: 'created',
       toValue: args.name.trim(),
     })
@@ -81,21 +82,22 @@ export const list = organizationQuery({
   },
 })
 
-export const get = privateQuery({
+export const get = organizationQuery({
   args: {
     projectId: vv.id('projects'),
   },
   handler: async (ctx, args) => {
-    const { activeOrganizationId: orgId } = ctx.session
     const project = await ctx.db.get(args.projectId)
-    if (!project || project.organizationId !== orgId) {
-      return null
-    }
+
+    if (!project) throw new ConvexError('No project found')
+
     const { content: description } = await ctx.runQuery(
       components.prosemirrorSync.lib.getSnapshot,
       { id: getProjectEditorId(args.projectId) },
     )
+
     const { members, manager } = await getProjectMembers(ctx, project._id)
+
     return {
       ...{ ...project, description },
       members,

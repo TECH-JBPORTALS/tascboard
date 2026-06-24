@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { privateMutation, privateQuery } from './lib/customFunctions'
+import { privateMutation, privateQuery } from './helpers/customFunctions'
 import { vv } from './schema'
 
 export const create = privateMutation({

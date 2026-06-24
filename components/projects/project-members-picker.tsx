@@ -104,10 +104,10 @@ export function ProjectMembersPicker({ projectId }: ProjectMembersPickerProps) {
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.user.name}
-                      imageUrl={employee.user.image}
+                      name={employee.name}
+                      imageUrl={employee.image}
                     />
-                    {employee.user.name}
+                    {employee.name}
                   </CommandItem>
                 ))}
               </CommandGroup>

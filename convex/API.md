@@ -19,7 +19,7 @@ const create = useMutation(api.task.create)
 | **Public** | `query` / `mutation` | No custom wrapper (rare) |
 | **Internal** | `internal*` | Server-only; use `internal.*` |
 
-`employeeId` in args is the Better Auth **member** id (`ctx.session.employee.id` in org context).
+`employeeId` in args is the Better Auth **member** id (`ctx.session.employee._id` in org context).
 
 Patch/update mutations often use `{ …Id, body: { …partial fields } }`.
 

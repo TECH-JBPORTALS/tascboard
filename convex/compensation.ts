@@ -1,8 +1,11 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import { organizationMutation, organizationQuery } from './lib/customFunctions'
-import { findActiveCompensation } from './lib/payrollHelpers'
+import {
+  organizationMutation,
+  organizationQuery,
+} from './helpers/customFunctions'
+import { findActiveCompensation } from './helpers/payrollHelpers'
 import { vv } from './schema'
 
 type OrganizationCtx = (QueryCtx | MutationCtx) & {

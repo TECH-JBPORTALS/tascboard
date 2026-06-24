@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { privateMutation, privateQuery } from './lib/customFunctions'
+import { privateMutation, privateQuery } from './helpers/customFunctions'
 import { vv } from './schema'
 
 export const toggleMember = privateMutation({
@@ -25,7 +25,7 @@ export const toggleMember = privateMutation({
       projectId: args.projectId,
       employeeId: args.employeeId,
       manager: false,
-      assignedBy: ctx.session.user.id,
+      assignedBy: ctx.session.user._id,
       createdAt: Date.now(),
     })
 
@@ -72,7 +72,7 @@ export const setManager = privateMutation({
       projectId: args.projectId,
       employeeId: args.employeeId,
       manager: true,
-      assignedBy: ctx.session.user.id,
+      assignedBy: ctx.session.user._id,
       createdAt: Date.now(),
     })
 

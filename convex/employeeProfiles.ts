@@ -3,10 +3,9 @@ import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import { internalMutation, type MutationCtx } from './_generated/server'
 import {
-  organizationInternalQuery,
   organizationMutation,
   organizationQuery,
-} from './lib/customFunctions'
+} from './helpers/customFunctions'
 import { vv } from './schema'
 
 /** Controll how many certificates can be uploaded by an employee. */
@@ -15,7 +14,7 @@ const MAX_CERTIFICATES = 5
 /** The return type for the getMyProfile query. */
 const profileReturn = vv.doc('employeeProfiles').omit('_id', '_creationTime')
 
-export const getInternalEmployeeProfile = organizationInternalQuery({
+export const getInternalEmployeeProfile = internalMutation({
   args: {
     employeeId: v.string(),
   },
@@ -135,7 +134,7 @@ export const getMyProfile = organizationQuery({
 
     const profile = await ctx.db
       .query('employeeProfiles')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employee.id))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
       .unique()
 
     if (!profile) return null
@@ -202,7 +201,7 @@ export const saveGeneralInfo = organizationMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { employee } = ctx.session
-    const profile = await getOrCreateMyProfile(ctx, employee.id)
+    const profile = await getOrCreateMyProfile(ctx, employee._id)
 
     await ctx.db.patch(profile._id, {
       firstName: args.firstName.trim(),
@@ -225,7 +224,7 @@ export const saveGovernmentId = organizationMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { employee } = ctx.session
-    const profile = await getOrCreateMyProfile(ctx, employee.id)
+    const profile = await getOrCreateMyProfile(ctx, employee._id)
 
     await ctx.db.patch(profile._id, {
       aadharNumber: args.aadharNumber.trim(),
@@ -251,7 +250,7 @@ export const saveBankDetails = organizationMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { employee } = ctx.session
-    const profile = await getOrCreateMyProfile(ctx, employee.id)
+    const profile = await getOrCreateMyProfile(ctx, employee._id)
 
     await ctx.db.patch(profile._id, {
       bankAccountNumber: args.bankAccountNumber.trim(),
@@ -281,7 +280,7 @@ export const addCertificate = organizationMutation({
   returns: vv.id('employeeCertificates'),
   handler: async (ctx, args) => {
     const { employee } = ctx.session
-    const profile = await getOrCreateMyProfile(ctx, employee.id)
+    const profile = await getOrCreateMyProfile(ctx, employee._id)
 
     const existing = await ctx.db
       .query('employeeCertificates')
@@ -325,7 +324,7 @@ export const removeCertificate = organizationMutation({
 
     const profile = await ctx.db
       .query('employeeProfiles')
-      .withIndex('by_employee', (q) => q.eq('employeeId', employee.id))
+      .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
       .unique()
 
     if (!profile || cert.employeeProfileId !== profile._id) {
@@ -347,7 +346,8 @@ export const completeOnboarding = organizationMutation({
   returns: v.null(),
   handler: async (ctx) => {
     const { activeOrganizationId, userId, employee } = ctx.session
-    const profile = await getOrCreateMyProfile(ctx, employee.id)
+    const profile = await getOrCreateMyProfile(ctx, employee._id)
+
     if (!profile.aadharNumber || !profile.panNumber) {
       throw new Error('Please complete government ID details first.')
     }

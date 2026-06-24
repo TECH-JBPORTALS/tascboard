@@ -1,12 +1,9 @@
-import { GenericCtx } from '@convex-dev/better-auth'
 import { ProsemirrorSync } from '@convex-dev/prosemirror-sync'
 import { v } from 'convex/values'
 import { components } from './_generated/api'
-import type { DataModel, Id } from './_generated/dataModel'
-import {
-  organizationInternalMutation,
-  validateActiveOrganization,
-} from './lib/customFunctions'
+import type { Id } from './_generated/dataModel'
+import { internalMutation } from './_generated/server'
+import { ensureActiveOrganization } from './helpers/auth'
 
 const prosemirrorSync = new ProsemirrorSync(components.prosemirrorSync)
 const PROJECT_EDITOR_PREFIX = 'project-'
@@ -20,7 +17,6 @@ function parseProjectEditorId(id: string): Id<'projects'> {
   return id.slice(PROJECT_EDITOR_PREFIX.length) as Id<'projects'>
 }
 
-// TODO Add authorization checks for the sync editor.
 export const {
   getSnapshot,
   submitSnapshot,
@@ -29,9 +25,7 @@ export const {
   submitSteps,
 } = prosemirrorSync.syncApi({
   async checkWrite(ctx, id) {
-    const { activeOrganizationId } = await validateActiveOrganization(
-      ctx as GenericCtx<DataModel>,
-    )
+    const activeOrganizationId = await ensureActiveOrganization(ctx)
     const projectId = parseProjectEditorId(id)
     const project = await ctx.db.get(projectId)
     if (!project || project.organizationId !== activeOrganizationId) {
@@ -45,7 +39,7 @@ export function getProjectEditorId(projectId: Id<'projects'>) {
   return `${PROJECT_EDITOR_PREFIX}${projectId}`
 }
 
-export const createEditor = organizationInternalMutation({
+export const createEditor = internalMutation({
   args: { id: v.string(), content: v.any() },
   returns: v.null(),
   handler: async (ctx, args) => {

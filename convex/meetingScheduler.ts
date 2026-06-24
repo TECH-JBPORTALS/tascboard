@@ -1,5 +1,5 @@
 import { internalMutation } from './_generated/server'
-import { generateSchedulesForMeeting } from './lib/meetingScheduler'
+import { generateSchedulesForMeeting } from './helpers/meetingScheduler'
 
 const DAYS_AHEAD = 14
 

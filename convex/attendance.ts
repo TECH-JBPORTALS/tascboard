@@ -12,25 +12,28 @@ import {
 import { components } from './_generated/api'
 import type { QueryCtx } from './_generated/server'
 import { internalMutation } from './_generated/server'
-import { deriveStatusFromLogin } from './lib/attendanceStatus'
+import { deriveStatusFromLogin } from './helpers/attendanceStatus'
 import {
   attendanceDateKey,
   getCalendarMonthRange,
   getElapsedWorkingDayKeysInMonth,
   scoreAttendanceForDays,
-} from './lib/attendanceSummary'
+} from './helpers/attendanceSummary'
 import {
   endOfCalendarDay,
   startOfCalendarDay,
   toCalendarDateKey,
-} from './lib/calendarDate'
+} from './helpers/calendarDate'
 import {
   organizationMutation,
   organizationQuery,
   privateMutation,
   privateQuery,
-} from './lib/customFunctions'
-import { getDaySchedule, getWorkSchedule } from './lib/organizationWorkSchedule'
+} from './helpers/customFunctions'
+import {
+  getDaySchedule,
+  getWorkSchedule,
+} from './helpers/organizationWorkSchedule'
 import { vv } from './schema'
 import { dayWorkSchedule } from './tables/organizationWorkSchedule'
 

@@ -1,21 +1,24 @@
 import { v } from 'convex/values'
 import { internalMutation } from './_generated/server'
 import { authComponent, createAuth } from './auth'
-import { organizationMutation, organizationQuery } from './lib/customFunctions'
+import {
+  organizationMutation,
+  organizationQuery,
+} from './helpers/customFunctions'
 import {
   ensureLeaveQuotaForYear,
   listLeaveQuotas,
   saveLeaveQuota,
-} from './lib/organizationLeaveQuota'
+} from './helpers/organizationLeaveQuota'
 import {
   buildOrganizationMetadata,
   parseOrganizationMetadata,
-} from './lib/organizationMetadata'
+} from './helpers/organizationMetadata'
 import {
   DEFAULT_WORK_SCHEDULE,
   getWorkSchedule,
   saveWorkSchedule,
-} from './lib/organizationWorkSchedule'
+} from './helpers/organizationWorkSchedule'
 import { workScheduleValidator } from './tables/organizationWorkSchedule'
 
 export const getWorkingSchedule = organizationQuery({

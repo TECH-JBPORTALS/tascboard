@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { privateQuery } from './lib/customFunctions'
+import { privateQuery } from './helpers/customFunctions'
 import { vv } from './schema'
 
 export const listByTask = privateQuery({

@@ -2,18 +2,18 @@ import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
-import { privateMutation, privateQuery } from './lib/customFunctions'
-import { statusTimingPatch } from './lib/dailyReportTasks'
-import { getTrackMembers } from './lib/memberHelper'
-import { formatTaskDate, logTaskActivity } from './lib/taskActivityLog'
-import { taskPriorityLabels, taskStatusLabels } from './lib/taskDisplay'
+import { privateMutation, privateQuery } from './helpers/customFunctions'
+import { statusTimingPatch } from './helpers/dailyReportTasks'
+import { getTrackMembers } from './helpers/memberHelper'
+import { formatTaskDate, logTaskActivity } from './helpers/taskActivityLog'
+import { taskPriorityLabels, taskStatusLabels } from './helpers/taskDisplay'
 import {
   compareTaskStatusOrder,
   getNextStatusOrder,
   getTasksInStatus,
   reindexStatusColumn,
-} from './lib/taskKanban'
-import { listTasksForTrack } from './lib/taskList'
+} from './helpers/taskKanban'
+import { listTasksForTrack } from './helpers/taskList'
 import { vv } from './schema'
 
 /**

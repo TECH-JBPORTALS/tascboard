@@ -142,10 +142,10 @@ export function TrackLeadPicker({
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.user.name}
-                      imageUrl={employee.user.image}
+                      name={employee.name}
+                      imageUrl={employee.image}
                     />
-                    {employee.user.name}
+                    {employee.name}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -193,12 +193,12 @@ export function TrackLeadDraftPicker({
             name={
               'employee' in currentLead
                 ? currentLead.employee.name
-                : currentLead.user.name
+                : currentLead.name
             }
             imageUrl={
               'employee' in currentLead
                 ? currentLead.employee.image
-                : currentLead.user.image
+                : currentLead.image
             }
           />
         ) : (
@@ -208,7 +208,7 @@ export function TrackLeadDraftPicker({
           {currentLead
             ? 'employee' in currentLead
               ? currentLead.employee.name
-              : currentLead.user.name
+              : currentLead.name
             : 'Lead'}
         </span>
       </PopoverTrigger>
@@ -249,10 +249,10 @@ export function TrackLeadDraftPicker({
                   >
                     <UserAvatar
                       className="size-5"
-                      name={employee.user.name}
-                      imageUrl={employee.user.image}
+                      name={employee.name}
+                      imageUrl={employee.image}
                     />
-                    {employee.user.name}
+                    {employee.name}
                     {leadEmployeeId === employee.id && (
                       <RiCheckFill className="ml-auto size-4" />
                     )}

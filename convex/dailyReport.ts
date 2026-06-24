@@ -3,17 +3,17 @@ import { endOfDay, format, startOfDay } from 'date-fns'
 import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { Doc } from './_generated/dataModel'
-import { startOfCalendarDay } from './lib/calendarDate'
+import { startOfCalendarDay } from './helpers/calendarDate'
 import {
   organizationMutation,
   organizationQuery,
   privateMutation,
   privateQuery,
-} from './lib/customFunctions'
+} from './helpers/customFunctions'
 import {
   isTaskEligibleForDailyReport,
   listEmployeeDoneTasksForDay,
-} from './lib/dailyReportTasks'
+} from './helpers/dailyReportTasks'
 import { vv } from './schema'
 
 const doneTaskValidator = v.object({

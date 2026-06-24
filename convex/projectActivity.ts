@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { components } from './_generated/api'
-import { organizationQuery } from './lib/customFunctions'
+import { organizationQuery } from './helpers/customFunctions'
 import { vv } from './schema'
 
 export const list = organizationQuery({

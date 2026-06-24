@@ -2,10 +2,11 @@ import type { Doc, Id } from './_generated/dataModel'
 import { MutationCtx } from './_generated/server'
 import {
   organizationMutation,
+  organizationQuery,
   privateMutation,
   privateQuery,
-} from './lib/customFunctions'
-import { getTrackMembers } from './lib/memberHelper'
+} from './helpers/customFunctions'
+import { getTrackMembers } from './helpers/memberHelper'
 import { vv } from './schema'
 import { removeTaskCascade } from './task'
 // -------------------- CREATE --------------------
@@ -30,15 +31,16 @@ export const create = organizationMutation({
 })
 
 // -------------------- LIST BY PROJECT --------------------
-export const listByProject = privateQuery({
+export const listByProject = organizationQuery({
   args: {
     projectId: vv.id('projects'),
   },
   handler: async (ctx, args) => {
-    const { activeOrganizationId: orgId } = ctx.session
-
     const project = await ctx.db.get(args.projectId)
-    if (!project || project.organizationId !== orgId) {
+    if (
+      !project ||
+      project.organizationId !== ctx.session.activeOrganizationId
+    ) {
       throw new Error('Not found')
     }
 

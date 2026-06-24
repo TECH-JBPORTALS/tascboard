@@ -3,13 +3,16 @@ import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import { getActiveCompensationForEmployee } from './compensation'
-import { organizationMutation, organizationQuery } from './lib/customFunctions'
+import {
+  organizationMutation,
+  organizationQuery,
+} from './helpers/customFunctions'
 import {
   calculateNetSalary,
   getPayPeriodForMonth,
   getYearRange,
   isPaidPayroll,
-} from './lib/payrollHelpers'
+} from './helpers/payrollHelpers'
 import { vv } from './schema'
 
 type OrganizationCtx = (QueryCtx | MutationCtx) & {

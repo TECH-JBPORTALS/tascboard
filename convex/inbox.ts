@@ -1,15 +1,15 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
+import { internalMutation } from './_generated/server'
 import {
   organizationMutation,
   organizationQuery,
-  privateInternalMutation,
   privateMutation,
   privateQuery,
-} from './lib/customFunctions'
+} from './helpers/customFunctions'
 import { vv } from './schema'
 
-export const createInboxItem = privateInternalMutation({
+export const createInboxItem = internalMutation({
   args: vv.doc('inboxItems').omit('_id', '_creationTime', 'read', 'archived'),
   handler: async (ctx, args) => {
     const insertedItemId = await ctx.db.insert('inboxItems', {

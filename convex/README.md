@@ -43,7 +43,7 @@ Do **not** use raw `query` / `mutation` from `./_generated/server` for app featu
 ```ts
 // organizationQuery / organizationMutation
 const { userId, user, activeOrganizationId, employee } = ctx.session
-// employee.id — Better Auth member id (use for employeeId in app tables)
+// employee._id — Better Auth member id (use for employeeId in app tables)
 // employee.role — org role string
 
 // privateQuery / privateMutation

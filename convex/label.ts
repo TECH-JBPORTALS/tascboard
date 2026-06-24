@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { privateMutation, privateQuery } from './lib/customFunctions'
-import { logTaskActivity } from './lib/taskActivityLog'
+import { privateMutation, privateQuery } from './helpers/customFunctions'
+import { logTaskActivity } from './helpers/taskActivityLog'
 import { vv } from './schema'
 
 const labelReturn = vv.doc('labels')

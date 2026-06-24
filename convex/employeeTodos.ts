@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { Doc } from './_generated/dataModel'
-import { privateMutation, privateQuery } from './lib/customFunctions'
+import { privateMutation, privateQuery } from './helpers/customFunctions'
 import { vv } from './schema'
 // GET ALL
 export const list = privateQuery({
