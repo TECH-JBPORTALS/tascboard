@@ -25,6 +25,22 @@ export const getByOrganizationUser = query({
   },
 })
 
+export const get = query({
+  args: { id: vv.string() },
+  returns: vv.doc('employee'),
+  handler: async (ctx, args) => {
+    const employee = await ctx.db
+      .query('employee')
+      .withIndex('by_id', (q) => q.eq('_id', args.id as Id<'employee'>))
+      .first()
+
+    if (!employee)
+      throw new ConvexError(ERROR_CODES.ORGANIZATION.MEMBER_NOT_FOUND.message)
+
+    return employee
+  },
+})
+
 /** List all the employees */
 export const list = query({
   args: vv

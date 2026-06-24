@@ -1536,6 +1536,21 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { id: string },
+        {
+          _creationTime: number;
+          _id: string;
+          active: boolean;
+          createdAt: number;
+          organizationId: string;
+          role: string;
+          userId: string;
+        },
+        Name
+      >;
       getByOrganizationUser: FunctionReference<
         "query",
         "internal",

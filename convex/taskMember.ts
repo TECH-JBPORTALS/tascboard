@@ -137,10 +137,9 @@ export const list = organizationQuery({
           : ''
 
         const employee = await ctx.runQuery(
-          components.betterAuth.employees.getByOrganizationUser,
+          components.betterAuth.employees.get,
           {
-            userId: member.employeeId,
-            organizationId: ctx.session.activeOrganizationId,
+            id: member.employeeId,
           },
         )
 
