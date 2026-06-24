@@ -1,11 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { OrganizationAccessProvider } from '@/components/organization/organization-access-provider'
 import { api } from '@/convex/_generated/api'
-import {
-  fetchAuthMutation,
-  fetchAuthQuery,
-  preloadAuthQuery,
-} from '@/lib/auth-server'
+import { fetchAuthQuery, preloadAuthQuery } from '@/lib/auth-server'
 import { findOrganizationBySlug } from '@/lib/organization-membership'
 
 export default async function OrgLayout({
@@ -17,9 +13,8 @@ export default async function OrgLayout({
 }) {
   const { orgSlug } = await params
 
-  const [organizationList, activeOrganization] = await Promise.all([
+  const [organizationList] = await Promise.all([
     fetchAuthQuery(api.auth.listOrganizations),
-    fetchAuthQuery(api.auth.getActiveOrganization),
   ])
 
   if (organizationList.length === 0) {
@@ -30,12 +25,6 @@ export default async function OrgLayout({
 
   if (!targetOrganization) {
     notFound()
-  }
-
-  if (activeOrganization?.id !== targetOrganization.id) {
-    await fetchAuthMutation(api.auth.setActiveOrganization, {
-      organizationId: targetOrganization.id,
-    })
   }
 
   const preloadedMemberRoleQuery = await preloadAuthQuery(

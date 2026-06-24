@@ -13,6 +13,7 @@ import { DataModel } from './_generated/dataModel'
 import { internalAction, mutation, query } from './_generated/server'
 import authConfig from './auth.config'
 import authSchema, { vv } from './schema'
+import { organizationQuery, privateQuery } from './helpers/customFunctions'
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
@@ -44,6 +45,27 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           email: user.email,
           verificationUrl: url,
         })
+      },
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          /* Set first organization id to the session before creating the new session 
+					- So user no need to select any prior institution once they authenticated */
+          before: async (session) => {
+            const firstOrganization = await ctx.runQuery(
+              components.betterAuth.organizations.firstByUser,
+              { userId: session.userId },
+            )
+
+            return {
+              data: {
+                ...session,
+                activeOrganizationId: firstOrganization?.organizationId,
+              },
+            }
+          },
+        },
       },
     },
     emailAndPassword: {
@@ -145,13 +167,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth(createAuthOptions(ctx))
 }
 
-export const listOrganizations = query(async (ctx) => {
-  const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
-
-  const organizations = await auth.api.listOrganizations({ headers })
+export const listOrganizations = privateQuery(async (ctx) => {
+  const organizations = await ctx.runQuery(
+    components.betterAuth.organizations.list,
+    { userId: ctx.session.userId },
+  )
 
   return organizations.map((organization) => ({
-    id: organization.id,
+    id: organization._id,
     name: organization.name,
     slug: organization.slug,
     metadata: organization.metadata,
@@ -176,13 +199,15 @@ export const setActiveOrganization = mutation({
   },
 })
 
-export const getActiveMemberRole = query({
+export const getActiveMemberRole = organizationQuery({
   args: {},
-  returns: v.union(v.object({ role: v.string() }), v.null()),
+  returns: v.object({ role: v.string() }),
   handler: async (ctx) => {
-    const { auth, headers } = await authComponent.getAuth(createAuth, ctx)
+    console.log('user Id', ctx.session.userId)
 
-    return await auth.api.getActiveMemberRole({ headers })
+    return {
+      role: ctx.session.employee.role,
+    }
   },
 })
 

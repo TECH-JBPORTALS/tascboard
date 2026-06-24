@@ -13,6 +13,7 @@ import type * as auth from "../auth.js";
 import type * as employees from "../employees.js";
 import type * as generatedSchema from "../generatedSchema.js";
 import type * as invitations from "../invitations.js";
+import type * as organizations from "../organizations.js";
 import type * as users from "../users.js";
 
 import type {
@@ -28,6 +29,7 @@ const fullApi: ApiFromModules<{
   employees: typeof employees;
   generatedSchema: typeof generatedSchema;
   invitations: typeof invitations;
+  organizations: typeof organizations;
   users: typeof users;
 }> = anyApi as any;
 

@@ -1548,7 +1548,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           organizationId: string;
           role: string;
           userId: string;
-        } | null,
+        },
         Name
       >;
       list: FunctionReference<
@@ -1593,6 +1593,38 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           organizationId: string;
           role?: null | string;
           status: string;
+        }>,
+        Name
+      >;
+    };
+    organizations: {
+      firstByUser: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        {
+          _creationTime: number;
+          _id: string;
+          active: boolean;
+          createdAt: number;
+          organizationId: string;
+          role: string;
+          userId: string;
+        } | null,
+        Name
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          createdAt: number;
+          logo?: null | string;
+          metadata?: null | string;
+          name: string;
+          slug: string;
         }>,
         Name
       >;

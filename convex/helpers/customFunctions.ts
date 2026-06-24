@@ -27,7 +27,7 @@ export const privateMutation = customMutation(
       id: session.userId,
     })
 
-    if (!user) throw new ConvexError(ERROR_CODES.BASE.USER_NOT_FOUND)
+    if (!user) throw new ConvexError(ERROR_CODES.BASE.USER_NOT_FOUND.message)
 
     return { session }
   }),
@@ -38,14 +38,11 @@ export const organizationQuery = customQuery(
   customCtx(async (ctx) => {
     const session = await ensureSession(ctx)
     const activeOrganizationId = await ensureActiveOrganization(ctx)
+    console.log('active', activeOrganizationId, 'user', session.userId)
     const employee = await ctx.runQuery(
       components.betterAuth.employees.getByOrganizationUser,
       { organizationId: activeOrganizationId, userId: session.userId },
     )
-
-    if (!employee)
-      throw new ConvexError(ERROR_CODES.ORGANIZATION.MEMBER_NOT_FOUND)
-
     return { session: { ...session, activeOrganizationId, employee } }
   }),
 )
@@ -62,7 +59,7 @@ export const organizationMutation = customMutation(
     )
 
     if (!employee)
-      throw new ConvexError(ERROR_CODES.ORGANIZATION.MEMBER_NOT_FOUND)
+      throw new ConvexError(ERROR_CODES.ORGANIZATION.MEMBER_NOT_FOUND.message)
 
     return { session: { ...session, activeOrganizationId, employee } }
   }),

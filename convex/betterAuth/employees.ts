@@ -1,17 +1,25 @@
+import { ConvexError } from 'convex/values'
+import { ERROR_CODES } from '../helpers/errors'
 import { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { vv } from './schema'
 
 export const getByOrganizationUser = query({
   args: { organizationId: vv.string(), userId: vv.string() },
-  returns: vv.nullable(vv.doc('employee')),
+  returns: vv.doc('employee'),
   handler: async (ctx, args) => {
     const employee = await ctx.db
       .query('employee')
       .withIndex('by_organization_user', (q) =>
         q.eq('organizationId', args.organizationId).eq('userId', args.userId),
       )
-      .unique()
+      .first()
+
+    if (!employee)
+      throw new ConvexError(
+        ERROR_CODES.ORGANIZATION.USER_IS_NOT_A_MEMBER_OF_THE_ORGANIZATION
+          .message,
+      )
 
     return employee
   },

@@ -19,7 +19,7 @@ export const ensureSession = async (ctx: GenericCtx<DataModel>) => {
     id: identity.subject,
   })
 
-  if (!user) throw new ConvexError(ERROR_CODES.BASE.USER_NOT_FOUND)
+  if (!user) throw new ConvexError(ERROR_CODES.BASE.USER_NOT_FOUND.message)
 
   return {
     id: identity.sessionId,

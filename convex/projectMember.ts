@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
+import { components } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
-import { privateMutation, privateQuery } from './helpers/customFunctions'
+import { organizationQuery, privateMutation } from './helpers/customFunctions'
 import { vv } from './schema'
 
 export const toggleMember = privateMutation({
@@ -110,7 +111,8 @@ export const removeManager = privateMutation({
     return null
   },
 })
-export const list = privateQuery({
+
+export const list = organizationQuery({
   args: {
     projectId: vv.id('projects'),
     manager: v.optional(v.boolean()),
@@ -146,6 +148,18 @@ export const list = privateQuery({
           ? await ctx.storage.getUrl(profile.profilePhotoStorageId)
           : ''
 
+        const employee = await ctx.runQuery(
+          components.betterAuth.employees.getByOrganizationUser,
+          {
+            userId: member.employeeId,
+            organizationId: ctx.session.activeOrganizationId,
+          },
+        )
+
+        const user = await ctx.runQuery(components.betterAuth.users.getById, {
+          id: employee.userId,
+        })
+
         return {
           _id: member._id,
           employeeId: member.employeeId,
@@ -154,9 +168,9 @@ export const list = privateQuery({
             _id: profile?.employeeId ?? member.employeeId,
             name: profile?.firstName
               ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
-              : ctx.session.user.name,
+              : (user?.name ?? 'Unknown'),
             image: image,
-            email: ctx.session.user.email,
+            email: user?.email,
           },
         }
       }),
