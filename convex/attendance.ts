@@ -7,6 +7,7 @@ import {
   endOfMonth,
   startOfDay,
   startOfMonth,
+  startOfToday,
   startOfWeek,
 } from 'date-fns'
 import { components } from './_generated/api'
@@ -246,10 +247,8 @@ export const listMonthlyMineByMonth = organizationQuery({
   },
 })
 
-export const getMyAttendanceByDate = organizationQuery({
-  args: {
-    recordDate: v.number(),
-  },
+export const getMyTodayAttendance = organizationQuery({
+  args: {},
   handler: async (ctx, args) => {
     const employee = await ctx.runQuery(
       components.betterAuth.employees.getByOrganizationUser,
@@ -263,13 +262,14 @@ export const getMyAttendanceByDate = organizationQuery({
       throw new Error('Employee not found')
     }
 
+    const start = startOfToday().getTime()
+
+    console.log(1782345600000, start)
+
     return await ctx.db
       .query('attendance')
       .withIndex('by_employee_and_date', (q) =>
-        q
-          .eq('employeeId', employee._id)
-          .gte('recordDate', startOfDay(args.recordDate).getTime())
-          .lte('recordDate', addDays(args.recordDate, 1).getTime()),
+        q.eq('employeeId', employee._id).eq('recordDate', start),
       )
       .first()
   },
@@ -388,7 +388,7 @@ export const markLogin = organizationMutation({
 
     await ctx.db.insert('attendance', {
       employeeId: employee._id,
-      recordDate: Date.now(),
+      recordDate: startOfDay(new Date()).getTime(),
       loginTime: Date.now(),
       status: 'present',
       createdAt: Date.now(),

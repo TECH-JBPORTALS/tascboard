@@ -38,7 +38,6 @@ export const organizationQuery = customQuery(
   customCtx(async (ctx) => {
     const session = await ensureSession(ctx)
     const activeOrganizationId = await ensureActiveOrganization(ctx)
-    console.log('active', activeOrganizationId, 'user', session.userId)
     const employee = await ctx.runQuery(
       components.betterAuth.employees.getByOrganizationUser,
       { organizationId: activeOrganizationId, userId: session.userId },

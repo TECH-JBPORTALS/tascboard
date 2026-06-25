@@ -12,8 +12,8 @@ import { components, internal } from './_generated/api'
 import { DataModel } from './_generated/dataModel'
 import { internalAction, mutation, query } from './_generated/server'
 import authConfig from './auth.config'
-import authSchema, { vv } from './schema'
 import { organizationQuery, privateQuery } from './helpers/customFunctions'
+import authSchema, { vv } from './schema'
 
 // Better Auth Component
 export const authComponent = createClient<DataModel, typeof authSchema>(
@@ -203,8 +203,6 @@ export const getActiveMemberRole = organizationQuery({
   args: {},
   returns: v.object({ role: v.string() }),
   handler: async (ctx) => {
-    console.log('user Id', ctx.session.userId)
-
     return {
       role: ctx.session.employee.role,
     }

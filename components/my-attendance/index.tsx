@@ -114,9 +114,7 @@ export function MyAttendance() {
 }
 
 export function TodayAttendance() {
-  const todayAttendance = useQuery(api.attendance.getMyAttendanceByDate, {
-    recordDate: startOfDay(Date.now()).getTime(),
-  })
+  const todayAttendance = useQuery(api.attendance.getMyTodayAttendance)
   const markLogin = useMutation(api.attendance.markLogin)
   const [loggingIn, setLoggingIn] = useState(false)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
