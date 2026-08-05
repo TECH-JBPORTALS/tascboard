@@ -17,7 +17,7 @@ export function isTaskDoneToday(
   const completionTime = getTaskCompletionTimestamp(task)
   if (completionTime === undefined) return false
 
-  return completionTime >= dayStart && completionTime <= dayEnd
+  return completionTime >= dayStart && completionTime < dayEnd
 }
 
 export async function getEmployeeAssignedTaskIds(

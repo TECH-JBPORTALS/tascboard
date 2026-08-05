@@ -1,9 +1,9 @@
 import { v } from 'convex/values'
-import { endOfDay, format, startOfDay } from 'date-fns'
+import { format } from 'date-fns'
 import { components } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { Doc } from './_generated/dataModel'
-import { startOfCalendarDay } from './helpers/calendarDate'
+import { endOfCalendarDay, startOfCalendarDay } from './helpers/calendarDate'
 import {
   organizationMutation,
   organizationQuery,
@@ -47,6 +47,7 @@ async function getCurrentEmployee(ctx: {
   return employee
 }
 
+/** Get the list of done tasks for the current employee for today */
 export const listMyDoneTasksForToday = organizationQuery({
   args: {
     today: v.number(),
@@ -54,8 +55,8 @@ export const listMyDoneTasksForToday = organizationQuery({
   returns: v.array(doneTaskValidator),
   handler: async (ctx, args) => {
     const employee = await getCurrentEmployee(ctx)
-    const dayStart = startOfDay(args.today).getTime()
-    const dayEnd = endOfDay(args.today).getTime()
+    const dayStart = startOfCalendarDay(args.today)
+    const dayEnd = endOfCalendarDay(args.today)
 
     const tasks = await listEmployeeDoneTasksForDay(
       ctx,
@@ -81,6 +82,7 @@ export const submitAndLogout = organizationMutation({
     workSummary: v.string(),
     taskIds: v.array(vv.id('tasks')),
     logoutTime: v.number(),
+    today: v.number(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -104,8 +106,8 @@ export const submitAndLogout = organizationMutation({
       throw new Error('Please describe what you accomplished today')
     }
 
-    const dayStart = startOfDay(args.logoutTime).getTime()
-    const dayEnd = endOfDay(args.logoutTime).getTime()
+    const dayStart = startOfCalendarDay(args.today)
+    const dayEnd = endOfCalendarDay(args.today)
 
     for (const taskId of args.taskIds) {
       const eligible = await isTaskEligibleForDailyReport(

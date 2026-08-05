@@ -2,11 +2,12 @@
 
 import { useMutation } from "convex/react";
 import { useQuery } from "convex-helpers/react/cache";
-import { format, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { startOfCalendarDay } from "@/lib/calendar-date";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import {
@@ -36,7 +37,7 @@ export function DailyReportDialog({
   loginTime,
   onSuccess,
 }: DailyReportDialogProps) {
-  const today = startOfDay(Date.now()).getTime();
+  const today = startOfCalendarDay(Date.now());
   const doneTasks = useQuery(
     api.dailyReport.listMyDoneTasksForToday,
     open ? { today } : "skip",
@@ -76,6 +77,7 @@ export function DailyReportDialog({
         workSummary: workSummary.trim(),
         taskIds: selectedTaskIds,
         logoutTime: Date.now(),
+        today,
       });
       toast.success("Daily report submitted. You are logged out.");
       onOpenChange(false);
